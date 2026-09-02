@@ -19,7 +19,7 @@ export default async function NovoAlunoPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/alunos"
-            className="p-2 rounded-[6px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-2xs"
+            className="p-2 rounded-[4px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-2xs"
           >
             <ChevronLeft className="w-5 h-5" />
           </Link>
@@ -39,7 +39,7 @@ export default async function NovoAlunoPage() {
         {/* 1. DADOS DO ATLETA */}
         <div className="card-light p-6 space-y-5">
           <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[6px] bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+            <div className="w-8 h-8 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/20 flex items-center justify-center text-[#1A6B2E]">
               <User className="w-4 h-4" />
             </div>
             <div>
@@ -136,7 +136,7 @@ export default async function NovoAlunoPage() {
         {/* 2. DADOS DO RESPONSÁVEL */}
         <div className="card-light p-6 space-y-5">
           <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[6px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
+            <div className="w-8 h-8 rounded-[4px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
               <Users className="w-4 h-4" />
             </div>
             <div>
@@ -229,7 +229,7 @@ export default async function NovoAlunoPage() {
         {/* 3. FICHA MÉDICA & AUTORIZAÇÕES */}
         <div className="card-light p-6 space-y-5">
           <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[6px] bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+            <div className="w-8 h-8 rounded-[4px] bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
               <HeartPulse className="w-4 h-4" />
             </div>
             <div>
@@ -313,7 +313,7 @@ export default async function NovoAlunoPage() {
                   name="image_use_authorized"
                   value="true"
                   defaultChecked
-                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                  className="w-4 h-4 rounded text-[#1A6B2E] focus:ring-[#1A6B2E] border-slate-300"
                 />
                 <span className="text-xs text-slate-700 font-medium">
                   Autorizo o uso de imagem do atleta para fotos de treinos e jogos nas redes sociais oficiais da Academia do Gol.
@@ -326,7 +326,7 @@ export default async function NovoAlunoPage() {
         {/* 4. TURMA & PLANO DE MENSALIDADE */}
         <div className="card-light p-6 space-y-5">
           <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[6px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
+            <div className="w-8 h-8 rounded-[4px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
               <CalendarDays className="w-4 h-4" />
             </div>
             <div>
@@ -400,13 +400,13 @@ export default async function NovoAlunoPage() {
         <div className="flex items-center justify-end gap-3 pt-4">
           <Link
             href="/alunos"
-            className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-[6px] text-xs font-bold uppercase tracking-wider transition-all"
+            className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all"
           >
             Cancelar
           </Link>
           <button
             type="submit"
-            className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider shadow-sm shadow-emerald-600/20 transition-all cursor-pointer flex items-center gap-2"
+            className="px-8 py-3 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
             Concluir Matrícula do Atleta

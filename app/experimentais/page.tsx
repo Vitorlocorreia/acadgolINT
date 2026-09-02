@@ -11,7 +11,7 @@ export default async function ExperimentaisPage() {
       {/* Header */}
       <div>
         <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-          <Target className="w-8 h-8 text-purple-600" />
+          <Target className="w-8 h-8 text-[#1A6B2E]" />
           Aulas Experimentais & Captação ({trials.length})
         </h1>
         <p className="text-xs text-slate-500 mt-1">
@@ -29,7 +29,7 @@ export default async function ExperimentaisPage() {
         <div className="card-light p-6 space-y-4">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-purple-600" />
+              <PlusCircle className="w-5 h-5 text-[#1A6B2E]" />
               Agendar Aula Experimental
             </h3>
             <p className="text-xs text-slate-500 mt-1">Cadastre o contato do lead interessado</p>
@@ -146,7 +146,7 @@ export default async function ExperimentaisPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider rounded-[6px] shadow-sm shadow-purple-600/20 transition-all cursor-pointer"
+              className="w-full py-3 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white font-bold text-xs uppercase tracking-wider rounded-[4px] shadow-xs transition-all cursor-pointer"
             >
               Agendar Aula Teste
             </button>

@@ -34,7 +34,7 @@ export default async function TurmasPage({ searchParams }: Props) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-            <CalendarDays className="w-8 h-8 text-emerald-600" />
+            <CalendarDays className="w-8 h-8 text-[#1A6B2E]" />
             Turmas & Grade de Treinos ({classes.length})
           </h1>
           <p className="text-xs text-slate-500 mt-1">
@@ -47,9 +47,9 @@ export default async function TurmasPage({ searchParams }: Props) {
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <Link
           href="/turmas"
-          className={`px-3.5 py-1.5 rounded-[6px] text-xs font-bold uppercase tracking-wider whitespace-nowrap border transition-all ${
+          className={`px-3.5 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider whitespace-nowrap border transition-all ${
             !params.unitId || params.unitId === 'all'
-              ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+              ? 'bg-[#1A6B2E] text-white border-[#1A6B2E] shadow-2xs'
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -59,9 +59,9 @@ export default async function TurmasPage({ searchParams }: Props) {
           <Link
             key={u.id}
             href={`/turmas?unitId=${u.id}`}
-            className={`px-3.5 py-1.5 rounded-[6px] text-xs font-bold uppercase tracking-wider whitespace-nowrap border transition-all ${
+            className={`px-3.5 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider whitespace-nowrap border transition-all ${
               params.unitId === u.id
-                ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                ? 'bg-[#1A6B2E] text-white border-[#1A6B2E] shadow-2xs'
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
@@ -90,12 +90,12 @@ export default async function TurmasPage({ searchParams }: Props) {
                 return (
                   <div
                     key={cls.id}
-                    className="card-light p-5 space-y-4 flex flex-col justify-between hover:border-emerald-500 transition-all"
+                    className="card-light p-5 space-y-4 flex flex-col justify-between hover:border-[#1A6B2E] transition-all"
                   >
                     <div className="space-y-3">
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#1A6B2E]/10 text-[#0D4A1C] border border-[#1A6B2E]/20">
                             {cls.category?.name || 'Geral'}
                           </span>
                           <h3 className="font-bebas text-2xl text-slate-900 tracking-wider mt-1.5 leading-none">
@@ -109,7 +109,7 @@ export default async function TurmasPage({ searchParams }: Props) {
 
                       <div className="space-y-1.5 text-xs text-slate-600">
                         <div className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <MapPin className="w-3.5 h-3.5 text-[#1A6B2E] shrink-0" />
                           <span>{cls.unit?.name}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
@@ -135,7 +135,7 @@ export default async function TurmasPage({ searchParams }: Props) {
                         <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
                           <div
                             className={`h-full rounded-full transition-all ${
-                              occupancyPct >= 90 ? 'bg-amber-500' : 'bg-emerald-600'
+                              occupancyPct >= 90 ? 'bg-amber-500' : 'bg-[#1A6B2E]'
                             }`}
                             style={{ width: `${Math.min(occupancyPct, 100)}%` }}
                           />
@@ -146,7 +146,7 @@ export default async function TurmasPage({ searchParams }: Props) {
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between">
                       <Link
                         href={`/chamada?classId=${cls.id}`}
-                        className="w-full py-2 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-800 text-xs font-bold uppercase tracking-wider rounded-[6px] text-center transition-all flex items-center justify-center gap-1 cursor-pointer border border-emerald-200"
+                        className="w-full py-2 bg-[#1A6B2E]/10 hover:bg-[#1A6B2E] hover:text-white text-[#0D4A1C] text-xs font-bold uppercase tracking-wider rounded-[4px] text-center transition-all flex items-center justify-center gap-1 cursor-pointer border border-[#1A6B2E]/20"
                       >
                         Fazer Chamada <ChevronRight className="w-3.5 h-3.5" />
                       </Link>
@@ -162,7 +162,7 @@ export default async function TurmasPage({ searchParams }: Props) {
         <div className="card-light p-6 space-y-4">
           <div className="border-b border-slate-100 pb-3">
             <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-emerald-600" />
+              <PlusCircle className="w-5 h-5 text-[#1A6B2E]" />
               Criar Nova Turma
             </h3>
             <p className="text-xs text-slate-500 mt-1">Configure os horários e capacidade</p>
@@ -244,7 +244,7 @@ export default async function TurmasPage({ searchParams }: Props) {
                       name="days_of_week"
                       value={d.key}
                       defaultChecked={d.key === 'ter' || d.key === 'qui'}
-                      className="rounded text-emerald-600 focus:ring-emerald-500 border-slate-300"
+                      className="rounded text-[#1A6B2E] focus:ring-[#1A6B2E] border-slate-300"
                     />
                     <span className="text-slate-800 font-bold">{d.label}</span>
                   </label>
@@ -297,7 +297,7 @@ export default async function TurmasPage({ searchParams }: Props) {
 
             <button
               type="submit"
-              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-[6px] shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
+              className="w-full py-3 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white font-bold text-xs uppercase tracking-wider rounded-[4px] shadow-xs transition-all cursor-pointer"
             >
               Salvar Turma
             </button>

@@ -82,8 +82,8 @@ export function FinanceiroClient({
       {/* Barra Superior: Seletor de Mês + Gerar Faturas */}
       <div className="card-light p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-[6px] px-3 py-2">
-            <Calendar className="w-4 h-4 text-emerald-600" />
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-[4px] px-3 py-2">
+            <Calendar className="w-4 h-4 text-[#1A6B2E]" />
             <span className="text-slate-600 text-xs font-bold uppercase">Mês de Referência:</span>
             <input
               type="month"
@@ -97,7 +97,7 @@ export function FinanceiroClient({
         <button
           onClick={handleGenerateInvoices}
           disabled={isPending}
-          className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+          className="px-4 py-2.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
         >
           {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5 text-white" />}
           Gerar Mensalidades do Mês
@@ -105,12 +105,12 @@ export function FinanceiroClient({
       </div>
 
       {feedback && (
-        <div className={`p-3 rounded-[6px] text-xs font-bold flex items-center gap-2 border ${
+        <div className={`p-3 rounded-[4px] text-xs font-bold flex items-center gap-2 border ${
           feedback.type === 'success'
-            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            ? 'bg-[#C8E6C9]/50 border-[#1A6B2E]/30 text-[#0D4A1C]'
             : 'bg-red-50 border-red-200 text-red-800'
         }`}>
-          {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <AlertTriangle className="w-4 h-4 text-red-600" />}
+          {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-[#1A6B2E]" /> : <AlertTriangle className="w-4 h-4 text-red-600" />}
           <span>{feedback.message}</span>
         </div>
       )}
@@ -123,10 +123,10 @@ export function FinanceiroClient({
           <p className="text-[10px] text-slate-400">{invoices.length} mensalidades</p>
         </div>
 
-        <div className="card-light p-4 space-y-2 border-emerald-200 bg-emerald-50/40">
-          <span className="text-xs text-emerald-800 font-bold uppercase tracking-wider">Total Recebido</span>
-          <div className="font-bebas text-3xl text-emerald-700 tracking-wider leading-none">{fmt(stats.collected)}</div>
-          <p className="text-[10px] text-emerald-700 font-bold">{collectionPct.toFixed(1)}% arrecadado</p>
+        <div className="card-light p-4 space-y-2 border-[#1A6B2E]/30 bg-[#C8E6C9]/20">
+          <span className="text-xs text-[#0D4A1C] font-bold uppercase tracking-wider">Total Recebido</span>
+          <div className="font-bebas text-3xl text-[#1A6B2E] tracking-wider leading-none">{fmt(stats.collected)}</div>
+          <p className="text-[10px] text-[#0D4A1C] font-bold">{collectionPct.toFixed(1)}% arrecadado</p>
         </div>
 
         <div className="card-light p-4 space-y-2">
@@ -146,9 +146,9 @@ export function FinanceiroClient({
       <div className="flex items-center gap-2">
         <button
           onClick={() => handleStatusFilter('all')}
-          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
             currentStatus === 'all'
-              ? 'bg-emerald-600 text-white border-emerald-600'
+              ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -156,9 +156,9 @@ export function FinanceiroClient({
         </button>
         <button
           onClick={() => handleStatusFilter('pending')}
-          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
             currentStatus === 'pending'
-              ? 'bg-emerald-600 text-white border-emerald-600'
+              ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -166,9 +166,9 @@ export function FinanceiroClient({
         </button>
         <button
           onClick={() => handleStatusFilter('paid')}
-          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
             currentStatus === 'paid'
-              ? 'bg-emerald-600 text-white border-emerald-600'
+              ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -234,7 +234,7 @@ export function FinanceiroClient({
                       <td className="px-5 py-3.5 text-center">
                         <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                           isPaid
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            ? 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20'
                             : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
                           {isPaid ? 'Pago' : 'Pendente'}
@@ -249,7 +249,7 @@ export function FinanceiroClient({
                               href={`https://wa.me/55${guardianPhone}?text=${encodeURIComponent(whatsappMessage)}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded font-bold text-[11px] uppercase tracking-wider inline-flex items-center gap-1 transition-all"
+                              className="px-3 py-1.5 bg-[#1A6B2E]/10 hover:bg-[#1A6B2E]/20 text-[#0D4A1C] border border-[#1A6B2E]/30 rounded font-bold text-[11px] uppercase tracking-wider inline-flex items-center gap-1 transition-all"
                             >
                               <Send className="w-3 h-3" /> WhatsApp
                             </a>
@@ -260,7 +260,7 @@ export function FinanceiroClient({
                               type="button"
                               onClick={() => handleMarkPaid(inv.id)}
                               disabled={isPending}
-                              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] uppercase tracking-wider rounded inline-flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                              className="px-3 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white font-bold text-[11px] uppercase tracking-wider rounded inline-flex items-center gap-1 transition-all cursor-pointer shadow-xs"
                             >
                               <Check className="w-3 h-3" /> Dar Baixa
                             </button>

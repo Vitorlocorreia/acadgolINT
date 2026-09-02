@@ -31,7 +31,7 @@ export default async function ChamadaPage({ searchParams }: Props) {
       {/* Header */}
       <div>
         <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-          <CheckSquare className="w-8 h-8 text-emerald-600" />
+          <CheckSquare className="w-8 h-8 text-[#1A6B2E]" />
           Chamada Digital na Beira do Campo
         </h1>
         <p className="text-xs text-slate-500 mt-1">

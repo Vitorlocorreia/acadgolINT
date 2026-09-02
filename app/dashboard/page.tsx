@@ -27,18 +27,18 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
       {/* Top Banner / Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-900 border border-emerald-700 p-6 rounded-[8px] shadow-sm relative overflow-hidden text-white">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#0D4A1C] via-[#1A6B2E] to-[#0D4A1C] border border-[#0D4A1C] p-6 rounded-[6px] shadow-xs relative overflow-hidden text-white">
         <div className="space-y-1 relative z-10">
           <div className="flex items-center gap-2">
             <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-white/20 text-white border border-white/30 backdrop-blur-xs">
               Temporada 2026
             </span>
-            <span className="text-xs text-emerald-100 font-medium">Unidades Recife & Região Metropolitana</span>
+            <span className="text-xs text-[#C8E6C9] font-medium">Unidades Recife & Região Metropolitana</span>
           </div>
           <h1 className="font-bebas text-3xl sm:text-4xl tracking-wider leading-none">
             Painel Geral da Escolinha
           </h1>
-          <p className="text-xs text-emerald-100/90">
+          <p className="text-xs text-white/90">
             Controle de atletas, chamadas em quadra, mensalidades e desenvolvimento técnico.
           </p>
         </div>
@@ -47,16 +47,16 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-2.5 flex-wrap relative z-10">
           <Link
             href="/alunos/novo"
-            className="px-4 py-2.5 bg-white hover:bg-slate-100 text-emerald-900 rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-white hover:bg-slate-100 text-[#0D4A1C] rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4 text-emerald-700" />
+            <PlusCircle className="w-4 h-4 text-[#1A6B2E]" />
             Nova Matrícula
           </Link>
           <Link
             href="/chamada"
-            className="px-4 py-2.5 bg-emerald-900/60 hover:bg-emerald-900/80 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-[#0D4A1C]/80 hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer"
           >
-            <Clock className="w-4 h-4 text-emerald-300" />
+            <Clock className="w-4 h-4 text-[#C8E6C9]" />
             Fazer Chamada
           </Link>
         </div>
@@ -65,10 +65,10 @@ export default async function DashboardPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Alunos */}
-        <div className="card-light p-5 space-y-3 hover:border-emerald-300 transition-all">
+        <div className="card-light p-5 space-y-3 hover:border-[#1A6B2E]/50 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Atletas Ativos</span>
-            <div className="w-9 h-9 rounded-[6px] bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
+            <div className="w-9 h-9 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/20 flex items-center justify-center text-[#1A6B2E]">
               <Users className="w-4 h-4" />
             </div>
           </div>
@@ -76,7 +76,7 @@ export default async function DashboardPage() {
             <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
               {data.activeStudents} <span className="text-sm font-sans text-slate-400 font-bold">/ {data.totalStudents} total</span>
             </div>
-            <p className="text-[11px] text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+            <p className="text-[11px] text-[#1A6B2E] font-semibold mt-1 flex items-center gap-1">
               <Flame className="w-3.5 h-3.5" /> 8 categorias em atividade
             </p>
           </div>
@@ -86,7 +86,7 @@ export default async function DashboardPage() {
         <div className="card-light p-5 space-y-3 hover:border-blue-300 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Mensalidades do Mês</span>
-            <div className="w-9 h-9 rounded-[6px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
+            <div className="w-9 h-9 rounded-[4px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
@@ -101,7 +101,7 @@ export default async function DashboardPage() {
           {/* Progress bar */}
           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-emerald-600 rounded-full transition-all"
+              className="h-full bg-[#1A6B2E] rounded-full transition-all"
               style={{ width: `${Math.min(collectionRate, 100)}%` }}
             />
           </div>
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
         <div className="card-light p-5 space-y-3 hover:border-amber-300 transition-all border-amber-200 bg-amber-50/20">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Em Atraso</span>
-            <div className="w-9 h-9 rounded-[6px] bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+            <div className="w-9 h-9 rounded-[4px] bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
         <div className="card-light p-5 space-y-3 hover:border-purple-300 transition-all">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Aulas Experimentais</span>
-            <div className="w-9 h-9 rounded-[6px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
+            <div className="w-9 h-9 rounded-[4px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
@@ -171,7 +171,7 @@ export default async function DashboardPage() {
             </div>
             <Link
               href="/chamada"
-              className="text-xs font-bold uppercase tracking-wider text-emerald-700 hover:underline flex items-center gap-1"
+              className="text-xs font-bold uppercase tracking-wider text-[#1A6B2E] hover:underline flex items-center gap-1"
             >
               Ver Todas <ChevronRight className="w-3.5 h-3.5" />
             </Link>
@@ -187,7 +187,7 @@ export default async function DashboardPage() {
               <div className="pt-2">
                 <Link
                   href="/turmas"
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-xs font-bold uppercase tracking-wider text-white rounded-[6px] inline-block shadow-xs"
+                  className="px-4 py-2 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-xs font-bold uppercase tracking-wider text-white rounded-[4px] inline-block shadow-xs"
                 >
                   Gerenciar Grade de Turmas
                 </Link>
@@ -198,12 +198,12 @@ export default async function DashboardPage() {
               {data.classesToday.map((cls) => (
                 <div
                   key={cls.id}
-                  className="p-4 rounded-[6px] bg-slate-50 border border-slate-200 flex items-center justify-between gap-4 hover:border-emerald-500 transition-all"
+                  className="p-4 rounded-[4px] bg-slate-50 border border-slate-200 flex items-center justify-between gap-4 hover:border-[#1A6B2E] transition-all"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 text-sm">{cls.name}</span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#1A6B2E]/10 text-[#0D4A1C] border border-[#1A6B2E]/20">
                         {cls.category?.name || 'Geral'}
                       </span>
                     </div>
@@ -218,7 +218,7 @@ export default async function DashboardPage() {
 
                   <Link
                     href={`/chamada?classId=${cls.id}`}
-                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider shrink-0 shadow-xs cursor-pointer"
+                    className="px-3.5 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider shrink-0 shadow-xs cursor-pointer"
                   >
                     Fazer Chamada
                   </Link>
@@ -246,7 +246,7 @@ export default async function DashboardPage() {
             ) : (
               <div className="space-y-2.5">
                 {data.trialClassesPending.map((tc) => (
-                  <div key={tc.id} className="p-3 bg-slate-50 rounded-[6px] border border-slate-200 space-y-1 text-xs">
+                  <div key={tc.id} className="p-3 bg-slate-50 rounded-[4px] border border-slate-200 space-y-1 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-slate-800">{tc.student_name} ({tc.student_age || '?'} anos)</span>
                       <span className="text-[10px] text-purple-700 font-mono font-bold">
@@ -270,21 +270,21 @@ export default async function DashboardPage() {
             <div className="grid grid-cols-1 gap-2">
               <Link
                 href="/alunos/novo"
-                className="p-3 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200 rounded-[6px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
+                className="p-3 bg-slate-50 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] border border-slate-200 rounded-[4px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
               >
                 <span>➕ Matricular Novo Atleta</span>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 href="/financeiro"
-                className="p-3 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200 rounded-[6px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
+                className="p-3 bg-slate-50 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] border border-slate-200 rounded-[4px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
               >
                 <span>💬 Cobrar Mensalidades no WhatsApp</span>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 href="/avaliacoes"
-                className="p-3 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200 rounded-[6px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
+                className="p-3 bg-slate-50 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] border border-slate-200 rounded-[4px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
               >
                 <span>⭐ Emitir Boletim / Scout do Atleta</span>
                 <ChevronRight className="w-4 h-4 text-slate-400" />

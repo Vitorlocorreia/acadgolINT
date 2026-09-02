@@ -18,7 +18,7 @@ interface Props {
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
   scheduled: { label: 'Agendada', color: 'bg-purple-50 text-purple-700 border-purple-200' },
   attended: { label: 'Compareceu', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  enrolled: { label: 'Matriculado!', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  enrolled: { label: 'Matriculado!', color: 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20' },
   missed: { label: 'Faltou', color: 'bg-red-50 text-red-700 border-red-200' },
 }
 
@@ -42,9 +42,9 @@ export function TrialClient({ trials }: Props) {
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         <button
           onClick={() => setSelectedFilter('all')}
-          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
             selectedFilter === 'all'
-              ? 'bg-emerald-600 text-white border-emerald-600'
+              ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -52,7 +52,7 @@ export function TrialClient({ trials }: Props) {
         </button>
         <button
           onClick={() => setSelectedFilter('scheduled')}
-          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
             selectedFilter === 'scheduled'
               ? 'bg-purple-600 text-white border-purple-600'
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
@@ -62,7 +62,7 @@ export function TrialClient({ trials }: Props) {
         </button>
         <button
           onClick={() => setSelectedFilter('attended')}
-          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
             selectedFilter === 'attended'
               ? 'bg-blue-600 text-white border-blue-600'
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
@@ -72,9 +72,9 @@ export function TrialClient({ trials }: Props) {
         </button>
         <button
           onClick={() => setSelectedFilter('enrolled')}
-          className={`px-3 py-1.5 rounded text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
+          className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all cursor-pointer ${
             selectedFilter === 'enrolled'
-              ? 'bg-emerald-600 text-white border-emerald-600'
+              ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
               : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
           }`}
         >
@@ -99,7 +99,7 @@ export function TrialClient({ trials }: Props) {
             return (
               <div
                 key={trial.id}
-                className="card-light p-4 space-y-3 flex flex-col justify-between hover:border-emerald-400 transition-all shadow-xs"
+                className="card-light p-4 space-y-3 flex flex-col justify-between hover:border-[#1A6B2E]/50 transition-all shadow-xs"
               >
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
@@ -137,7 +137,7 @@ export function TrialClient({ trials }: Props) {
                     href={`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(whatsappMsg)}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
+                    className="px-3 py-1.5 bg-[#1A6B2E]/10 hover:bg-[#1A6B2E]/20 text-[#0D4A1C] border border-[#1A6B2E]/30 rounded text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
                   >
                     <Send className="w-3 h-3" /> WhatsApp
                   </a>
@@ -155,7 +155,7 @@ export function TrialClient({ trials }: Props) {
                     {trial.status === 'attended' && (
                       <Link
                         href="/alunos/novo"
-                        className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer shadow-xs"
+                        className="px-2.5 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer shadow-xs"
                       >
                         <UserPlus className="w-3 h-3" /> Matricular
                       </Link>

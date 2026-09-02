@@ -49,17 +49,17 @@ export default async function AlunoProfilePage({ params }: Props) {
       <div className="flex items-center justify-between">
         <Link
           href="/alunos"
-          className="px-3 py-1.5 rounded-[6px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider shadow-2xs"
+          className="px-3 py-1.5 rounded-[4px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider shadow-2xs"
         >
           <ChevronLeft className="w-4 h-4" /> Voltar para a lista
         </Link>
       </div>
 
       {/* Hero / Carteirinha do Atleta */}
-      <div className="card-light p-6 relative overflow-hidden bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-900 border border-emerald-700 text-white shadow-sm">
+      <div className="card-light p-6 relative overflow-hidden bg-gradient-to-r from-[#0D4A1C] via-[#1A6B2E] to-[#0D4A1C] border border-[#0D4A1C] text-white shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-5">
-            <div className="w-20 h-20 rounded-[8px] bg-white text-emerald-900 border-2 border-white/60 flex items-center justify-center font-bebas text-4xl shadow-md shrink-0">
+            <div className="w-20 h-20 rounded-[6px] bg-white text-[#0D4A1C] border-2 border-white/60 flex items-center justify-center font-bebas text-4xl shadow-md shrink-0">
               {student.name.charAt(0)}
             </div>
 
@@ -77,14 +77,14 @@ export default async function AlunoProfilePage({ params }: Props) {
                 </span>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-emerald-100 flex-wrap font-medium">
+              <div className="flex items-center gap-3 text-xs text-[#C8E6C9] flex-wrap font-medium">
                 <span className="text-white font-bold">{age} anos ({student.birth_date?.split('-').reverse().join('/')})</span>
                 <span>•</span>
-                <span className="text-emerald-200 font-bold">{student.preferred_position}</span>
+                <span className="text-[#C8E6C9] font-bold">{student.preferred_position}</span>
                 <span>•</span>
                 <span>Pé: {student.dominant_foot}</span>
                 <span>•</span>
-                <span className="font-mono bg-emerald-950/60 px-2 py-0.5 rounded border border-white/20 text-white">
+                <span className="font-mono bg-[#0D4A1C]/80 px-2 py-0.5 rounded border border-white/20 text-white">
                   Uniforme: Tam {student.uniform_size || '10'}
                 </span>
               </div>
@@ -93,13 +93,13 @@ export default async function AlunoProfilePage({ params }: Props) {
 
           {/* Turma Atual */}
           {enrollment?.class && (
-            <div className="p-3 bg-white/10 rounded-[6px] border border-white/20 text-xs space-y-1 self-stretch sm:self-auto sm:min-w-[220px] backdrop-blur-xs">
-              <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-200 block">
+            <div className="p-3 bg-white/10 rounded-[4px] border border-white/20 text-xs space-y-1 self-stretch sm:self-auto sm:min-w-[220px] backdrop-blur-xs">
+              <span className="text-[10px] uppercase font-bold tracking-widest text-[#C8E6C9] block">
                 Turma Vinculada
               </span>
               <span className="font-bold text-white block">{enrollment.class.name}</span>
               <span className="text-emerald-100 text-[11px] block">📍 {enrollment.class.unit?.name}</span>
-              <span className="text-emerald-200 text-[10px] font-mono block">
+              <span className="text-[#C8E6C9] text-[10px] font-mono block">
                 Prof: {enrollment.class.coach?.name || 'Professor'}
               </span>
             </div>
@@ -130,7 +130,7 @@ export default async function AlunoProfilePage({ params }: Props) {
                   href={`https://wa.me/55${guardian.phone.replace(/\D/g, '')}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="font-bold text-emerald-700 hover:underline flex items-center gap-1 font-mono"
+                  className="font-bold text-[#1A6B2E] hover:underline flex items-center gap-1 font-mono"
                 >
                   <Phone className="w-3 h-3" /> {guardian.phone}
                 </a>
@@ -184,7 +184,7 @@ export default async function AlunoProfilePage({ params }: Props) {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-slate-500 font-medium">Uso de Imagem (LGPD)</span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#C8E6C9] text-[#0D4A1C] border border-[#1A6B2E]/20">
                   {medical.image_use_authorized ? '✓ Autorizado' : 'Não'}
                 </span>
               </div>
@@ -198,7 +198,7 @@ export default async function AlunoProfilePage({ params }: Props) {
         <div className="card-light p-5 space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-emerald-600" />
+              <DollarSign className="w-4 h-4 text-[#1A6B2E]" />
               <h3 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
                 Mensalidades & Pagamentos
               </h3>
@@ -237,7 +237,7 @@ export default async function AlunoProfilePage({ params }: Props) {
                         <td className="px-4 py-3 text-center">
                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                             isPaid
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              ? 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20'
                               : 'bg-amber-50 text-amber-700 border-amber-200'
                           }`}>
                             {isPaid ? 'Pago' : 'Pendente'}
@@ -251,7 +251,7 @@ export default async function AlunoProfilePage({ params }: Props) {
                               )}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-[11px] uppercase tracking-wider inline-flex items-center gap-1 shadow-2xs"
+                              className="px-3 py-1 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded font-bold text-[11px] uppercase tracking-wider inline-flex items-center gap-1 shadow-2xs"
                             >
                               <Send className="w-3 h-3" /> Cobrar no WhatsApp
                             </a>

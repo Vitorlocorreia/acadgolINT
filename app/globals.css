@@ -6,20 +6,23 @@
     --bg-card: #ffffff;
     --bg-subtle: #f1f5f9;
     --border-color: #e2e8f0;
-    --brand: #059669;
-    --brand-dark: #065f46;
-    --brand-hover: #047857;
-    --brand-subtle: #ecfdf5;
-    --brand-ring: rgba(5, 150, 105, 0.3);
-    --text-primary: #0f172a;
-    --text-secondary: #475569;
-    --text-muted: #64748b;
+    
+    /* Verde Oficial Academia do Gol (#1A6B2E) */
+    --brand: #1A6B2E;
+    --brand-dark: #0D4A1C;
+    --brand-light: #C8E6C9;
+    --brand-subtle: rgba(26, 107, 46, 0.08);
+    --brand-ring: rgba(26, 107, 46, 0.25);
+    
+    --text-primary: #1C1C1C;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
   }
 
   body {
     background-color: var(--bg-main);
     color: var(--text-primary);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 }
@@ -28,7 +31,7 @@
   font-family: 'Bebas Neue', 'Arial Black', Impact, sans-serif;
 }
 
-/* Custom scrollbars */
+/* Scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -51,7 +54,7 @@
 .card-light {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
 }
 
@@ -59,19 +62,42 @@
   width: 100%;
   background-color: #ffffff;
   border: 1px solid #cbd5e1;
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 0.625rem 0.875rem;
-  color: #0f172a;
+  color: #1C1C1C;
   font-size: 0.875rem;
   outline: none;
   transition: all 0.15s ease-in-out;
 }
 
 .input-escolinha:focus {
-  border-color: #059669;
-  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15);
+  border-color: #1A6B2E;
+  box-shadow: 0 0 0 2px rgba(26, 107, 46, 0.2);
 }
 
 .input-escolinha::placeholder {
-  color: #94a3b8;
+  color: #9ca3af;
+}
+
+/* Cores da Marca Oficiais */
+.bg-brand {
+  background-color: #1A6B2E;
+}
+.bg-brand-dark {
+  background-color: #0D4A1C;
+}
+.bg-brand-subtle {
+  background-color: rgba(26, 107, 46, 0.08);
+}
+.text-brand {
+  color: #1A6B2E;
+}
+.text-brand-dark {
+  color: #0D4A1C;
+}
+.border-brand {
+  border-color: #1A6B2E;
+}
+.border-brand-subtle {
+  border-color: rgba(26, 107, 46, 0.2);
 }

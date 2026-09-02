@@ -18,7 +18,7 @@ export default async function FinanceiroPage({ searchParams }: Props) {
       {/* Header */}
       <div>
         <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-          <DollarSign className="w-8 h-8 text-emerald-600" />
+          <DollarSign className="w-8 h-8 text-[#1A6B2E]" />
           Financeiro & Mensalidades
         </h1>
         <p className="text-xs text-slate-500 mt-1">
