@@ -45,14 +45,38 @@ export default async function AlunoProfilePage({ params }: Props) {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
-      {/* Header com Voltar */}
-      <div className="flex items-center justify-between">
+      {/* Header com Voltar e Link do Portal */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <Link
           href="/alunos"
-          className="px-3 py-1.5 rounded-[4px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider shadow-2xs"
+          className="px-3 py-1.5 rounded-[4px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider shadow-2xs self-start"
         >
           <ChevronLeft className="w-4 h-4" /> Voltar para a lista
         </Link>
+
+        {student.portal_token && (
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/portal/${student.portal_token}`}
+              target="_blank"
+              className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-[#1A6B2E] border border-[#1A6B2E]/30 rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-2xs"
+            >
+              📲 Ver Portal do Responsável
+            </Link>
+            {guardian?.phone && (
+              <a
+                href={`https://wa.me/55${guardian.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
+                  `Olá ${guardian.name}! Segue o link de acesso exclusivo ao Portal do Atleta ${student.name} na Academia do Gol: http://localhost:3000/portal/${student.portal_token}`
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3.5 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-xs"
+              >
+                <Send className="w-3.5 h-3.5" /> Enviar Acesso no WhatsApp
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Hero / Carteirinha do Atleta */}

@@ -75,6 +75,9 @@ export async function createStudentEnrollmentAction(formData: FormData) {
   const supabase = createAdminClient()
 
   // 1. Dados do Atleta
+  const uniformSize = String(formData.get('uniform_size') || '10')
+  const signatureUrl = formData.get('signature_url') ? String(formData.get('signature_url')) : null
+
   const studentData = {
     name: String(formData.get('name')),
     birth_date: String(formData.get('birth_date')),
@@ -82,7 +85,8 @@ export async function createStudentEnrollmentAction(formData: FormData) {
     rg: formData.get('rg') ? String(formData.get('rg')) : null,
     preferred_position: String(formData.get('preferred_position') || 'Meia'),
     dominant_foot: String(formData.get('dominant_foot') || 'Destro'),
-    uniform_size: String(formData.get('uniform_size') || '10'),
+    uniform_size: uniformSize,
+    signature_url: signatureUrl,
     status: 'active',
   }
 
@@ -94,6 +98,20 @@ export async function createStudentEnrollmentAction(formData: FormData) {
 
   if (studentError || !student) {
     throw new Error('Erro ao cadastrar aluno: ' + (studentError?.message || 'Falha no banco.'))
+  }
+
+  // Dá baixa automática no estoque de uniformes para o tamanho escolhido
+  const { data: uniformItem } = await supabase
+    .from('uniform_inventory')
+    .select('id, quantity')
+    .eq('size', uniformSize)
+    .single()
+
+  if (uniformItem && uniformItem.quantity > 0) {
+    await supabase
+      .from('uniform_inventory')
+      .update({ quantity: uniformItem.quantity - 1 })
+      .eq('id', uniformItem.id)
   }
 
   const studentId = student.id

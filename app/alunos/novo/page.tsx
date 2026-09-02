@@ -8,6 +8,7 @@ import {
   CheckCircle2,
 } from 'lucide-react'
 import { getFormDataForEnrollment, createStudentEnrollmentAction } from '../actions'
+import { SignaturePad } from '@/components/signature-pad'
 
 export default async function NovoAlunoPage() {
   const { units, categories, plans, classes, coaches } = await getFormDataForEnrollment()
@@ -396,6 +397,30 @@ export default async function NovoAlunoPage() {
           </div>
         </div>
 
+        {/* 5. CONTRATO & ASSINATURA DIGITAL */}
+        <div className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div className="w-8 h-8 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/20 flex items-center justify-center text-[#1A6B2E]">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
+                5. Termo de Adesão & Assinatura Digital
+              </h2>
+              <p className="text-[11px] text-slate-500">O responsável pode assinar com o dedo no celular ou tablet</p>
+            </div>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded border border-slate-200 text-xs text-slate-600 space-y-1">
+            <p className="font-bold text-slate-800">Declaração de Matrícula na Academia do Gol:</p>
+            <p>
+              Declaro que as informações prestadas são verdadeiras e estou ciente das normas da escolinha, horários de treino e plano de mensalidades contratado. Autorizo o atendimento de primeiros socorros em caso de emergência médica durante as atividades.
+            </p>
+          </div>
+
+          <SignaturePad name="signature_url" />
+        </div>
+
         {/* Botões de Ação */}
         <div className="flex items-center justify-end gap-3 pt-4">
           <Link
@@ -409,7 +434,7 @@ export default async function NovoAlunoPage() {
             className="px-8 py-3 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
-            Concluir Matrícula do Atleta
+            Concluir Matrícula & Assinar
           </button>
         </div>
       </form>

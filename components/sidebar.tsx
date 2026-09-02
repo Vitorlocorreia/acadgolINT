@@ -14,6 +14,8 @@ import {
   ShieldCheck,
   Menu,
   X,
+  Trophy,
+  Shirt,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -39,6 +41,18 @@ const navItems = [
     icon: CheckSquare,
     badge: 'Campo',
     badgeColor: 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20',
+  },
+  {
+    href: '/jogos',
+    label: 'Jogos & Convocações',
+    icon: Trophy,
+    badge: 'Jogos',
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+  },
+  {
+    href: '/uniformes',
+    label: 'Estoque de Uniformes',
+    icon: Shirt,
   },
   {
     href: '/financeiro',
@@ -136,7 +150,7 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center justify-between px-3.5 py-2.5 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
+                className={`flex items-center justify-between px-3.5 py-2 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all duration-150 ${
                   isActive
                     ? 'bg-[#1A6B2E] text-white shadow-xs'
                     : 'text-slate-600 hover:text-[#0D4A1C] hover:bg-[#1A6B2E]/8 border border-transparent'

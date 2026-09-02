@@ -11,6 +11,8 @@ import {
   Loader2,
   Check,
   Calendar,
+  Zap,
+  Smartphone,
 } from 'lucide-react'
 import { markInvoiceAsPaidAction, generateMonthlyInvoicesAction } from './actions'
 
@@ -39,6 +41,7 @@ export function FinanceiroClient({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [showReguaModal, setShowReguaModal] = useState(false)
 
   const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     router.push(`/financeiro?month=${e.target.value}&status=${currentStatus}`)
@@ -75,11 +78,35 @@ export function FinanceiroClient({
     })
   }
 
+  // Simulação de Webhook do PIX
+  const handleSimulateWebhook = async (invoiceId: string) => {
+    setFeedback(null)
+    startTransition(async () => {
+      try {
+        const res = await fetch('/api/webhooks/pix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ invoice_id: invoiceId, amount: 180.00 }),
+        })
+        const data = await res.json()
+        if (data.success) {
+          setFeedback({ type: 'success', message: '⚡ Webhook PIX recebido: Baixa instantânea confirmada no sistema!' })
+          router.refresh()
+        } else {
+          setFeedback({ type: 'error', message: 'Falha no webhook: ' + data.error })
+        }
+      } catch (err: any) {
+        setFeedback({ type: 'error', message: 'Erro na chamada do webhook.' })
+      }
+    })
+  }
+
   const collectionPct = stats.total > 0 ? (stats.collected / stats.total) * 100 : 0
+  const pendingInvoices = invoices.filter((i) => i.status === 'pending' || i.status === 'overdue')
 
   return (
     <div className="space-y-6">
-      {/* Barra Superior: Seletor de Mês + Gerar Faturas */}
+      {/* Barra Superior: Seletor de Mês + Régua WhatsApp + Gerar Faturas */}
       <div className="card-light p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-[4px] px-3 py-2">
@@ -94,14 +121,26 @@ export function FinanceiroClient({
           </div>
         </div>
 
-        <button
-          onClick={handleGenerateInvoices}
-          disabled={isPending}
-          className="px-4 py-2.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
-        >
-          {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5 text-white" />}
-          Gerar Mensalidades do Mês
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          {pendingInvoices.length > 0 && (
+            <button
+              onClick={() => setShowReguaModal(true)}
+              className="px-3.5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-[#0D4A1C] border border-[#1A6B2E]/30 rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+            >
+              <Smartphone className="w-4 h-4 text-[#1A6B2E]" />
+              Régua WhatsApp ({pendingInvoices.length})
+            </button>
+          )}
+
+          <button
+            onClick={handleGenerateInvoices}
+            disabled={isPending}
+            className="px-4 py-2.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
+          >
+            {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PlusCircle className="w-3.5 h-3.5 text-white" />}
+            Gerar Mensalidades do Mês
+          </button>
+        </div>
       </div>
 
       {feedback && (
@@ -203,7 +242,7 @@ export function FinanceiroClient({
                   const guardian = Array.isArray(inv.student?.guardian) ? inv.student.guardian[0] : inv.student?.guardian
                   const guardianPhone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
 
-                  const whatsappMessage = `Olá ${guardian?.name || 'Responsável'}, tudo bem? Aqui é da Academia do Gol! Segue a mensalidade do atleta *${inv.student?.name}* referente ao mês *${inv.reference_month}* no valor de *${fmt(inv.amount)}* com vencimento em *${inv.due_date?.split('-').reverse().join('/')}*.\n\nChave PIX:\n${inv.pix_code || 'pix.academiadogol.com.br'}\n\nQualquer dúvida estamos à disposição!`
+                  const whatsappMessage = `Olá ${guardian?.name || 'Responsável'}, tudo bem? Aqui é da Academia do Gol! Segue a mensalidade do atleta *${inv.student?.name}* referente ao mês *${inv.reference_month}* no valor de *${fmt(inv.amount)}* com vencimento em *${inv.due_date?.split('-').reverse().join('/')}*.\n\nChave PIX:\n${inv.pix_code || 'pix.academiadogol.com.br'}\n\nVocê também pode acessar o Portal do Atleta para acompanhar frequência e boletim: http://localhost:3000/portal/${inv.student?.portal_token || ''}\n\nObrigado!`
 
                   return (
                     <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
@@ -256,14 +295,25 @@ export function FinanceiroClient({
                           )}
 
                           {!isPaid ? (
-                            <button
-                              type="button"
-                              onClick={() => handleMarkPaid(inv.id)}
-                              disabled={isPending}
-                              className="px-3 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white font-bold text-[11px] uppercase tracking-wider rounded inline-flex items-center gap-1 transition-all cursor-pointer shadow-xs"
-                            >
-                              <Check className="w-3 h-3" /> Dar Baixa
-                            </button>
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleMarkPaid(inv.id)}
+                                disabled={isPending}
+                                className="px-3 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white font-bold text-[11px] uppercase tracking-wider rounded inline-flex items-center gap-1 transition-all cursor-pointer shadow-xs"
+                              >
+                                <Check className="w-3 h-3" /> Dar Baixa
+                              </button>
+                              <button
+                                type="button"
+                                title="Simular baixa automática via PIX Webhook"
+                                onClick={() => handleSimulateWebhook(inv.id)}
+                                disabled={isPending}
+                                className="p-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded transition-all cursor-pointer"
+                              >
+                                <Zap className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           ) : (
                             <span className="text-[11px] text-slate-500 font-mono">
                               Pago via {inv.payment_method || 'PIX'}
@@ -276,6 +326,72 @@ export function FinanceiroClient({
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal da Régua de WhatsApp em Lote */}
+      {showReguaModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-[8px] max-w-2xl w-full p-6 space-y-4 shadow-xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-[#1A6B2E]" />
+                  Régua de Cobrança WhatsApp em 1-Clique
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  Mensagens automáticas prontas para envio aos responsáveis pendentes.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowReguaModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {pendingInvoices.map((inv) => {
+                const guardian = Array.isArray(inv.student?.guardian) ? inv.student.guardian[0] : inv.student?.guardian
+                const guardianPhone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
+                const msg = `Olá ${guardian?.name || 'Responsável'}, tudo bem? Aqui é da Academia do Gol! Segue o lembrete da mensalidade do atleta *${inv.student?.name}* referente ao mês *${inv.reference_month}* no valor de *${fmt(inv.amount)}* com vencimento em *${inv.due_date?.split('-').reverse().join('/')}*.\n\nChave PIX:\n${inv.pix_code || 'pix.academiadogol.com.br'}\n\nAcesse o Portal do Atleta: http://localhost:3000/portal/${inv.student?.portal_token || ''}\n\nObrigado!`
+
+                return (
+                  <div key={inv.id} className="p-3 bg-slate-50 rounded border border-slate-200 flex items-center justify-between gap-3 text-xs">
+                    <div>
+                      <div className="font-bold text-slate-900">{inv.student?.name} (Resp: {guardian?.name})</div>
+                      <div className="text-[11px] text-slate-500">
+                        {fmt(inv.amount)} • Venc: {inv.due_date?.split('-').reverse().join('/')}
+                      </div>
+                    </div>
+
+                    {guardianPhone ? (
+                      <a
+                        href={`https://wa.me/55${guardianPhone}?text=${encodeURIComponent(msg)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded font-bold text-xs uppercase tracking-wider inline-flex items-center gap-1 shrink-0"
+                      >
+                        <Send className="w-3.5 h-3.5" /> Disparar
+                      </a>
+                    ) : (
+                      <span className="text-[11px] text-slate-400 italic">Sem WhatsApp</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setShowReguaModal(false)}
+                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold uppercase tracking-wider"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}
