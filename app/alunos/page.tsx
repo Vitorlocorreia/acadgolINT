@@ -142,18 +142,20 @@ export default async function AlunosPage({ searchParams }: Props) {
                 {students.map((st: any) => {
                   const age = calculateAge(st.birth_date)
                   const enrollment = Array.isArray(st.enrollment) ? st.enrollment[0] : st.enrollment
+                  const guardian = Array.isArray(st.guardian) ? st.guardian[0] : st.guardian
+                  const guardianPhone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
 
                   return (
-                    <tr key={st.id} className="hover:bg-slate-50/80 transition-colors">
+                    <tr key={st.id} className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors">
                       {/* Atleta */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/30 flex items-center justify-center font-bold text-[#1A6B2E] text-sm shrink-0">
+                          <div className="w-9 h-9 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/30 flex items-center justify-center font-bold text-[#1A6B2E] dark:text-emerald-400 text-sm shrink-0">
                             {st.name.charAt(0)}
                           </div>
                           <div>
-                            <div className="font-bold text-slate-900 text-sm">{st.name}</div>
-                            <div className="text-[10px] text-slate-500 font-mono">
+                            <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">{st.name}</div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
                               Nasc: {st.birth_date?.split('-').reverse().join('/')}
                             </div>
                           </div>
@@ -162,8 +164,8 @@ export default async function AlunosPage({ searchParams }: Props) {
 
                       {/* Idade / Posição */}
                       <td className="px-5 py-4">
-                        <div className="font-bold text-slate-800">{age} anos</div>
-                        <div className="text-[10px] text-[#1A6B2E] font-semibold">
+                        <div className="font-bold text-slate-800 dark:text-slate-200">{age} anos</div>
+                        <div className="text-[10px] text-[#1A6B2E] dark:text-emerald-400 font-semibold">
                           {st.preferred_position} • {st.dominant_foot}
                         </div>
                       </td>
@@ -172,8 +174,8 @@ export default async function AlunosPage({ searchParams }: Props) {
                       <td className="px-5 py-4">
                         {enrollment?.class ? (
                           <div className="space-y-0.5">
-                            <span className="font-bold text-slate-800 block">{enrollment.class.name}</span>
-                            <span className="text-[10px] text-slate-500 block">
+                            <span className="font-bold text-slate-800 dark:text-slate-200 block">{enrollment.class.name}</span>
+                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
                               📍 {enrollment.class.unit?.name || 'Unidade'}
                             </span>
                           </div>
@@ -184,17 +186,21 @@ export default async function AlunosPage({ searchParams }: Props) {
 
                       {/* Responsável */}
                       <td className="px-5 py-4">
-                        {st.guardian ? (
+                        {guardian ? (
                           <div>
-                            <span className="font-bold text-slate-800 block">{st.guardian.name}</span>
-                            <a
-                              href={`https://wa.me/55${st.guardian.phone.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[11px] text-[#1A6B2E] font-semibold hover:underline flex items-center gap-1 font-mono"
-                            >
-                              <Phone className="w-3 h-3" /> {st.guardian.phone}
-                            </a>
+                            <span className="font-bold text-slate-800 dark:text-slate-200 block">{guardian.name}</span>
+                            {guardian.phone ? (
+                              <a
+                                href={`https://wa.me/55${guardianPhone}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[11px] text-[#1A6B2E] dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 font-mono"
+                              >
+                                <Phone className="w-3 h-3" /> {guardian.phone}
+                              </a>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">Sem telefone</span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-slate-400">—</span>

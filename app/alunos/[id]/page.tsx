@@ -150,14 +150,18 @@ export default async function AlunoProfilePage({ params }: Props) {
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-2">
                 <span className="text-slate-500 font-medium">WhatsApp</span>
-                <a
-                  href={`https://wa.me/55${guardian.phone.replace(/\D/g, '')}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-bold text-[#1A6B2E] hover:underline flex items-center gap-1 font-mono"
-                >
-                  <Phone className="w-3 h-3" /> {guardian.phone}
-                </a>
+                {guardian.phone ? (
+                  <a
+                    href={`https://wa.me/55${guardian.phone.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-[#1A6B2E] hover:underline flex items-center gap-1 font-mono"
+                  >
+                    <Phone className="w-3 h-3" /> {guardian.phone}
+                  </a>
+                ) : (
+                  <span className="text-slate-400 italic">Não informado</span>
+                )}
               </div>
               <div className="flex justify-between border-b border-slate-100 pb-2">
                 <span className="text-slate-500 font-medium">CPF</span>
