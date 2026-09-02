@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Sidebar } from '@/components/sidebar'
+import { ThemeProvider } from '@/components/theme-provider'
+import { AppShell } from '@/components/app-shell'
 
 export const metadata: Metadata = {
   title: 'Academia do Gol | Gestão da Escolinha de Futebol',
-  description: 'Sistema completo de administração interna, turmas, chamadas, mensalidades e scout de atletas da Academia do Gol.',
+  description: 'Sistema completo de administração interna, turmas, chamadas, jogos, estoque e mensalidades da Academia do Gol.',
 }
 
 export default function RootLayout({
@@ -13,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -22,11 +23,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-slate-50 text-slate-900 flex flex-col lg:flex-row antialiased">
-        <Sidebar />
-        <main className="flex-1 min-w-0 overflow-y-auto min-h-screen bg-slate-50/50">
-          {children}
-        </main>
+      <body className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] antialiased">
+        <ThemeProvider>
+          <AppShell>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   )
