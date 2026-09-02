@@ -283,10 +283,10 @@ export default async function DashboardPage() {
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
-                href="/avaliacoes"
+                href="/jogos"
                 className="p-3 bg-slate-50 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] border border-slate-200 rounded-[4px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
               >
-                <span>⭐ Emitir Boletim / Scout do Atleta</span>
+                <span>🏆 Agendar Jogo & Convocação</span>
                 <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
             </div>

@@ -60,11 +60,6 @@ const navItems = [
     icon: DollarSign,
   },
   {
-    href: '/avaliacoes',
-    label: 'Boletim do Atleta',
-    icon: Award,
-  },
-  {
     href: '/experimentais',
     label: 'Aulas Experimentais',
     icon: Target,

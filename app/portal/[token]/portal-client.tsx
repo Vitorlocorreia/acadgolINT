@@ -37,8 +37,8 @@ function calculateAge(birthDateStr: string) {
 }
 
 export function PortalClient({ data }: Props) {
-  const { student, attendance, evaluation, callups } = data
-  const [activeTab, setActiveTab] = useState<'carteirinha' | 'boletim' | 'financeiro' | 'jogos'>('carteirinha')
+  const { student, attendance, callups } = data
+  const [activeTab, setActiveTab] = useState<'carteirinha' | 'financeiro' | 'jogos'>('carteirinha')
   const [copiedPixId, setCopiedPixId] = useState<string | null>(null)
 
   const enrollment = Array.isArray(student.enrollment) ? student.enrollment[0] : student.enrollment
@@ -153,7 +153,7 @@ export function PortalClient({ data }: Props) {
         )}
 
         {/* Abas de Navegação */}
-        <div className="grid grid-cols-4 gap-1.5 p-1 bg-white border border-slate-200 rounded-[6px] shadow-2xs">
+        <div className="grid grid-cols-3 gap-1.5 p-1 bg-white border border-slate-200 rounded-[6px] shadow-2xs">
           <button
             onClick={() => setActiveTab('carteirinha')}
             className={`py-2 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
@@ -165,16 +165,6 @@ export function PortalClient({ data }: Props) {
             Frequência
           </button>
           <button
-            onClick={() => setActiveTab('boletim')}
-            className={`py-2 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              activeTab === 'boletim'
-                ? 'bg-[#1A6B2E] text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Boletim
-          </button>
-          <button
             onClick={() => setActiveTab('jogos')}
             className={`py-2 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
               activeTab === 'jogos'
@@ -182,7 +172,7 @@ export function PortalClient({ data }: Props) {
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Jogos
+            Jogos & Convocações
           </button>
           <button
             onClick={() => setActiveTab('financeiro')}
@@ -235,74 +225,6 @@ export function PortalClient({ data }: Props) {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* CONTEÚDO DA ABA 2: BOLETIM / SCOUT TÉCNICO */}
-        {activeTab === 'boletim' && (
-          <div className="space-y-4">
-            {!evaluation ? (
-              <div className="card-light py-12 text-center space-y-2">
-                <Award className="w-10 h-10 text-slate-300 mx-auto" />
-                <p className="text-sm font-bold text-slate-700">Primeiro boletim em andamento</p>
-                <p className="text-xs text-slate-500">O treinador irá emitir a avaliação ao final do ciclo de treinos.</p>
-              </div>
-            ) : (
-              <div className="card-light p-6 space-y-5">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div>
-                    <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none">
-                      Boletim de Evolução Técnica
-                    </h3>
-                    <p className="text-xs text-slate-500">{evaluation.period} • Prof. {evaluation.coach?.name || 'Treinador'}</p>
-                  </div>
-                  <div className="p-2 bg-[#C8E6C9] rounded text-center border border-[#1A6B2E]/20">
-                    <span className="font-bebas text-2xl text-[#0D4A1C] leading-none block">
-                      {(
-                        (evaluation.score_pass +
-                          evaluation.score_shooting +
-                          evaluation.score_dribble +
-                          evaluation.score_control +
-                          evaluation.score_marking +
-                          evaluation.score_speed +
-                          evaluation.score_discipline +
-                          evaluation.score_teamwork) /
-                        8
-                      ).toFixed(1)}
-                    </span>
-                    <span className="text-[9px] uppercase font-bold text-[#0D4A1C]">Média</span>
-                  </div>
-                </div>
-
-                {/* Grid de Fundamentos */}
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  {[
-                    { label: 'Passe & Visão', val: evaluation.score_pass },
-                    { label: 'Finalização & Chute', val: evaluation.score_shooting },
-                    { label: 'Drible & 1x1', val: evaluation.score_dribble },
-                    { label: 'Domínio & Controle', val: evaluation.score_control },
-                    { label: 'Marcação & Posicionamento', val: evaluation.score_marking },
-                    { label: 'Velocidade & Agilidade', val: evaluation.score_speed },
-                    { label: 'Disciplina & Conduta', val: evaluation.score_discipline },
-                    { label: 'Trabalho em Equipe', val: evaluation.score_teamwork },
-                  ].map((f) => (
-                    <div key={f.label} className="p-2.5 bg-slate-50 rounded border border-slate-200 flex justify-between items-center">
-                      <span className="text-slate-700 font-medium">{f.label}</span>
-                      <div className="flex text-amber-500 font-bold">
-                        {'★'.repeat(f.val)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Comentário do Treinador */}
-                {evaluation.coach_feedback && (
-                  <div className="p-3 bg-[#C8E6C9]/30 rounded border border-[#1A6B2E]/20 text-xs text-[#0D4A1C] italic">
-                    <strong>Parecer do Treinador:</strong> "{evaluation.coach_feedback}"
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
 
