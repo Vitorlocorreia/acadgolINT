@@ -4,9 +4,7 @@ import {
   User,
   HeartPulse,
   CalendarDays,
-  ShieldCheck,
   ChevronLeft,
-  ArrowRight,
   CheckCircle2,
 } from 'lucide-react'
 import { getFormDataForEnrollment, createStudentEnrollmentAction } from '../actions'
@@ -21,15 +19,15 @@ export default async function NovoAlunoPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/alunos"
-            className="p-2 rounded-[4px] bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all"
+            className="p-2 rounded-[6px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-2xs"
           >
             <ChevronLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="font-bebas text-3xl text-white tracking-wider leading-none">
+            <h1 className="font-bebas text-3xl text-slate-900 tracking-wider leading-none">
               Nova Matrícula de Atleta
             </h1>
-            <p className="text-xs text-zinc-400 mt-0.5">
+            <p className="text-xs text-slate-500 mt-0.5">
               Preencha os dados do aluno, responsável, ficha de saúde e turma para matricular.
             </p>
           </div>
@@ -39,23 +37,23 @@ export default async function NovoAlunoPage() {
       {/* Formulário Completo de Matrícula */}
       <form action={createStudentEnrollmentAction} className="space-y-6">
         {/* 1. DADOS DO ATLETA */}
-        <div className="card-dark p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-zinc-800 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+        <div className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div className="w-8 h-8 rounded-[6px] bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
               <User className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bebas text-xl text-white tracking-wider leading-none">
+              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
                 1. Informações do Atleta
               </h2>
-              <p className="text-[11px] text-zinc-400">Dados pessoais e de futebol do aluno</p>
+              <p className="text-[11px] text-slate-500">Dados pessoais e de futebol do aluno</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Nome Completo do Aluno <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Nome Completo do Aluno <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -67,8 +65,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Data de Nascimento <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Data de Nascimento <span className="text-red-500">*</span>
               </label>
               <input
                 type="date"
@@ -79,7 +77,7 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 CPF do Aluno (se tiver)
               </label>
               <input
@@ -91,8 +89,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Posição de Preferência <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Posição de Preferência <span className="text-red-500">*</span>
               </label>
               <select name="preferred_position" className="input-escolinha cursor-pointer">
                 <option value="Meia">Meia / Meio-Campo</option>
@@ -105,8 +103,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Pé Dominante <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Pé Dominante <span className="text-red-500">*</span>
               </label>
               <select name="dominant_foot" className="input-escolinha cursor-pointer">
                 <option value="Destro">Destro (Pé Direito)</option>
@@ -116,8 +114,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Tamanho do Uniforme (Kit) <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Tamanho do Uniforme (Kit) <span className="text-red-500">*</span>
               </label>
               <select name="uniform_size" className="input-escolinha cursor-pointer">
                 <option value="4">Tam 04 (Infantil)</option>
@@ -136,23 +134,23 @@ export default async function NovoAlunoPage() {
         </div>
 
         {/* 2. DADOS DO RESPONSÁVEL */}
-        <div className="card-dark p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-zinc-800 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+        <div className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div className="w-8 h-8 rounded-[6px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
               <Users className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bebas text-xl text-white tracking-wider leading-none">
+              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
                 2. Dados do Pai / Responsável Legal
               </h2>
-              <p className="text-[11px] text-zinc-400">Contato principal para cobranças e avisos</p>
+              <p className="text-[11px] text-slate-500">Contato principal para cobranças e avisos</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Nome do Responsável <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Nome do Responsável <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -164,8 +162,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Grau de Parentesco <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Grau de Parentesco <span className="text-red-500">*</span>
               </label>
               <select name="relationship" className="input-escolinha cursor-pointer">
                 <option value="Pai">Pai</option>
@@ -177,8 +175,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                WhatsApp / Celular <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                WhatsApp / Celular <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -190,8 +188,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                CPF do Responsável <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                CPF do Responsável <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -203,7 +201,7 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 E-mail do Responsável
               </label>
               <input
@@ -215,7 +213,7 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Endereço / Bairro
               </label>
               <input
@@ -229,22 +227,22 @@ export default async function NovoAlunoPage() {
         </div>
 
         {/* 3. FICHA MÉDICA & AUTORIZAÇÕES */}
-        <div className="card-dark p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-zinc-800 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+        <div className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div className="w-8 h-8 rounded-[6px] bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
               <HeartPulse className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bebas text-xl text-white tracking-wider leading-none">
+              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
                 3. Ficha Médica & Saúde
               </h2>
-              <p className="text-[11px] text-zinc-400">Segurança do atleta em campo e termos</p>
+              <p className="text-[11px] text-slate-500">Segurança do atleta em campo e termos</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Tipo Sanguíneo
               </label>
               <select name="blood_type" className="input-escolinha cursor-pointer">
@@ -261,7 +259,7 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Plano de Saúde (se tiver)
               </label>
               <input
@@ -273,7 +271,7 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Alergias ou Restrições Alimentares / Medicamentosas
               </label>
               <input
@@ -285,7 +283,7 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Contato de Emergência Adicional
               </label>
               <input
@@ -297,7 +295,7 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Telefone de Emergência
               </label>
               <input
@@ -309,15 +307,15 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div className="sm:col-span-2 pt-2">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex items-center gap-2.5 cursor-pointer">
                 <input
                   type="checkbox"
                   name="image_use_authorized"
                   value="true"
                   defaultChecked
-                  className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-400 bg-zinc-950 border-zinc-700"
+                  className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300"
                 />
-                <span className="text-xs text-zinc-300 font-medium">
+                <span className="text-xs text-slate-700 font-medium">
                   Autorizo o uso de imagem do atleta para fotos de treinos e jogos nas redes sociais oficiais da Academia do Gol.
                 </span>
               </label>
@@ -326,23 +324,23 @@ export default async function NovoAlunoPage() {
         </div>
 
         {/* 4. TURMA & PLANO DE MENSALIDADE */}
-        <div className="card-dark p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-zinc-800 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+        <div className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div className="w-8 h-8 rounded-[6px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
               <CalendarDays className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bebas text-xl text-white tracking-wider leading-none">
+              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
                 4. Turma de Treino & Plano de Mensalidade
               </h2>
-              <p className="text-[11px] text-zinc-400">Escolha a escala de treinos e plano contratado</p>
+              <p className="text-[11px] text-slate-500">Escolha a escala de treinos e plano contratado</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Selecione a Turma de Treino <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Selecione a Turma de Treino <span className="text-red-500">*</span>
               </label>
               <select name="class_id" required className="input-escolinha cursor-pointer">
                 {classes.length === 0 ? (
@@ -358,8 +356,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Plano de Matrícula <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Plano de Matrícula <span className="text-red-500">*</span>
               </label>
               <select name="plan_id" required className="input-escolinha cursor-pointer">
                 {plans.map((p: any) => (
@@ -371,8 +369,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Dia de Vencimento da Mensalidade <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Dia de Vencimento da Mensalidade <span className="text-red-500">*</span>
               </label>
               <select name="due_day" className="input-escolinha cursor-pointer font-mono">
                 <option value="5">Todo dia 05</option>
@@ -383,8 +381,8 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Valor da Mensalidade Acordado (R$) <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Valor da Mensalidade Acordado (R$) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -402,13 +400,13 @@ export default async function NovoAlunoPage() {
         <div className="flex items-center justify-end gap-3 pt-4">
           <Link
             href="/alunos"
-            className="px-6 py-3 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all"
+            className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-[6px] text-xs font-bold uppercase tracking-wider transition-all"
           >
             Cancelar
           </Link>
           <button
             type="submit"
-            className="px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 rounded-[4px] text-xs font-bold uppercase tracking-wider shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all cursor-pointer flex items-center gap-2"
+            className="px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider shadow-sm shadow-emerald-600/20 transition-all cursor-pointer flex items-center gap-2"
           >
             <CheckCircle2 className="w-4 h-4" />
             Concluir Matrícula do Atleta

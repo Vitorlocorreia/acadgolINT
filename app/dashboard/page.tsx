@@ -5,11 +5,8 @@ import {
   DollarSign,
   AlertTriangle,
   ArrowUpRight,
-  CheckCircle2,
   Clock,
   PlusCircle,
-  MessageSquare,
-  Award,
   Flame,
   ChevronRight,
 } from 'lucide-react'
@@ -30,20 +27,18 @@ export default async function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
       {/* Top Banner / Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-zinc-900 via-zinc-900/90 to-zinc-950 border border-zinc-800 p-6 rounded-[6px] shadow-lg relative overflow-hidden">
-        <div className="absolute right-0 top-0 translate-x-8 -translate-y-8 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
-
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-800 via-emerald-700 to-emerald-900 border border-emerald-700 p-6 rounded-[8px] shadow-sm relative overflow-hidden text-white">
         <div className="space-y-1 relative z-10">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-[2px] text-[10px] font-bold uppercase tracking-widest bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+            <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-white/20 text-white border border-white/30 backdrop-blur-xs">
               Temporada 2026
             </span>
-            <span className="text-xs text-zinc-400 font-mono">Unidades Recife & Região</span>
+            <span className="text-xs text-emerald-100 font-medium">Unidades Recife & Região Metropolitana</span>
           </div>
-          <h1 className="font-bebas text-3xl sm:text-4xl text-white tracking-wider leading-none">
+          <h1 className="font-bebas text-3xl sm:text-4xl tracking-wider leading-none">
             Painel Geral da Escolinha
           </h1>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-emerald-100/90">
             Controle de atletas, chamadas em quadra, mensalidades e desenvolvimento técnico.
           </p>
         </div>
@@ -52,16 +47,16 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-2.5 flex-wrap relative z-10">
           <Link
             href="/alunos/novo"
-            className="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-white hover:bg-slate-100 text-emerald-900 rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-4 h-4 text-emerald-700" />
             Nova Matrícula
           </Link>
           <Link
             href="/chamada"
-            className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-zinc-700 transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-emerald-900/60 hover:bg-emerald-900/80 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer"
           >
-            <Clock className="w-4 h-4 text-emerald-400" />
+            <Clock className="w-4 h-4 text-emerald-300" />
             Fazer Chamada
           </Link>
         </div>
@@ -70,91 +65,91 @@ export default async function DashboardPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Alunos */}
-        <div className="card-dark p-5 space-y-3 relative overflow-hidden group hover:border-zinc-700 transition-all">
+        <div className="card-light p-5 space-y-3 hover:border-emerald-300 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Atletas Ativos</span>
-            <div className="w-8 h-8 rounded-[4px] bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Atletas Ativos</span>
+            <div className="w-9 h-9 rounded-[6px] bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700">
               <Users className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="font-bebas text-4xl text-white leading-none tracking-wider">
-              {data.activeStudents} <span className="text-sm font-sans text-zinc-500 font-bold">/ {data.totalStudents} total</span>
+            <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
+              {data.activeStudents} <span className="text-sm font-sans text-slate-400 font-bold">/ {data.totalStudents} total</span>
             </div>
-            <p className="text-[11px] text-emerald-400 font-medium mt-1 flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5" /> 8 categorias ativas
+            <p className="text-[11px] text-emerald-700 font-semibold mt-1 flex items-center gap-1">
+              <Flame className="w-3.5 h-3.5" /> 8 categorias em atividade
             </p>
           </div>
         </div>
 
         {/* Faturamento do Mês */}
-        <div className="card-dark p-5 space-y-3 relative overflow-hidden group hover:border-zinc-700 transition-all">
+        <div className="card-light p-5 space-y-3 hover:border-blue-300 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Mensalidades do Mês</span>
-            <div className="w-8 h-8 rounded-[4px] bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Mensalidades do Mês</span>
+            <div className="w-9 h-9 rounded-[6px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="font-bebas text-4xl text-white leading-none tracking-wider">
+            <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
               {fmt(data.currentMonthRevenue.collected)}
             </div>
-            <p className="text-[11px] text-zinc-400 font-medium mt-1">
+            <p className="text-[11px] text-slate-500 font-medium mt-1">
               Previsto: {fmt(data.currentMonthRevenue.total)}
             </p>
           </div>
           {/* Progress bar */}
-          <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-emerald-500 rounded-full transition-all"
+              className="h-full bg-emerald-600 rounded-full transition-all"
               style={{ width: `${Math.min(collectionRate, 100)}%` }}
             />
           </div>
         </div>
 
         {/* Inadimplência */}
-        <div className="card-dark p-5 space-y-3 relative overflow-hidden group hover:border-zinc-700 transition-all">
+        <div className="card-light p-5 space-y-3 hover:border-amber-300 transition-all border-amber-200 bg-amber-50/20">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Em Atraso</span>
-            <div className="w-8 h-8 rounded-[4px] bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Em Atraso</span>
+            <div className="w-9 h-9 rounded-[6px] bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
               <AlertTriangle className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="font-bebas text-4xl text-amber-400 leading-none tracking-wider">
+            <div className="font-bebas text-4xl text-amber-700 leading-none tracking-wider">
               {fmt(data.currentMonthRevenue.overdue)}
             </div>
-            <p className="text-[11px] text-zinc-400 font-medium mt-1">
+            <p className="text-[11px] text-slate-500 font-medium mt-1">
               {data.currentMonthRevenue.overdueCount} mensalidade(s) pendente(s)
             </p>
           </div>
           <Link
             href="/financeiro?filter=overdue"
-            className="text-[11px] font-bold text-amber-400 hover:underline flex items-center gap-1"
+            className="text-[11px] font-bold text-amber-700 hover:underline flex items-center gap-1"
           >
             Cobrar no WhatsApp <ArrowUpRight className="w-3 h-3" />
           </Link>
         </div>
 
         {/* Aulas Experimentais */}
-        <div className="card-dark p-5 space-y-3 relative overflow-hidden group hover:border-zinc-700 transition-all">
+        <div className="card-light p-5 space-y-3 hover:border-purple-300 transition-all">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">Aulas Experimentais</span>
-            <div className="w-8 h-8 rounded-[4px] bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Aulas Experimentais</span>
+            <div className="w-9 h-9 rounded-[6px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <div className="font-bebas text-4xl text-white leading-none tracking-wider">
+            <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
               {data.trialClassesPending.length}
             </div>
-            <p className="text-[11px] text-zinc-400 font-medium mt-1">
+            <p className="text-[11px] text-slate-500 font-medium mt-1">
               Novos atletas agendados para esta semana
             </p>
           </div>
           <Link
             href="/experimentais"
-            className="text-[11px] font-bold text-purple-400 hover:underline flex items-center gap-1"
+            className="text-[11px] font-bold text-purple-700 hover:underline flex items-center gap-1"
           >
             Ver Leads <ChevronRight className="w-3 h-3" />
           </Link>
@@ -164,19 +159,19 @@ export default async function DashboardPage() {
       {/* Main Grid: Treinos de Hoje + Aulas Experimentais + Ações Rápidas */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Treinos de Hoje (Chamada na Quadra) */}
-        <div className="lg:col-span-2 card-dark p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
+        <div className="lg:col-span-2 card-light p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h2 className="font-bebas text-2xl text-white tracking-wider leading-none">
+              <h2 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none">
                 ⚽ Treinos & Turmas de Hoje
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Clique na turma para abrir a chamada digital e registrar as presenças na quadra.
               </p>
             </div>
             <Link
               href="/chamada"
-              className="text-xs font-bold uppercase tracking-wider text-emerald-400 hover:underline flex items-center gap-1"
+              className="text-xs font-bold uppercase tracking-wider text-emerald-700 hover:underline flex items-center gap-1"
             >
               Ver Todas <ChevronRight className="w-3.5 h-3.5" />
             </Link>
@@ -184,15 +179,15 @@ export default async function DashboardPage() {
 
           {data.classesToday.length === 0 ? (
             <div className="py-12 text-center space-y-2">
-              <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center mx-auto text-zinc-500">
+              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
                 <Calendar className="w-6 h-6" />
               </div>
-              <p className="text-sm font-bold text-zinc-300">Nenhum treino escalado para o dia de hoje.</p>
-              <p className="text-xs text-zinc-500">Confira a grade semanal completa na aba de turmas.</p>
+              <p className="text-sm font-bold text-slate-700">Nenhum treino escalado para o dia de hoje.</p>
+              <p className="text-xs text-slate-500">Confira a grade semanal completa na aba de turmas.</p>
               <div className="pt-2">
                 <Link
                   href="/turmas"
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-bold uppercase tracking-wider text-white rounded-[4px] inline-block"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-xs font-bold uppercase tracking-wider text-white rounded-[6px] inline-block shadow-xs"
                 >
                   Gerenciar Grade de Turmas
                 </Link>
@@ -203,19 +198,19 @@ export default async function DashboardPage() {
               {data.classesToday.map((cls) => (
                 <div
                   key={cls.id}
-                  className="p-4 rounded-[4px] bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-4 hover:border-emerald-500/40 transition-all"
+                  className="p-4 rounded-[6px] bg-slate-50 border border-slate-200 flex items-center justify-between gap-4 hover:border-emerald-500 transition-all"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-white text-sm">{cls.name}</span>
-                      <span className="px-2 py-0.5 rounded-[2px] text-[10px] font-bold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="font-bold text-slate-900 text-sm">{cls.name}</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 border border-emerald-300">
                         {cls.category?.name || 'Geral'}
                       </span>
                     </div>
-                    <div className="text-xs text-zinc-400 flex items-center gap-3">
+                    <div className="text-xs text-slate-500 flex items-center gap-3">
                       <span>📍 {cls.unit?.name}</span>
                       <span>👨‍🏫 {cls.coach?.name || 'Sem professor'}</span>
-                      <span className="font-mono text-zinc-300">
+                      <span className="font-mono text-slate-700 font-semibold">
                         ⏰ {cls.start_time?.slice(0, 5)} - {cls.end_time?.slice(0, 5)}
                       </span>
                     </div>
@@ -223,7 +218,7 @@ export default async function DashboardPage() {
 
                   <Link
                     href={`/chamada?classId=${cls.id}`}
-                    className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 rounded-[4px] text-xs font-bold uppercase tracking-wider shrink-0 cursor-pointer"
+                    className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider shrink-0 shadow-xs cursor-pointer"
                   >
                     Fazer Chamada
                   </Link>
@@ -236,29 +231,29 @@ export default async function DashboardPage() {
         {/* Card Lateral: Aulas Experimentais & Atalhos */}
         <div className="space-y-6">
           {/* Aulas Experimentais Recentes */}
-          <div className="card-dark p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
-              <h3 className="font-bebas text-xl text-white tracking-wider leading-none flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-purple-400" /> Aulas Experimentais
+          <div className="card-light p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="font-bebas text-xl text-slate-900 tracking-wider leading-none flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-purple-600" /> Aulas Experimentais
               </h3>
-              <Link href="/experimentais" className="text-xs text-purple-400 font-bold hover:underline">
+              <Link href="/experimentais" className="text-xs text-purple-700 font-bold hover:underline">
                 Ver Todas
               </Link>
             </div>
 
             {data.trialClassesPending.length === 0 ? (
-              <p className="text-xs text-zinc-500 py-4 text-center">Nenhuma aula teste agendada no momento.</p>
+              <p className="text-xs text-slate-400 py-4 text-center">Nenhuma aula teste agendada no momento.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {data.trialClassesPending.map((tc) => (
-                  <div key={tc.id} className="p-3 bg-zinc-950 rounded-[4px] border border-zinc-800/80 space-y-1 text-xs">
+                  <div key={tc.id} className="p-3 bg-slate-50 rounded-[6px] border border-slate-200 space-y-1 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-white">{tc.student_name} ({tc.student_age || '?'} anos)</span>
-                      <span className="text-[10px] text-purple-400 font-mono font-bold">
+                      <span className="font-bold text-slate-800">{tc.student_name} ({tc.student_age || '?'} anos)</span>
+                      <span className="text-[10px] text-purple-700 font-mono font-bold">
                         {tc.scheduled_date?.split('-').reverse().join('/')}
                       </span>
                     </div>
-                    <p className="text-zinc-400 text-[11px]">
+                    <p className="text-slate-500 text-[11px]">
                       Resp: {tc.guardian_name} • {tc.guardian_phone}
                     </p>
                   </div>
@@ -268,31 +263,31 @@ export default async function DashboardPage() {
           </div>
 
           {/* Atalhos Rápidos */}
-          <div className="card-dark p-6 space-y-3">
-            <h3 className="font-bebas text-xl text-white tracking-wider leading-none">
+          <div className="card-light p-6 space-y-3">
+            <h3 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
               ⚡ Gestão Rápida
             </h3>
             <div className="grid grid-cols-1 gap-2">
               <Link
                 href="/alunos/novo"
-                className="p-3 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-[4px] flex items-center justify-between text-xs font-bold text-zinc-200 transition-all"
+                className="p-3 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200 rounded-[6px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
               >
                 <span>➕ Matricular Novo Atleta</span>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 href="/financeiro"
-                className="p-3 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-[4px] flex items-center justify-between text-xs font-bold text-zinc-200 transition-all"
+                className="p-3 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200 rounded-[6px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
               >
                 <span>💬 Cobrar Mensalidades no WhatsApp</span>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
               <Link
                 href="/avaliacoes"
-                className="p-3 bg-zinc-950 hover:bg-zinc-900 border border-zinc-800 rounded-[4px] flex items-center justify-between text-xs font-bold text-zinc-200 transition-all"
+                className="p-3 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-900 border border-slate-200 rounded-[6px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
               >
                 <span>⭐ Emitir Boletim / Scout do Atleta</span>
-                <ChevronRight className="w-4 h-4 text-zinc-500" />
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               </Link>
             </div>
           </div>

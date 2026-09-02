@@ -10,11 +10,11 @@ export default async function ExperimentaisPage() {
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
       {/* Header */}
       <div>
-        <h1 className="font-bebas text-3xl sm:text-4xl text-white tracking-wider leading-none flex items-center gap-2">
-          <Target className="w-8 h-8 text-purple-400" />
+        <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
+          <Target className="w-8 h-8 text-purple-600" />
           Aulas Experimentais & Captação ({trials.length})
         </h1>
-        <p className="text-xs text-zinc-400 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Funil de novos atletas: agendamento de aula teste, confirmação via WhatsApp e conversão em matrícula.
         </p>
       </div>
@@ -26,19 +26,19 @@ export default async function ExperimentaisPage() {
         </div>
 
         {/* Formulário: Agendar Nova Aula Teste */}
-        <div className="card-dark p-6 space-y-4">
-          <div className="border-b border-zinc-800 pb-3">
-            <h3 className="font-bebas text-2xl text-white tracking-wider leading-none flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-purple-400" />
+        <div className="card-light p-6 space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
+              <PlusCircle className="w-5 h-5 text-purple-600" />
               Agendar Aula Experimental
             </h3>
-            <p className="text-xs text-zinc-400 mt-1">Cadastre o contato do lead interessado</p>
+            <p className="text-xs text-slate-500 mt-1">Cadastre o contato do lead interessado</p>
           </div>
 
           <form action={createTrialClassAction} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Nome da Criança / Aluno <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Nome da Criança / Aluno <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -50,7 +50,7 @@ export default async function ExperimentaisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Idade do Aluno
               </label>
               <input
@@ -64,8 +64,8 @@ export default async function ExperimentaisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Nome do Responsável <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Nome do Responsável <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
@@ -77,8 +77,8 @@ export default async function ExperimentaisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                WhatsApp do Responsável <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                WhatsApp do Responsável <span className="text-red-500">*</span>
               </label>
               <input
                 type="tel"
@@ -90,7 +90,7 @@ export default async function ExperimentaisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Unidade de Interesse
               </label>
               <select name="unit_id" className="input-escolinha cursor-pointer">
@@ -104,7 +104,7 @@ export default async function ExperimentaisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Categoria / Faixa Etária
               </label>
               <select name="category_id" className="input-escolinha cursor-pointer">
@@ -119,8 +119,8 @@ export default async function ExperimentaisPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                  Data Agendada <span className="text-red-400">*</span>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                  Data Agendada <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="date"
@@ -132,7 +132,7 @@ export default async function ExperimentaisPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                   Horário
                 </label>
                 <input
@@ -146,7 +146,7 @@ export default async function ExperimentaisPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider rounded-[4px] shadow-[0_0_15px_rgba(168,85,247,0.3)] transition-all cursor-pointer"
+              className="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs uppercase tracking-wider rounded-[6px] shadow-sm shadow-purple-600/20 transition-all cursor-pointer"
             >
               Agendar Aula Teste
             </button>

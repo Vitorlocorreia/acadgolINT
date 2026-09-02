@@ -17,11 +17,11 @@ export default async function FinanceiroPage({ searchParams }: Props) {
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-bebas text-3xl sm:text-4xl text-white tracking-wider leading-none flex items-center gap-2">
-          <DollarSign className="w-8 h-8 text-emerald-400" />
+        <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
+          <DollarSign className="w-8 h-8 text-emerald-600" />
           Financeiro & Mensalidades
         </h1>
-        <p className="text-xs text-zinc-400 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Controle de pagamentos, cobrança recorrente, régua de WhatsApp e baixas de caixa.
         </p>
       </div>

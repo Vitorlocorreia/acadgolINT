@@ -9,7 +9,6 @@ import {
   Save,
   Users,
   Calendar,
-  Sparkles,
   Loader2,
   Check,
 } from 'lucide-react'
@@ -89,19 +88,19 @@ export function AttendanceClient({
   return (
     <div className="space-y-6">
       {/* Seletor de Turma e Data */}
-      <div className="card-dark p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+      <div className="card-light p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-wrap">
           {/* Seletor de Turma */}
-          <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded px-3 py-2 flex-1 sm:flex-initial">
-            <Users className="w-4 h-4 text-emerald-400" />
-            <span className="text-zinc-400 text-xs font-bold uppercase">Turma:</span>
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-[6px] px-3 py-2 flex-1 sm:flex-initial">
+            <Users className="w-4 h-4 text-emerald-600" />
+            <span className="text-slate-600 text-xs font-bold uppercase">Turma:</span>
             <select
               value={selectedClassId}
               onChange={(e) => handleClassOrDateChange(e.target.value, selectedDate)}
-              className="bg-transparent text-white text-xs font-bold uppercase outline-none cursor-pointer"
+              className="bg-transparent text-slate-800 text-xs font-bold uppercase outline-none cursor-pointer"
             >
               {classes.map((cls) => (
-                <option key={cls.id} value={cls.id} className="bg-zinc-900 text-white">
+                <option key={cls.id} value={cls.id} className="bg-white text-slate-900">
                   {cls.name} ({cls.unit?.name})
                 </option>
               ))}
@@ -109,14 +108,14 @@ export function AttendanceClient({
           </div>
 
           {/* Seletor de Data */}
-          <div className="flex items-center gap-2 bg-zinc-950 border border-zinc-800 rounded px-3 py-2">
-            <Calendar className="w-4 h-4 text-purple-400" />
-            <span className="text-zinc-400 text-xs font-bold uppercase">Data:</span>
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-[6px] px-3 py-2">
+            <Calendar className="w-4 h-4 text-purple-600" />
+            <span className="text-slate-600 text-xs font-bold uppercase">Data:</span>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => handleClassOrDateChange(selectedClassId, e.target.value)}
-              className="bg-transparent text-white text-xs font-mono font-bold outline-none cursor-pointer"
+              className="bg-transparent text-slate-800 text-xs font-mono font-bold outline-none cursor-pointer"
             />
           </div>
         </div>
@@ -125,46 +124,46 @@ export function AttendanceClient({
         <button
           onClick={handleMarkAllPresent}
           type="button"
-          className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold uppercase tracking-wider rounded flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider rounded-[6px] flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-slate-200"
         >
-          <Check className="w-3.5 h-3.5 text-emerald-400" />
+          <Check className="w-3.5 h-3.5 text-emerald-600" />
           Marcar Todos Presentes
         </button>
       </div>
 
       {/* Resumo da Chamada */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-[4px] text-center">
-          <span className="text-emerald-400 font-bebas text-2xl leading-none">{presentCount}</span>
-          <p className="text-[10px] uppercase font-bold text-emerald-400 tracking-wider">Presentes</p>
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-[8px] text-center">
+          <span className="text-emerald-700 font-bebas text-3xl leading-none block">{presentCount}</span>
+          <p className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Presentes</p>
         </div>
-        <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-[4px] text-center">
-          <span className="text-red-400 font-bebas text-2xl leading-none">{absentCount}</span>
-          <p className="text-[10px] uppercase font-bold text-red-400 tracking-wider">Faltas</p>
+        <div className="p-3 bg-red-50 border border-red-200 rounded-[8px] text-center">
+          <span className="text-red-700 font-bebas text-3xl leading-none block">{absentCount}</span>
+          <p className="text-[10px] uppercase font-bold text-red-800 tracking-wider">Faltas</p>
         </div>
-        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-[4px] text-center">
-          <span className="text-amber-400 font-bebas text-2xl leading-none">{justifiedCount}</span>
-          <p className="text-[10px] uppercase font-bold text-amber-400 tracking-wider">Justificadas</p>
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded-[8px] text-center">
+          <span className="text-amber-700 font-bebas text-3xl leading-none block">{justifiedCount}</span>
+          <p className="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Justificadas</p>
         </div>
       </div>
 
       {feedback && (
-        <div className={`p-3 rounded-[4px] text-xs font-bold flex items-center gap-2 border ${
+        <div className={`p-3 rounded-[6px] text-xs font-bold flex items-center gap-2 border ${
           feedback.type === 'success'
-            ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
-            : 'bg-red-500/15 border-red-500/30 text-red-400'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border-red-200 text-red-800'
         }`}>
-          {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+          {feedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <XCircle className="w-4 h-4 text-red-600" />}
           <span>{feedback.message}</span>
         </div>
       )}
 
       {/* Lista de Alunos na Beira do Campo */}
       {students.length === 0 ? (
-        <div className="card-dark py-12 text-center space-y-2">
-          <Users className="w-10 h-10 text-zinc-600 mx-auto" />
-          <p className="text-sm font-bold text-zinc-300">Nenhum atleta matriculado nesta turma.</p>
-          <p className="text-xs text-zinc-500">Matricule alunos para poder registrar presença.</p>
+        <div className="card-light py-12 text-center space-y-2">
+          <Users className="w-10 h-10 text-slate-400 mx-auto" />
+          <p className="text-sm font-bold text-slate-700">Nenhum atleta matriculado nesta turma.</p>
+          <p className="text-xs text-slate-500">Matricule alunos para poder registrar presença.</p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -174,19 +173,19 @@ export function AttendanceClient({
             return (
               <div
                 key={student.id}
-                className="card-dark p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 hover:border-zinc-700 transition-all"
+                className="card-light p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 hover:border-emerald-300 transition-all"
               >
                 {/* Atleta info */}
                 <div className="flex items-center gap-3">
-                  <span className="text-xs font-mono text-zinc-600 font-bold w-5">
+                  <span className="text-xs font-mono text-slate-400 font-bold w-5">
                     #{String(idx + 1).padStart(2, '0')}
                   </span>
-                  <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center font-bold text-emerald-400 text-sm shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center font-bold text-emerald-800 text-sm shrink-0">
                     {student.name.charAt(0)}
                   </div>
                   <div>
-                    <div className="font-bold text-white text-sm">{student.name}</div>
-                    <div className="text-[10px] text-zinc-400">
+                    <div className="font-bold text-slate-900 text-sm">{student.name}</div>
+                    <div className="text-[10px] text-slate-500">
                       {student.preferred_position} • Tam {student.uniform_size || '10'}
                     </div>
                   </div>
@@ -197,10 +196,10 @@ export function AttendanceClient({
                   <button
                     type="button"
                     onClick={() => handleStatusChange(student.id, 'present')}
-                    className={`py-2 px-3 rounded-[3px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                    className={`py-2 px-3 rounded-[6px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
                       currentStatus === 'present'
-                        ? 'bg-emerald-500 text-zinc-950 shadow-[0_0_12px_rgba(34,197,94,0.3)]'
-                        : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" /> Presente
@@ -209,10 +208,10 @@ export function AttendanceClient({
                   <button
                     type="button"
                     onClick={() => handleStatusChange(student.id, 'absent')}
-                    className={`py-2 px-3 rounded-[3px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                    className={`py-2 px-3 rounded-[6px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
                       currentStatus === 'absent'
-                        ? 'bg-red-500 text-white shadow-[0_0_12px_rgba(239,68,68,0.3)]'
-                        : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                        ? 'bg-red-600 text-white shadow-xs'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     <XCircle className="w-3.5 h-3.5" /> Falta
@@ -221,10 +220,10 @@ export function AttendanceClient({
                   <button
                     type="button"
                     onClick={() => handleStatusChange(student.id, 'justified')}
-                    className={`py-2 px-3 rounded-[3px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                    className={`py-2 px-3 rounded-[6px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
                       currentStatus === 'justified'
-                        ? 'bg-amber-500 text-zinc-950 shadow-[0_0_12px_rgba(245,158,11,0.3)]'
-                        : 'bg-zinc-950 text-zinc-400 border border-zinc-800 hover:text-white'
+                        ? 'bg-amber-500 text-white shadow-xs'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                     }`}
                   >
                     <AlertTriangle className="w-3.5 h-3.5" /> Justif.
@@ -242,7 +241,7 @@ export function AttendanceClient({
           <button
             onClick={handleSave}
             disabled={isPending}
-            className="w-full sm:w-auto px-8 py-3.5 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 rounded-[4px] text-xs font-bold uppercase tracking-widest shadow-[0_0_25px_rgba(34,197,94,0.4)] flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+            className="w-full sm:w-auto px-8 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[6px] text-xs font-bold uppercase tracking-widest shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
           >
             {isPending ? (
               <Loader2 className="w-4 h-4 animate-spin" />

@@ -30,20 +30,20 @@ export default async function ChamadaPage({ searchParams }: Props) {
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="font-bebas text-3xl sm:text-4xl text-white tracking-wider leading-none flex items-center gap-2">
-          <CheckSquare className="w-8 h-8 text-emerald-400" />
+        <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
+          <CheckSquare className="w-8 h-8 text-emerald-600" />
           Chamada Digital na Beira do Campo
         </h1>
-        <p className="text-xs text-zinc-400 mt-1">
+        <p className="text-xs text-slate-500 mt-1">
           Marque a presença dos atletas diretamente pelo celular ou tablet na quadra.
         </p>
       </div>
 
       {classes.length === 0 ? (
-        <div className="card-dark py-16 text-center space-y-2">
-          <CheckSquare className="w-12 h-12 text-zinc-600 mx-auto" />
-          <p className="text-sm font-bold text-zinc-300">Nenhuma turma cadastrada no sistema.</p>
-          <p className="text-xs text-zinc-500">Cadastre turmas na aba Turmas & Grade.</p>
+        <div className="card-light py-16 text-center space-y-2">
+          <CheckSquare className="w-12 h-12 text-slate-400 mx-auto" />
+          <p className="text-sm font-bold text-slate-700">Nenhuma turma cadastrada no sistema.</p>
+          <p className="text-xs text-slate-500">Cadastre turmas na aba Turmas & Grade.</p>
         </div>
       ) : (
         <AttendanceClient

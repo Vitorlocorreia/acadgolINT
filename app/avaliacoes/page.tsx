@@ -1,14 +1,7 @@
 import {
   Award,
   PlusCircle,
-  Star,
-  Zap,
-  Shield,
-  Heart,
-  User,
-  Calendar,
   Sparkles,
-  TrendingUp,
 } from 'lucide-react'
 import { getEvaluationsList, getStudentsAndCoachesForEvaluation, createEvaluationAction } from './actions'
 
@@ -18,7 +11,7 @@ function renderStars(rating: number) {
       {[1, 2, 3, 4, 5].map((i) => (
         <span
           key={i}
-          className={`text-xs ${i <= rating ? 'text-amber-400' : 'text-zinc-700'}`}
+          className={`text-xs ${i <= rating ? 'text-amber-500' : 'text-slate-300'}`}
         >
           ★
         </span>
@@ -36,11 +29,11 @@ export default async function AvaliacoesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-bebas text-3xl sm:text-4xl text-white tracking-wider leading-none flex items-center gap-2">
-            <Award className="w-8 h-8 text-emerald-400" />
+          <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
+            <Award className="w-8 h-8 text-emerald-600" />
             Boletim do Atleta & Scout Técnico ({evaluations.length})
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Avaliações periódicas dos fundamentos do futebol e relatório de evolução para os pais.
           </p>
         </div>
@@ -49,15 +42,15 @@ export default async function AvaliacoesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Lista de Boletins / Cards dos Atletas */}
         <div className="lg:col-span-2 space-y-4">
-          <h2 className="font-bebas text-2xl text-white tracking-wider leading-none">
+          <h2 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none">
             ⭐ Avaliações Recentes
           </h2>
 
           {evaluations.length === 0 ? (
-            <div className="card-dark py-16 text-center space-y-2">
-              <Award className="w-12 h-12 text-zinc-600 mx-auto" />
-              <p className="text-sm font-bold text-zinc-300">Nenhum boletim emitido ainda.</p>
-              <p className="text-xs text-zinc-500">Preencha o formulário ao lado para registrar o primeiro scout técnico.</p>
+            <div className="card-light py-16 text-center space-y-2">
+              <Award className="w-12 h-12 text-slate-400 mx-auto" />
+              <p className="text-sm font-bold text-slate-700">Nenhum boletim emitido ainda.</p>
+              <p className="text-xs text-slate-500">Preencha o formulário ao lado para registrar o primeiro scout técnico.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -78,73 +71,73 @@ export default async function AvaliacoesPage() {
                 return (
                   <div
                     key={ev.id}
-                    className="card-dark p-5 space-y-4 bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 hover:border-emerald-500/40 transition-all shadow-md relative overflow-hidden"
+                    className="card-light p-5 space-y-4 hover:border-emerald-500 transition-all shadow-sm"
                   >
                     {/* Top Atleta + Badge Nota Geral */}
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-[6px] bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center font-bebas text-2xl text-emerald-400 shrink-0">
+                        <div className="w-12 h-12 rounded-[8px] bg-emerald-100 border border-emerald-300 flex items-center justify-center font-bebas text-2xl text-emerald-800 shrink-0">
                           {ev.student?.name?.charAt(0) || 'A'}
                         </div>
                         <div>
-                          <h3 className="font-bold text-white text-sm">{ev.student?.name}</h3>
-                          <div className="text-[10px] text-emerald-400 font-medium">
+                          <h3 className="font-bold text-slate-900 text-sm">{ev.student?.name}</h3>
+                          <div className="text-[10px] text-emerald-700 font-semibold">
                             {ev.student?.preferred_position} • Pé {ev.student?.dominant_foot}
                           </div>
-                          <div className="text-[10px] text-zinc-500 font-mono">
+                          <div className="text-[10px] text-slate-400 font-mono">
                             {ev.period} • {ev.evaluation_date?.split('-').reverse().join('/')}
                           </div>
                         </div>
                       </div>
 
-                      <div className="p-2 rounded-[4px] bg-zinc-950 border border-zinc-800 text-center shrink-0">
-                        <span className="font-bebas text-2xl text-amber-400 leading-none block">
+                      <div className="p-2 rounded-[6px] bg-amber-50 border border-amber-200 text-center shrink-0">
+                        <span className="font-bebas text-2xl text-amber-700 leading-none block">
                           {overallScore}
                         </span>
-                        <span className="text-[9px] uppercase font-bold text-zinc-500 tracking-wider">
+                        <span className="text-[9px] uppercase font-bold text-amber-800 tracking-wider">
                           Média Geral
                         </span>
                       </div>
                     </div>
 
                     {/* Grid de Fundamentos Técnicos */}
-                    <div className="grid grid-cols-2 gap-2 bg-zinc-950/80 p-3 rounded border border-zinc-800/80 text-[11px]">
+                    <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-[6px] border border-slate-200 text-[11px]">
                       <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Passe</span>
+                        <span className="text-slate-600">Passe</span>
                         {renderStars(ev.score_pass)}
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Finalização</span>
+                        <span className="text-slate-600">Finalização</span>
                         {renderStars(ev.score_shooting)}
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Drible</span>
+                        <span className="text-slate-600">Drible</span>
                         {renderStars(ev.score_dribble)}
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Domínio</span>
+                        <span className="text-slate-600">Domínio</span>
                         {renderStars(ev.score_control)}
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Velocidade</span>
+                        <span className="text-slate-600">Velocidade</span>
                         {renderStars(ev.score_speed)}
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-zinc-400">Disciplina</span>
+                        <span className="text-slate-600">Disciplina</span>
                         {renderStars(ev.score_discipline)}
                       </div>
                     </div>
 
                     {/* Parecer do Treinador */}
                     {ev.coach_feedback && (
-                      <div className="p-2.5 bg-zinc-950 rounded border border-zinc-800 text-[11px] text-zinc-300 italic">
+                      <div className="p-2.5 bg-slate-50 rounded border border-slate-200 text-[11px] text-slate-700 italic">
                         "{ev.coach_feedback}"
                       </div>
                     )}
 
-                    <div className="text-[10px] text-zinc-500 flex justify-between items-center pt-2 border-t border-zinc-800/60 font-mono">
+                    <div className="text-[10px] text-slate-500 flex justify-between items-center pt-2 border-t border-slate-100 font-mono">
                       <span>Avaliador: Prof. {ev.coach?.name || 'Treinador'}</span>
-                      <span className="text-emerald-400 font-bold">✓ Homologado</span>
+                      <span className="text-emerald-700 font-bold">✓ Homologado</span>
                     </div>
                   </div>
                 )
@@ -154,19 +147,19 @@ export default async function AvaliacoesPage() {
         </div>
 
         {/* Formulário: Nova Avaliação Técnica */}
-        <div className="card-dark p-6 space-y-4">
-          <div className="border-b border-zinc-800 pb-3">
-            <h3 className="font-bebas text-2xl text-white tracking-wider leading-none flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-emerald-400" />
+        <div className="card-light p-6 space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-emerald-600" />
               Lançar Avaliação Técnica
             </h3>
-            <p className="text-xs text-zinc-400 mt-1">Pontuação de 1 a 5 para os fundamentos</p>
+            <p className="text-xs text-slate-500 mt-1">Pontuação de 1 a 5 para os fundamentos</p>
           </div>
 
           <form action={createEvaluationAction} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
-                Atleta <span className="text-red-400">*</span>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                Atleta <span className="text-red-500">*</span>
               </label>
               <select name="student_id" required className="input-escolinha cursor-pointer">
                 {students.map((s: any) => (
@@ -178,7 +171,7 @@ export default async function AvaliacoesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Treinador Avaliador
               </label>
               <select name="coach_id" className="input-escolinha cursor-pointer">
@@ -192,7 +185,7 @@ export default async function AvaliacoesPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                   Período
                 </label>
                 <input
@@ -204,7 +197,7 @@ export default async function AvaliacoesPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                   Data da Avaliação
                 </label>
                 <input
@@ -216,9 +209,9 @@ export default async function AvaliacoesPage() {
               </div>
             </div>
 
-            {/* Fundamentos com sliders ou selects 1 a 5 */}
+            {/* Fundamentos com selects 1 a 5 */}
             <div className="space-y-3 pt-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 block border-b border-zinc-800 pb-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 block border-b border-slate-100 pb-1">
                 Notas dos Fundamentos (1 a 5)
               </span>
 
@@ -233,11 +226,11 @@ export default async function AvaliacoesPage() {
                 { name: 'score_teamwork', label: 'Trabalho em Equipe' },
               ].map((f) => (
                 <div key={f.name} className="flex items-center justify-between text-xs">
-                  <span className="text-zinc-300 font-medium">{f.label}</span>
+                  <span className="text-slate-700 font-medium">{f.label}</span>
                   <select
                     name={f.name}
                     defaultValue="4"
-                    className="bg-zinc-950 border border-zinc-800 text-white rounded px-2.5 py-1 text-xs font-mono font-bold cursor-pointer"
+                    className="bg-slate-50 border border-slate-200 text-slate-900 rounded px-2.5 py-1 text-xs font-mono font-bold cursor-pointer"
                   >
                     <option value="1">1 ★ (Iniciante)</option>
                     <option value="2">2 ★ (Básico)</option>
@@ -250,7 +243,7 @@ export default async function AvaliacoesPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-1">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
                 Parecer do Treinador (Comentário)
               </label>
               <textarea
@@ -263,7 +256,7 @@ export default async function AvaliacoesPage() {
 
             <button
               type="submit"
-              className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-[4px] shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all cursor-pointer"
+              className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-[6px] shadow-sm shadow-emerald-600/20 transition-all cursor-pointer"
             >
               Emitir Boletim do Atleta
             </button>
