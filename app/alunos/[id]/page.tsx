@@ -66,7 +66,7 @@ export default async function AlunoProfilePage({ params }: Props) {
             {guardian?.phone && (
               <a
                 href={`https://wa.me/55${guardian.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
-                  `Olá ${guardian.name}! Segue o link de acesso exclusivo ao Portal do Atleta ${student.name} na Academia do Gol: http://localhost:3000/portal/${student.portal_token}`
+                  `Olá ${guardian.name}! Segue o link de acesso exclusivo ao Portal do Atleta ${student.name} na Academia do Gol: https://acadgoli.vercel.app/portal/${student.portal_token}`
                 )}`}
                 target="_blank"
                 rel="noreferrer"

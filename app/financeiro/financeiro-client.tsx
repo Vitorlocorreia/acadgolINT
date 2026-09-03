@@ -242,7 +242,7 @@ export function FinanceiroClient({
                   const guardian = Array.isArray(inv.student?.guardian) ? inv.student.guardian[0] : inv.student?.guardian
                   const guardianPhone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
 
-                  const whatsappMessage = `Olá ${guardian?.name || 'Responsável'}, tudo bem? Aqui é da Academia do Gol! Segue a mensalidade do atleta *${inv.student?.name}* referente ao mês *${inv.reference_month}* no valor de *${fmt(inv.amount)}* com vencimento em *${inv.due_date?.split('-').reverse().join('/')}*.\n\nChave PIX:\n${inv.pix_code || 'pix.academiadogol.com.br'}\n\nVocê também pode acessar o Portal do Atleta para acompanhar frequência e boletim: http://localhost:3000/portal/${inv.student?.portal_token || ''}\n\nObrigado!`
+                  const whatsappMessage = `Olá ${guardian?.name || 'Responsável'}, tudo bem? Aqui é da Academia do Gol! Segue a mensalidade do atleta *${inv.student?.name}* referente ao mês *${inv.reference_month}* no valor de *${fmt(inv.amount)}* com vencimento em *${inv.due_date?.split('-').reverse().join('/')}*.\n\nChave PIX:\n${inv.pix_code || 'pix.academiadogol.com.br'}\n\nVocê também pode acessar o Portal do Atleta para acompanhar frequência e mensalidades: https://acadgoli.vercel.app/portal/${inv.student?.portal_token || ''}\n\nObrigado!`
 
                   return (
                     <tr key={inv.id} className="hover:bg-slate-50/80 transition-colors">
@@ -356,7 +356,7 @@ export function FinanceiroClient({
               {pendingInvoices.map((inv) => {
                 const guardian = Array.isArray(inv.student?.guardian) ? inv.student.guardian[0] : inv.student?.guardian
                 const guardianPhone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
-                const msg = `Olá ${guardian?.name || 'Responsável'}, tudo bem? Aqui é da Academia do Gol! Segue o lembrete da mensalidade do atleta *${inv.student?.name}* referente ao mês *${inv.reference_month}* no valor de *${fmt(inv.amount)}* com vencimento em *${inv.due_date?.split('-').reverse().join('/')}*.\n\nChave PIX:\n${inv.pix_code || 'pix.academiadogol.com.br'}\n\nAcesse o Portal do Atleta: http://localhost:3000/portal/${inv.student?.portal_token || ''}\n\nObrigado!`
+                const msg = `Olá ${guardian?.name || 'Responsável'}, tudo bem? Aqui é da Academia do Gol! Segue o lembrete da mensalidade do atleta *${inv.student?.name}* referente ao mês *${inv.reference_month}* no valor de *${fmt(inv.amount)}* com vencimento em *${inv.due_date?.split('-').reverse().join('/')}*.\n\nChave PIX:\n${inv.pix_code || 'pix.academiadogol.com.br'}\n\nAcesse o Portal do Atleta: https://acadgoli.vercel.app/portal/${inv.student?.portal_token || ''}\n\nObrigado!`
 
                 return (
                   <div key={inv.id} className="p-3 bg-slate-50 rounded border border-slate-200 flex items-center justify-between gap-3 text-xs">
