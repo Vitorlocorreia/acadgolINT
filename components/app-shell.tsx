@@ -14,6 +14,7 @@ import {
   Trophy,
   Shirt,
   ShieldCheck,
+  Smartphone,
   Menu,
   X,
   PanelLeftClose,
@@ -68,6 +69,13 @@ const navItems = [
     icon: Target,
     badge: 'Leads',
     badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+  },
+  {
+    href: '/whatsapp',
+    label: 'WhatsApp Robô',
+    icon: Smartphone,
+    badge: 'Auto',
+    badgeColor: 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/30',
   },
 ]
 

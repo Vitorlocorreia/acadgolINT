@@ -74,7 +74,29 @@ export async function saveAttendanceAction(
     return { success: false, error: error.message }
   }
 
+  // Disparo automático de aviso de falta no WhatsApp para os pais
+  const absentRecords = records.filter((r) => r.status === 'absent')
+  if (absentRecords.length > 0) {
+    const studentIds = absentRecords.map((r) => r.student_id)
+    const { data: absentStudents } = await supabase
+      .from('students')
+      .select('id, name, guardian:guardians(name, phone)')
+      .in('id', studentIds)
+
+    if (absentStudents && absentStudents.length > 0) {
+      const { sendEvolutionWhatsApp } = await import('@/lib/whatsapp/evolution')
+      for (const st of absentStudents) {
+        const guardian = Array.isArray(st.guardian) ? st.guardian[0] : st.guardian
+        if (guardian?.phone) {
+          const formattedDate = trainingDate.split('-').reverse().join('/')
+          const msg = `⚽ *Academia do Gol — Aviso de Ausência*\n\nOlá ${guardian.name || 'Responsável'}! Notamos que o atleta *${st.name}* não compareceu ao treino de hoje (${formattedDate}).\n\nAconteceu algum imprevisto ou gostaria de justificar a falta? Estamos à disposição!\n\n_Mensagem automática da Academia do Gol_`
+          await sendEvolutionWhatsApp({ phone: guardian.phone, message: msg }).catch(() => {})
+        }
+      }
+    }
+  }
+
   revalidatePath('/chamada')
   revalidatePath('/dashboard')
-  return { success: true }
+  return { success: true, absentsNotified: absentRecords.length }
 }
