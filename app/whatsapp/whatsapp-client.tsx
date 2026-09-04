@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useTransition } from 'react'
+import React, { useState, useEffect, useTransition } from 'react'
 import {
   Smartphone,
   QrCode,
@@ -38,6 +38,14 @@ export function WhatsAppClient() {
   )
   const [testFeedback, setTestFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
   const [copied, setCopied] = useState(false)
+
+  // Carrega status e QR Code automaticamente ao abrir a tela
+  useEffect(() => {
+    handleCheckStatus()
+    handleGenerateQR()
+    const interval = setInterval(handleCheckStatus, 8000)
+    return () => clearInterval(interval)
+  }, [])
 
   // Disparar verificação
   const handleCheckStatus = () => {

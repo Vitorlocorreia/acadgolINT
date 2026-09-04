@@ -1,7 +1,8 @@
 // Evolution API Client v2 - Academia do Gol
 // Suporta envio 100% automático de WhatsApp sem custo de mensagem
 
-const EVOLUTION_URL = process.env.EVOLUTION_API_URL || 'http://localhost:8080'
+const EVOLUTION_URL =
+  process.env.EVOLUTION_API_URL || 'https://extras-identified-frontier-toys.trycloudflare.com'
 const EVOLUTION_KEY = process.env.EVOLUTION_API_KEY || 'acadgol_evolution_secret_2026'
 const INSTANCE_NAME = process.env.EVOLUTION_INSTANCE_NAME || 'academiadogol'
 
