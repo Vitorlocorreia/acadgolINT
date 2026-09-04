@@ -37,12 +37,12 @@ export function AttendanceClient({
   const [selectedDate, setSelectedDate] = useState(trainingDate)
   const [selectedClassId, setSelectedClassId] = useState(classId)
 
-  // Map of studentId -> 'present' | 'absent' | 'justified'
-  const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | 'justified'>>(() => {
-    const map: Record<string, 'present' | 'absent' | 'justified'> = {}
+  // Map of studentId -> 'present' | 'absent' | 'justified' | null
+  const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | 'justified' | null>>(() => {
+    const map: Record<string, 'present' | 'absent' | 'justified' | null> = {}
     students.forEach((s) => {
       const existing = initialLogs.find((l) => l.student_id === s.id)
-      map[s.id] = existing ? existing.status : 'present' // default: presente
+      map[s.id] = existing ? existing.status : null // default: null (não marcado)
     })
     return map
   })
@@ -55,16 +55,37 @@ export function AttendanceClient({
     status: 'present' | 'absent' | 'justified',
     studentName?: string
   ) => {
-    setAttendance((prev) => ({ ...prev, [studentId]: status }))
-    const label = status === 'present' ? 'PRESENTE (Check-in)' : status === 'absent' ? 'FALTA' : 'JUSTIFICADA'
-    setFeedback({
-      type: 'success',
-      message: `Atleta ${studentName || ''} marcado como ${label}! Clique em "Notificar Pai" para enviar agora ou salve no botão abaixo.`,
+    setAttendance((prev) => {
+      const current = prev[studentId]
+      // Se já estava selecionado esse mesmo status, desmarca (toggle off)!
+      if (current === status) {
+        setFeedback({
+          type: 'success',
+          message: `Atleta ${studentName || ''} desmarcado (pendente).`,
+        })
+        return { ...prev, [studentId]: null }
+      }
+
+      // Senão, marca o novo status
+      const label = status === 'present' ? 'PRESENTE (Check-in)' : status === 'absent' ? 'FALTA' : 'JUSTIFICADA'
+      setFeedback({
+        type: 'success',
+        message: `Atleta ${studentName || ''} marcado como ${label}! (Clique novamente para desmarcar)`,
+      })
+      return { ...prev, [studentId]: status }
     })
   }
 
   const handleQuickNotify = (studentId: string, studentName: string) => {
-    const status = attendance[studentId] || 'present'
+    const status = attendance[studentId]
+    if (!status) {
+      setFeedback({
+        type: 'error',
+        message: `Marque primeiro se ${studentName} está Presente ou com Falta antes de notificar.`,
+      })
+      return
+    }
+
     setSendingStudentId(studentId)
     setFeedback(null)
     startTransition(async () => {
@@ -85,15 +106,30 @@ export function AttendanceClient({
   }
 
   const handleMarkAllPresent = () => {
-    const updated: Record<string, 'present' | 'absent' | 'justified'> = {}
-    students.forEach((s) => {
-      updated[s.id] = 'present'
-    })
-    setAttendance(updated)
-    setFeedback({
-      type: 'success',
-      message: 'Todos os atletas foram marcados como presentes! Clique em "Salvar Chamada" para registrar.',
-    })
+    const allAlreadyPresent = students.every((s) => attendance[s.id] === 'present')
+    const updated: Record<string, 'present' | 'absent' | 'justified' | null> = {}
+
+    if (allAlreadyPresent) {
+      // Desmarca todos
+      students.forEach((s) => {
+        updated[s.id] = null
+      })
+      setAttendance(updated)
+      setFeedback({
+        type: 'success',
+        message: 'Chamada desmarcada (todos pendentes).',
+      })
+    } else {
+      // Marca todos presentes
+      students.forEach((s) => {
+        updated[s.id] = 'present'
+      })
+      setAttendance(updated)
+      setFeedback({
+        type: 'success',
+        message: 'Todos os atletas marcados como presentes! Clique novamente para desmarcar todos.',
+      })
+    }
   }
 
   const handleClassOrDateChange = (newClassId: string, newDate: string) => {
@@ -105,10 +141,20 @@ export function AttendanceClient({
   const handleSave = () => {
     setFeedback(null)
     startTransition(async () => {
-      const records = students.map((s) => ({
-        student_id: s.id,
-        status: attendance[s.id] || 'present',
-      }))
+      const records = students
+        .filter((s) => attendance[s.id] !== null && attendance[s.id] !== undefined)
+        .map((s) => ({
+          student_id: s.id,
+          status: attendance[s.id] as 'present' | 'absent' | 'justified',
+        }))
+
+      if (records.length === 0) {
+        setFeedback({
+          type: 'error',
+          message: 'Marque pelo menos um atleta como presente ou falta antes de salvar.',
+        })
+        return
+      }
 
       const res = await saveAttendanceAction(selectedClassId, selectedDate, records, { notifyAbsents: true, notifyPresences: true })
       if (res.success) {
@@ -125,6 +171,7 @@ export function AttendanceClient({
   const presentCount = Object.values(attendance).filter((st) => st === 'present').length
   const absentCount = Object.values(attendance).filter((st) => st === 'absent').length
   const justifiedCount = Object.values(attendance).filter((st) => st === 'justified').length
+  const pendingCount = students.length - (presentCount + absentCount + justifiedCount)
 
   return (
     <div className="space-y-6">
@@ -172,8 +219,8 @@ export function AttendanceClient({
         </button>
       </div>
 
-      {/* Resumo da Chamada */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Resumo da Chamada com 4 Indicadores */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="p-3 bg-[#C8E6C9]/40 border border-[#1A6B2E]/20 rounded-[6px] text-center">
           <span className="text-[#0D4A1C] font-bebas text-3xl leading-none block">{presentCount}</span>
           <p className="text-[10px] uppercase font-bold text-[#0D4A1C] tracking-wider">Presentes</p>
@@ -186,10 +233,14 @@ export function AttendanceClient({
           <span className="text-amber-700 font-bebas text-3xl leading-none block">{justifiedCount}</span>
           <p className="text-[10px] uppercase font-bold text-amber-800 tracking-wider">Justificadas</p>
         </div>
+        <div className="p-3 bg-slate-100 border border-slate-200 rounded-[6px] text-center">
+          <span className="text-slate-600 font-bebas text-3xl leading-none block">{pendingCount}</span>
+          <p className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Pendentes</p>
+        </div>
       </div>
 
       {feedback && (
-        <div className={`p-3 rounded-[4px] text-xs font-bold flex items-center gap-2 border ${
+        <div className={`p-3 rounded-[4px] text-xs font-bold flex items-center gap-2 border animate-in fade-in duration-150 ${
           feedback.type === 'success'
             ? 'bg-[#C8E6C9]/50 border-[#1A6B2E]/30 text-[#0D4A1C]'
             : 'bg-red-50 border-red-200 text-red-800'
@@ -209,23 +260,52 @@ export function AttendanceClient({
       ) : (
         <div className="space-y-2.5">
           {students.map((student, idx) => {
-            const currentStatus = attendance[student.id] || 'present'
+            const currentStatus = attendance[student.id]
 
             return (
               <div
                 key={student.id}
-                className="card-light p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 hover:border-[#1A6B2E]/50 transition-all"
+                className={`card-light p-3.5 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 transition-all ${
+                  currentStatus === 'present'
+                    ? 'border-[#1A6B2E]/60 bg-[#C8E6C9]/10'
+                    : currentStatus === 'absent'
+                    ? 'border-red-300 bg-red-50/20'
+                    : currentStatus === 'justified'
+                    ? 'border-amber-300 bg-amber-50/20'
+                    : 'hover:border-slate-300'
+                }`}
               >
                 {/* Atleta info */}
                 <div className="flex items-center gap-3">
                   <span className="text-xs font-mono text-slate-400 font-bold w-5">
                     #{String(idx + 1).padStart(2, '0')}
                   </span>
-                  <div className="w-9 h-9 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/30 flex items-center justify-center font-bold text-[#1A6B2E] text-sm shrink-0">
+                  <div className={`w-9 h-9 rounded-[4px] border flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${
+                    currentStatus === 'present'
+                      ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
+                      : currentStatus === 'absent'
+                      ? 'bg-red-600 text-white border-red-600'
+                      : currentStatus === 'justified'
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-[#1A6B2E]/10 border-[#1A6B2E]/30 text-[#1A6B2E]'
+                  }`}>
                     {student.name.charAt(0)}
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 text-sm">{student.name}</div>
+                    <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                      <span>{student.name}</span>
+                      {currentStatus && (
+                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded tracking-wider ${
+                          currentStatus === 'present'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : currentStatus === 'absent'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {currentStatus === 'present' ? 'Presente' : currentStatus === 'absent' ? 'Falta' : 'Justif.'}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[10px] text-slate-500">
                       {student.preferred_position} • Tam {student.uniform_size || '10'}
                     </div>
@@ -240,7 +320,7 @@ export function AttendanceClient({
                       onClick={() => handleStatusChange(student.id, 'present', student.name)}
                       className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1 ${
                         currentStatus === 'present'
-                          ? 'bg-[#1A6B2E] text-white shadow-xs ring-2 ring-[#1A6B2E]/30 font-extrabold'
+                          ? 'bg-[#1A6B2E] text-white shadow-xs ring-2 ring-[#1A6B2E]/40 font-extrabold scale-[1.02]'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                       }`}
                     >
@@ -252,7 +332,7 @@ export function AttendanceClient({
                       onClick={() => handleStatusChange(student.id, 'absent', student.name)}
                       className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1 ${
                         currentStatus === 'absent'
-                          ? 'bg-red-600 text-white shadow-xs ring-2 ring-red-600/30 font-extrabold'
+                          ? 'bg-red-600 text-white shadow-xs ring-2 ring-red-600/40 font-extrabold scale-[1.02]'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                       }`}
                     >
@@ -264,7 +344,7 @@ export function AttendanceClient({
                       onClick={() => handleStatusChange(student.id, 'justified', student.name)}
                       className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1 ${
                         currentStatus === 'justified'
-                          ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-500/30 font-extrabold'
+                          ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-500/40 font-extrabold scale-[1.02]'
                           : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
                       }`}
                     >
@@ -276,16 +356,36 @@ export function AttendanceClient({
                   <button
                     type="button"
                     onClick={() => handleQuickNotify(student.id, student.name)}
-                    disabled={isPending || sendingStudentId === student.id}
-                    className="py-2 px-3 rounded-[4px] bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shadow-xs shrink-0 disabled:opacity-50"
-                    title="Disparar notificação imediata no WhatsApp do responsável"
+                    disabled={isPending || sendingStudentId === student.id || !currentStatus}
+                    className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shadow-xs shrink-0 disabled:opacity-40 disabled:cursor-not-allowed ${
+                      currentStatus === 'present'
+                        ? 'bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white'
+                        : currentStatus === 'absent'
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : currentStatus === 'justified'
+                        ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                        : 'bg-slate-100 text-slate-400 border border-slate-200'
+                    }`}
+                    title={
+                      !currentStatus
+                        ? 'Selecione Presente ou Falta primeiro'
+                        : 'Disparar notificação no WhatsApp do responsável agora'
+                    }
                   >
                     {sendingStudentId === student.id ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
                       <Send className="w-3.5 h-3.5" />
                     )}
-                    <span>Notificar WhatsApp</span>
+                    <span>
+                      {currentStatus === 'present'
+                        ? 'Avisar Presença'
+                        : currentStatus === 'absent'
+                        ? 'Avisar Falta'
+                        : currentStatus === 'justified'
+                        ? 'Avisar Justif.'
+                        : 'Notificar WhatsApp'}
+                    </span>
                   </button>
                 </div>
               </div>
