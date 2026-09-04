@@ -16,6 +16,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 import { saveAttendanceAction, notifySingleStudentAttendanceAction } from './actions'
+import { playWhistle, playSuccessChime } from '@/lib/audio/sound-effects'
 
 interface Props {
   classId: string
@@ -66,6 +67,11 @@ export function AttendanceClient({
         return { ...prev, [studentId]: null }
       }
 
+      // Se marcou presente, toca apito de futebol!
+      if (status === 'present') {
+        playWhistle()
+      }
+
       // Senão, marca o novo status
       const label = status === 'present' ? 'PRESENTE (Check-in)' : status === 'absent' ? 'FALTA' : 'JUSTIFICADA'
       setFeedback({
@@ -92,6 +98,7 @@ export function AttendanceClient({
       const res = await notifySingleStudentAttendanceAction(studentId, selectedDate, status, selectedClassId)
       setSendingStudentId(null)
       if (res.success) {
+        playSuccessChime()
         setFeedback({
           type: 'success',
           message: `⚽ Notificação de ${status === 'present' ? 'Presença' : status === 'absent' ? 'Falta' : 'Justificativa'} enviada com sucesso no WhatsApp do responsável de ${studentName}!`,
@@ -120,7 +127,8 @@ export function AttendanceClient({
         message: 'Chamada desmarcada (todos pendentes).',
       })
     } else {
-      // Marca todos presentes
+      // Marca todos presentes e toca apito
+      playWhistle()
       students.forEach((s) => {
         updated[s.id] = 'present'
       })
