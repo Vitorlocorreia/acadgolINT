@@ -51,31 +51,73 @@ export async function sendEvolutionWhatsApp({
   }
 }
 
-// Verifica status da conexão do WhatsApp
+// Verifica status da conexão do WhatsApp e dados do aparelho
 export async function getEvolutionInstanceStatus(): Promise<{
   connected: boolean
   state: string
+  ownerNumber?: string
   profileName?: string
   profilePictureUrl?: string
 }> {
   try {
-    const res = await fetch(`${EVOLUTION_URL}/instance/connectionState/${INSTANCE_NAME}`, {
+    const res = await fetch(`${EVOLUTION_URL}/instance/fetchInstances`, {
       headers: { apikey: EVOLUTION_KEY },
       signal: AbortSignal.timeout(4000),
+      cache: 'no-store',
     })
 
     if (!res.ok) {
       return { connected: false, state: 'disconnected' }
     }
 
-    const data = await res.json()
-    const state = data?.instance?.state || 'disconnected'
+    const instances = await res.json()
+    const inst = Array.isArray(instances)
+      ? instances.find((i: any) => i.name === INSTANCE_NAME)
+      : null
+
+    if (!inst) {
+      return { connected: false, state: 'disconnected' }
+    }
+
+    const state = inst.connectionStatus || 'disconnected'
+    const cleanNumber = inst.ownerJid
+      ? inst.ownerJid.replace('@s.whatsapp.net', '')
+      : undefined
+
     return {
       connected: state === 'open',
       state,
+      ownerNumber: cleanNumber,
+      profileName: inst.profileName || undefined,
+      profilePictureUrl: inst.profilePicUrl || undefined,
     }
   } catch {
     return { connected: false, state: 'offline' }
+  }
+}
+
+// Desconecta o aparelho da Evolution API
+export async function disconnectEvolutionWhatsApp(): Promise<{
+  success: boolean
+  error?: string
+}> {
+  try {
+    const res = await fetch(`${EVOLUTION_URL}/instance/logout/${INSTANCE_NAME}`, {
+      method: 'DELETE',
+      headers: { apikey: EVOLUTION_KEY },
+    })
+
+    if (!res.ok) {
+      // Se logout der erro, tenta delete para forçar reset limpo
+      await fetch(`${EVOLUTION_URL}/instance/delete/${INSTANCE_NAME}`, {
+        method: 'DELETE',
+        headers: { apikey: EVOLUTION_KEY },
+      })
+    }
+
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: err.message }
   }
 }
 

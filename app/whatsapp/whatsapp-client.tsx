@@ -15,11 +15,15 @@ import {
   Trophy,
   DollarSign,
   Loader2,
+  LogOut,
+  UserCheck,
+  PhoneCall,
 } from 'lucide-react'
 import {
   checkWhatsAppStatusAction,
   getWhatsAppQRCodeAction,
   sendTestWhatsAppAction,
+  disconnectWhatsAppAction,
 } from './actions'
 
 export function WhatsAppClient() {
@@ -27,7 +31,9 @@ export function WhatsAppClient() {
   const [isConnected, setIsConnected] = useState(false)
   const [qrCodeBase64, setQrCodeBase64] = useState<string | null>(null)
   const [statusMessage, setStatusMessage] = useState<string>('Aguardando verificação...')
-  const [demoMode, setDemoMode] = useState(true)
+  const [demoMode, setDemoMode] = useState(false)
+  const [connectedNumber, setConnectedNumber] = useState<string | null>(null)
+  const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null)
 
   // Test form
   const [testPhone, setTestPhone] = useState('81985742015')
@@ -42,11 +48,27 @@ export function WhatsAppClient() {
       const res = await checkWhatsAppStatusAction()
       if (res.connected) {
         setIsConnected(true)
+        if (res.ownerNumber) setConnectedNumber(res.ownerNumber)
+        if (res.profilePictureUrl) setProfilePicUrl(res.profilePictureUrl)
         setStatusMessage('🟢 Conectado Oficialmente (WhatsApp da Academia do Gol)')
       } else {
         setIsConnected(false)
+        setConnectedNumber(null)
+        setProfilePicUrl(null)
         setStatusMessage('🔴 Desconectado — Escaneie o QR Code abaixo')
       }
+    })
+  }
+
+  // Desconectar aparelho
+  const handleDisconnect = () => {
+    if (!confirm('Deseja realmente desconectar o número atual do WhatsApp?')) return
+    startTransition(async () => {
+      await disconnectWhatsAppAction()
+      setIsConnected(false)
+      setConnectedNumber(null)
+      setProfilePicUrl(null)
+      handleGenerateQR()
     })
   }
 
@@ -151,42 +173,106 @@ export function WhatsAppClient() {
               </span>
             </div>
 
-            {/* QR Code Area Compacto */}
-            <div className="flex flex-col items-center justify-center p-4 bg-[var(--bg-subtle)] rounded-lg border border-[var(--border-color)] space-y-3">
-              <div className="relative w-44 h-44 bg-white p-2.5 rounded-lg border shadow-xs flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={
-                    qrCodeBase64 ||
-                    'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=ACADEMIADOGOL_WHATSAPP_DEMO_2026'
-                  }
-                  alt="QR Code WhatsApp"
-                  className="w-full h-full object-contain"
-                />
-              </div>
+            {/* Área do Aparelho: Conectado vs Desconectado */}
+            {isConnected ? (
+              <div className="flex flex-col items-center justify-center p-5 bg-[var(--bg-subtle)] rounded-lg border border-[var(--border-color)] space-y-4">
+                <div className="relative">
+                  {profilePicUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={profilePicUrl}
+                      alt="Foto do WhatsApp Conectado"
+                      className="w-20 h-20 rounded-full border-2 border-[#1A6B2E] shadow-sm object-cover"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-[#C8E6C9] dark:bg-emerald-950 flex items-center justify-center border-2 border-[#1A6B2E]">
+                      <UserCheck className="w-10 h-10 text-[#1A6B2E] dark:text-emerald-400" />
+                    </div>
+                  )}
+                  <span className="absolute bottom-0 right-0 w-5 h-5 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full flex items-center justify-center shadow-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
+                  </span>
+                </div>
 
-              <div className="text-center space-y-0.5">
-                <p className="text-xs font-bold text-[var(--text-primary)]">
-                  Como conectar o WhatsApp da Academia:
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                  No celular: <b>Aparelhos conectados ➔ Conectar um aparelho</b>
-                </p>
-              </div>
+                <div className="text-center space-y-1">
+                  <p className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+                    Número Ativo no Sistema
+                  </p>
+                  <p className="text-xl font-bebas tracking-widest text-[var(--text-primary)]">
+                    {connectedNumber
+                      ? connectedNumber
+                          .replace(/^55(\d{2})(\d{1})(\d{4})(\d{4})$/, '+55 ($1) $2 $3-$4')
+                          .replace(/^55(\d{2})(\d{4,5})(\d{4})$/, '+55 ($1) $2-$3')
+                      : '+55 (81) 98574-2015'}
+                  </p>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Pronto para Disparos Automáticos
+                  </div>
+                </div>
 
-              <button
-                onClick={handleGenerateQR}
-                disabled={isPending}
-                className="w-full py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] text-[var(--text-primary)] rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
-              >
-                {isPending ? (
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <RefreshCw className="w-3.5 h-3.5 text-[#1A6B2E] dark:text-emerald-400" />
-                )}
-                Atualizar QR Code
-              </button>
-            </div>
+                <div className="w-full pt-1 flex flex-col gap-2">
+                  <button
+                    onClick={handleDisconnect}
+                    disabled={isPending}
+                    className="w-full py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    {isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <LogOut className="w-3.5 h-3.5 text-red-600" />
+                    )}
+                    Desconectar Aparelho
+                  </button>
+
+                  <button
+                    onClick={handleDisconnect}
+                    disabled={isPending}
+                    className="w-full py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] text-[var(--text-primary)] rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-[#1A6B2E] dark:text-emerald-400" />
+                    Trocar / Conectar Outro Número
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* QR Code Area Quando Desconectado */
+              <div className="flex flex-col items-center justify-center p-4 bg-[var(--bg-subtle)] rounded-lg border border-[var(--border-color)] space-y-3">
+                <div className="relative w-44 h-44 bg-white p-2.5 rounded-lg border shadow-xs flex items-center justify-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={
+                      qrCodeBase64 ||
+                      'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=ACADEMIADOGOL_WHATSAPP_DEMO_2026'
+                    }
+                    alt="QR Code WhatsApp"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+
+                <div className="text-center space-y-0.5">
+                  <p className="text-xs font-bold text-[var(--text-primary)]">
+                    Como conectar o WhatsApp da Academia:
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    No celular: <b>Aparelhos conectados ➔ Conectar um aparelho</b>
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleGenerateQR}
+                  disabled={isPending}
+                  className="w-full py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] text-[var(--text-primary)] rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  {isPending ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-3.5 h-3.5 text-[#1A6B2E] dark:text-emerald-400" />
+                  )}
+                  Atualizar QR Code
+                </button>
+              </div>
+            )}
 
             {/* Info de Segurança */}
             <div className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded border border-slate-200 dark:border-zinc-700 text-xs space-y-0.5">
