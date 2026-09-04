@@ -11,8 +11,11 @@ import {
   Calendar,
   Loader2,
   Check,
+  Send,
+  Smartphone,
+  Sparkles,
 } from 'lucide-react'
-import { saveAttendanceAction } from './actions'
+import { saveAttendanceAction, notifySingleStudentAttendanceAction } from './actions'
 
 interface Props {
   classId: string
@@ -45,9 +48,40 @@ export function AttendanceClient({
   })
 
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [sendingStudentId, setSendingStudentId] = useState<string | null>(null)
 
-  const handleStatusChange = (studentId: string, status: 'present' | 'absent' | 'justified') => {
+  const handleStatusChange = (
+    studentId: string,
+    status: 'present' | 'absent' | 'justified',
+    studentName?: string
+  ) => {
     setAttendance((prev) => ({ ...prev, [studentId]: status }))
+    const label = status === 'present' ? 'PRESENTE (Check-in)' : status === 'absent' ? 'FALTA' : 'JUSTIFICADA'
+    setFeedback({
+      type: 'success',
+      message: `Atleta ${studentName || ''} marcado como ${label}! Clique em "Notificar Pai" para enviar agora ou salve no botão abaixo.`,
+    })
+  }
+
+  const handleQuickNotify = (studentId: string, studentName: string) => {
+    const status = attendance[studentId] || 'present'
+    setSendingStudentId(studentId)
+    setFeedback(null)
+    startTransition(async () => {
+      const res = await notifySingleStudentAttendanceAction(studentId, selectedDate, status, selectedClassId)
+      setSendingStudentId(null)
+      if (res.success) {
+        setFeedback({
+          type: 'success',
+          message: `⚽ Notificação de ${status === 'present' ? 'Presença' : status === 'absent' ? 'Falta' : 'Justificativa'} enviada com sucesso no WhatsApp do responsável de ${studentName}!`,
+        })
+      } else {
+        setFeedback({
+          type: 'error',
+          message: res.error || 'Erro ao enviar notificação WhatsApp.',
+        })
+      }
+    })
   }
 
   const handleMarkAllPresent = () => {
@@ -56,6 +90,10 @@ export function AttendanceClient({
       updated[s.id] = 'present'
     })
     setAttendance(updated)
+    setFeedback({
+      type: 'success',
+      message: 'Todos os atletas foram marcados como presentes! Clique em "Salvar Chamada" para registrar.',
+    })
   }
 
   const handleClassOrDateChange = (newClassId: string, newDate: string) => {
@@ -72,9 +110,12 @@ export function AttendanceClient({
         status: attendance[s.id] || 'present',
       }))
 
-      const res = await saveAttendanceAction(selectedClassId, selectedDate, records)
+      const res = await saveAttendanceAction(selectedClassId, selectedDate, records, { notifyAbsents: true, notifyPresences: true })
       if (res.success) {
-        setFeedback({ type: 'success', message: 'Chamada salva com sucesso!' })
+        setFeedback({
+          type: 'success',
+          message: `✅ Chamada salva com sucesso! ${res.notificationsSent || 0} notificações de presença/falta transmitidas via WhatsApp oficial!`,
+        })
       } else {
         setFeedback({ type: 'error', message: res.error || 'Erro ao salvar chamada.' })
       }
@@ -192,41 +233,59 @@ export function AttendanceClient({
                 </div>
 
                 {/* Botões de Ação Rápida no Celular */}
-                <div className="grid grid-cols-3 gap-1.5 sm:w-80">
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange(student.id, 'present')}
-                    className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                      currentStatus === 'present'
-                        ? 'bg-[#1A6B2E] text-white shadow-xs'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Presente
-                  </button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                  <div className="grid grid-cols-3 gap-1.5 sm:w-72">
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(student.id, 'present', student.name)}
+                      className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1 ${
+                        currentStatus === 'present'
+                          ? 'bg-[#1A6B2E] text-white shadow-xs ring-2 ring-[#1A6B2E]/30 font-extrabold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Presente
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => handleStatusChange(student.id, 'absent')}
-                    className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                      currentStatus === 'absent'
-                        ? 'bg-red-600 text-white shadow-xs'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <XCircle className="w-3.5 h-3.5" /> Falta
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(student.id, 'absent', student.name)}
+                      className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1 ${
+                        currentStatus === 'absent'
+                          ? 'bg-red-600 text-white shadow-xs ring-2 ring-red-600/30 font-extrabold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <XCircle className="w-3.5 h-3.5" /> Falta
+                    </button>
 
+                    <button
+                      type="button"
+                      onClick={() => handleStatusChange(student.id, 'justified', student.name)}
+                      className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1 ${
+                        currentStatus === 'justified'
+                          ? 'bg-amber-500 text-white shadow-xs ring-2 ring-amber-500/30 font-extrabold'
+                          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" /> Justif.
+                    </button>
+                  </div>
+
+                  {/* Disparo Imediato 1-Click WhatsApp */}
                   <button
                     type="button"
-                    onClick={() => handleStatusChange(student.id, 'justified')}
-                    className={`py-2 px-3 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                      currentStatus === 'justified'
-                        ? 'bg-amber-500 text-white shadow-xs'
-                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-                    }`}
+                    onClick={() => handleQuickNotify(student.id, student.name)}
+                    disabled={isPending || sendingStudentId === student.id}
+                    className="py-2 px-3 rounded-[4px] bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white text-xs font-bold uppercase tracking-wider transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5 shadow-xs shrink-0 disabled:opacity-50"
+                    title="Disparar notificação imediata no WhatsApp do responsável"
                   >
-                    <AlertTriangle className="w-3.5 h-3.5" /> Justif.
+                    {sendingStudentId === student.id ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5" />
+                    )}
+                    <span>Notificar WhatsApp</span>
                   </button>
                 </div>
               </div>
@@ -237,7 +296,10 @@ export function AttendanceClient({
 
       {/* Botão de Salvar Flutuante / Bottom */}
       {students.length > 0 && (
-        <div className="sticky bottom-4 z-20 flex justify-end">
+        <div className="sticky bottom-4 z-20 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md rounded-lg border border-slate-200 dark:border-zinc-800 shadow-xl">
+          <div className="text-xs text-slate-600 dark:text-slate-400">
+            <span className="font-bold text-slate-800 dark:text-slate-200">Automação de WhatsApp Ativa:</span> Ao salvar, o sistema dispara o aviso oficial de presença ou ausência para todos os pais.
+          </div>
           <button
             onClick={handleSave}
             disabled={isPending}
@@ -248,7 +310,7 @@ export function AttendanceClient({
             ) : (
               <Save className="w-4 h-4" />
             )}
-            Salvar Chamada do Treino
+            Salvar Chamada e Notificar Pais
           </button>
         </div>
       )}

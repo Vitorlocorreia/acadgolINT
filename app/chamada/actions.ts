@@ -54,7 +54,8 @@ export async function getClassStudentsAndAttendance(classId: string, trainingDat
 export async function saveAttendanceAction(
   classId: string,
   trainingDate: string,
-  records: Array<{ student_id: string; status: 'present' | 'absent' | 'justified'; coach_notes?: string }>
+  records: Array<{ student_id: string; status: 'present' | 'absent' | 'justified'; coach_notes?: string }>,
+  options: { notifyAbsents?: boolean; notifyPresences?: boolean } = { notifyAbsents: true, notifyPresences: true }
 ) {
   const supabase = createAdminClient()
 
@@ -74,29 +75,95 @@ export async function saveAttendanceAction(
     return { success: false, error: error.message }
   }
 
-  // Disparo automático de aviso de falta no WhatsApp para os pais
-  const absentRecords = records.filter((r) => r.status === 'absent')
-  if (absentRecords.length > 0) {
-    const studentIds = absentRecords.map((r) => r.student_id)
-    const { data: absentStudents } = await supabase
-      .from('students')
-      .select('id, name, guardian:guardians(name, phone)')
-      .in('id', studentIds)
+  // Notificações automáticas no WhatsApp para os pais
+  const { sendEvolutionWhatsApp } = await import('@/lib/whatsapp/evolution')
+  const formattedDate = trainingDate.split('-').reverse().join('/')
+  let notificationsSent = 0
 
-    if (absentStudents && absentStudents.length > 0) {
-      const { sendEvolutionWhatsApp } = await import('@/lib/whatsapp/evolution')
-      for (const st of absentStudents) {
-        const guardian = Array.isArray(st.guardian) ? st.guardian[0] : st.guardian
-        if (guardian?.phone) {
-          const formattedDate = trainingDate.split('-').reverse().join('/')
-          const msg = `⚽ *Academia do Gol — Aviso de Ausência*\n\nOlá ${guardian.name || 'Responsável'}! Notamos que o atleta *${st.name}* não compareceu ao treino de hoje (${formattedDate}).\n\nAconteceu algum imprevisto ou gostaria de justificar a falta? Estamos à disposição!\n\n_Mensagem automática da Academia do Gol_`
-          await sendEvolutionWhatsApp({ phone: guardian.phone, message: msg }).catch(() => {})
-        }
-      }
+  // Busca dados dos alunos e responsáveis
+  const studentIds = records.map((r) => r.student_id)
+  const { data: studentsWithGuardians } = await supabase
+    .from('students')
+    .select('id, name, guardian:guardians(name, phone)')
+    .in('id', studentIds)
+
+  const studentMap = new Map((studentsWithGuardians || []).map((s: any) => [s.id, s]))
+
+  for (const record of records) {
+    const st: any = studentMap.get(record.student_id)
+    if (!st) continue
+
+    const guardian = Array.isArray(st.guardian) ? st.guardian[0] : st.guardian
+    if (!guardian?.phone) continue
+
+    if (record.status === 'absent' && options.notifyAbsents !== false) {
+      const msg = `⚽ *Academia do Gol — Aviso de Ausência*\n\nOlá ${guardian.name || 'Responsável'}! Notamos que o atleta *${st.name}* não compareceu ao treino de hoje (${formattedDate}).\n\nAconteceu algum imprevisto ou gostaria de justificar a falta? Estamos à disposição!\n\n_Mensagem automática da Academia do Gol_`
+      await sendEvolutionWhatsApp({ phone: guardian.phone, message: msg }).catch(() => {})
+      notificationsSent++
+    } else if (record.status === 'present' && options.notifyPresences) {
+      const msg = `⚽ *Academia do Gol — Check-in de Treino*\n\nOlá ${guardian.name || 'Responsável'}! Confirmamos que o atleta *${st.name}* acabou de se apresentar e já está em campo para o treino de hoje (${formattedDate})!\n\n_Check-in oficial da Academia do Gol_`
+      await sendEvolutionWhatsApp({ phone: guardian.phone, message: msg }).catch(() => {})
+      notificationsSent++
     }
   }
 
   revalidatePath('/chamada')
   revalidatePath('/dashboard')
-  return { success: true, absentsNotified: absentRecords.length }
+  return { success: true, notificationsSent }
+}
+
+// Disparo imediato individual de WhatsApp ao marcar presença ou falta
+export async function notifySingleStudentAttendanceAction(
+  studentId: string,
+  trainingDate: string,
+  status: 'present' | 'absent' | 'justified',
+  classId?: string
+) {
+  const supabase = createAdminClient()
+
+  if (classId) {
+    await supabase.from('attendance_logs').upsert(
+      {
+        class_id: classId,
+        training_date: trainingDate,
+        student_id: studentId,
+        status,
+      },
+      { onConflict: 'class_id,training_date,student_id' }
+    )
+  }
+
+  const { data: student } = await supabase
+    .from('students')
+    .select('id, name, guardian:guardians(name, phone)')
+    .eq('id', studentId)
+    .single()
+
+  if (!student) return { success: false, error: 'Aluno não encontrado' }
+
+  const guardian = Array.isArray(student.guardian) ? student.guardian[0] : student.guardian
+  if (!guardian?.phone) {
+    return { success: false, error: 'Responsável sem telefone cadastrado' }
+  }
+
+  const { sendEvolutionWhatsApp } = await import('@/lib/whatsapp/evolution')
+  const formattedDate = trainingDate.split('-').reverse().join('/')
+
+  let msg = ''
+  if (status === 'present') {
+    msg = `⚽ *Academia do Gol — Check-in de Treino*\n\nOlá ${guardian.name || 'Responsável'}! Confirmamos que o atleta *${student.name}* acabou de se apresentar e já está em campo para o treino de hoje (${formattedDate})!\n\n_Check-in oficial da Academia do Gol_`
+  } else if (status === 'absent') {
+    msg = `⚽ *Academia do Gol — Aviso de Ausência*\n\nOlá ${guardian.name || 'Responsável'}! Notamos que o atleta *${student.name}* não compareceu ao treino de hoje (${formattedDate}).\n\nAconteceu algum imprevisto ou gostaria de justificar a falta? Estamos à disposição!\n\n_Mensagem automática da Academia do Gol_`
+  } else {
+    msg = `⚽ *Academia do Gol — Falta Justificada*\n\nOlá ${guardian.name || 'Responsável'}! Registramos a justificativa de ausência do atleta *${student.name}* para o treino de hoje (${formattedDate}). Obrigado pelo aviso!\n\n_Academia do Gol_`
+  }
+
+  const res = await sendEvolutionWhatsApp({ phone: guardian.phone, message: msg })
+  revalidatePath('/chamada')
+  return {
+    success: res.success,
+    message: res.success
+      ? `Notificação WhatsApp enviada para ${guardian.name || 'o responsável'}!`
+      : `Erro WhatsApp: ${res.error || 'Falha no envio'}`,
+  }
 }
