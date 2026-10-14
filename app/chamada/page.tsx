@@ -1,11 +1,12 @@
 import { CheckSquare } from 'lucide-react'
-import { getClassesForAttendance, getClassStudentsAndAttendance } from './actions'
+import { getClassesForAttendance, getClassStudentsAndAttendance, getAttendanceHistory } from './actions'
 import { AttendanceClient } from './attendance-client'
 
 interface Props {
   searchParams: Promise<{
     classId?: string
     date?: string
+    tab?: string
   }>
 }
 
@@ -26,16 +27,18 @@ export default async function ChamadaPage({ searchParams }: Props) {
     initialLogs = data.logs
   }
 
+  const history = await getAttendanceHistory(selectedClassId)
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
           <CheckSquare className="w-8 h-8 text-[#1A6B2E]" />
-          Chamada Digital na Beira do Campo
+          Chamada & Frequência em Campo
         </h1>
         <p className="text-xs text-slate-500 mt-1">
-          Marque a presença dos atletas diretamente pelo celular ou tablet na quadra.
+          Check-in de atletas na quadra, histórico completo de presenças e impressão de fichas de treino.
         </p>
       </div>
 
@@ -52,6 +55,8 @@ export default async function ChamadaPage({ searchParams }: Props) {
           students={students}
           initialLogs={initialLogs}
           classes={classes}
+          history={history}
+          initialTab={params.tab || 'chamada'}
         />
       )}
     </div>

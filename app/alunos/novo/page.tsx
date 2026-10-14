@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import { getFormDataForEnrollment, createStudentEnrollmentAction } from '../actions'
 import { SignaturePad } from '@/components/signature-pad'
+import { GuardiansFormSection } from './guardians-form-section'
+import { StudentPhotoUpload } from '../student-photo-upload'
 
 export default async function NovoAlunoPage() {
   const { units, categories, plans, classes, coaches } = await getFormDataForEnrollment()
@@ -49,6 +51,11 @@ export default async function NovoAlunoPage() {
               </h2>
               <p className="text-[11px] text-slate-500">Dados pessoais e de futebol do aluno</p>
             </div>
+          </div>
+
+          {/* Foto do Atleta para o Card FIFA */}
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-[6px]">
+            <StudentPhotoUpload />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -134,98 +141,8 @@ export default async function NovoAlunoPage() {
           </div>
         </div>
 
-        {/* 2. DADOS DO RESPONSÁVEL */}
-        <div className="card-light p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
-              <Users className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
-                2. Dados do Pai / Responsável Legal
-              </h2>
-              <p className="text-[11px] text-slate-500">Contato principal para cobranças e avisos</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Nome do Responsável <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="guardian_name"
-                required
-                placeholder="Ex: Marcos Vinícius da Silva"
-                className="input-escolinha"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Grau de Parentesco <span className="text-red-500">*</span>
-              </label>
-              <select name="relationship" className="input-escolinha cursor-pointer">
-                <option value="Pai">Pai</option>
-                <option value="Mãe">Mãe</option>
-                <option value="Avô/Avó">Avô / Avó</option>
-                <option value="Tio/Tia">Tio / Tia</option>
-                <option value="Tutor Legal">Tutor Legal</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                WhatsApp / Celular <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="tel"
-                name="guardian_phone"
-                required
-                placeholder="(81) 99999-9999"
-                className="input-escolinha font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                CPF do Responsável <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="guardian_cpf"
-                required
-                placeholder="000.000.000-00"
-                className="input-escolinha font-mono"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                E-mail do Responsável
-              </label>
-              <input
-                type="email"
-                name="guardian_email"
-                placeholder="email@responsavel.com"
-                className="input-escolinha"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Endereço / Bairro
-              </label>
-              <input
-                type="text"
-                name="address"
-                placeholder="Ex: Rua Setúbal, Boa Viagem"
-                className="input-escolinha"
-              />
-            </div>
-          </div>
-        </div>
+        {/* 2. DADOS DOS RESPONSÁVEIS */}
+        <GuardiansFormSection />
 
         {/* 3. FICHA MÉDICA & AUTORIZAÇÕES */}
         <div className="card-light p-6 space-y-5">

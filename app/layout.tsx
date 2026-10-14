@@ -4,8 +4,8 @@ import { ThemeProvider } from '@/components/theme-provider'
 import { AppShell } from '@/components/app-shell'
 
 export const metadata: Metadata = {
-  title: 'Academia do Gol | Gestão da Escolinha de Futebol',
-  description: 'Sistema completo de administração interna, turmas, chamadas, jogos, estoque e mensalidades da Academia do Gol.',
+  title: 'Academia do Gol | DNA Rubro-Negro • Sport Club do Recife',
+  description: 'Formação de atletas, turmas, convocações, chamadas e gestão com a tradição e o DNA do Sport Club do Recife.',
 }
 
 export default function RootLayout({

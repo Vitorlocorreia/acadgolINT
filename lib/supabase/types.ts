@@ -238,6 +238,7 @@ export interface Database {
           city: string | null
           state: string | null
           zip_code: string | null
+          receives_notifications: boolean
           created_at: string
         }
         Insert: {
@@ -252,6 +253,7 @@ export interface Database {
           city?: string | null
           state?: string | null
           zip_code?: string | null
+          receives_notifications?: boolean
           created_at?: string
         }
         Update: {
@@ -266,6 +268,7 @@ export interface Database {
           city?: string | null
           state?: string | null
           zip_code?: string | null
+          receives_notifications?: boolean
           created_at?: string
         }
       }
@@ -364,6 +367,7 @@ export interface Database {
           pix_qr_url: string | null
           paid_at: string | null
           payment_method: string | null
+          notes: string | null
           created_at: string
         }
         Insert: {
@@ -378,6 +382,7 @@ export interface Database {
           pix_qr_url?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          notes?: string | null
           created_at?: string
         }
         Update: {
@@ -392,6 +397,7 @@ export interface Database {
           pix_qr_url?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          notes?: string | null
           created_at?: string
         }
       }

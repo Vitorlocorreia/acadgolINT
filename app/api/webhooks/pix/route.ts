@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
       .update({
         status: 'paid',
         paid_at: new Date().toISOString(),
-        payment_method: 'pix',
+        payment_method: 'pix_portal',
+        notes: '[PORTAL DO PAI] Baixa automática via PIX Webhook (Portal do Responsável)',
       })
       .eq('id', invoiceId)
       .select('id, student_id, amount')

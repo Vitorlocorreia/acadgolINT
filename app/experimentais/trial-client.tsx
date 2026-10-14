@@ -125,6 +125,14 @@ export function TrialClient({ trials }: Props) {
                       <span>Unidade:</span>
                       <span className="text-slate-700 font-medium">{trial.unit?.name || 'A definir'}</span>
                     </div>
+                    {trial.class_info && (
+                      <div className="flex items-center justify-between text-slate-500">
+                        <span>Turma Vinculada:</span>
+                        <span className="font-bold text-[#D61F27] bg-[#D61F27]/10 px-1.5 py-0.5 rounded text-[10px]">
+                          ⚽ {trial.class_info.name}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between text-slate-500 pt-1 border-t border-slate-200">
                       <span>Responsável:</span>
                       <span className="font-bold text-slate-800">{trial.guardian_name}</span>
@@ -132,17 +140,27 @@ export function TrialClient({ trials }: Props) {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2 flex-wrap">
                   <a
                     href={`https://wa.me/55${cleanPhone}?text=${encodeURIComponent(whatsappMsg)}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="px-3 py-1.5 bg-[#1A6B2E]/10 hover:bg-[#1A6B2E]/20 text-[#0D4A1C] border border-[#1A6B2E]/30 rounded text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
+                    className="px-2.5 py-1.5 bg-[#D61F27]/10 hover:bg-[#D61F27]/20 text-[#D61F27] border border-[#D61F27]/30 rounded text-[11px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
                   >
                     <Send className="w-3 h-3" /> WhatsApp
                   </a>
 
                   <div className="flex items-center gap-1.5">
+                    {trial.class_id && (
+                      <Link
+                        href={`/chamada?classId=${trial.class_id}&date=${trial.scheduled_date}`}
+                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded text-[10px] font-bold uppercase inline-flex items-center gap-1 cursor-pointer"
+                        title="Ver lista de presença desta turma"
+                      >
+                        <span>📋 Chamada</span>
+                      </Link>
+                    )}
+
                     {trial.status === 'scheduled' && (
                       <button
                         onClick={() => handleStatusChange(trial.id, 'attended')}
@@ -155,7 +173,7 @@ export function TrialClient({ trials }: Props) {
                     {trial.status === 'attended' && (
                       <Link
                         href="/alunos/novo"
-                        className="px-2.5 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer shadow-xs"
+                        className="px-2.5 py-1.5 bg-[#D61F27] hover:bg-[#A31016] text-white rounded text-[10px] font-bold uppercase flex items-center gap-1 cursor-pointer shadow-xs"
                       >
                         <UserPlus className="w-3 h-3" /> Matricular
                       </Link>

@@ -5,8 +5,11 @@ import {
   Search,
   ChevronRight,
   Phone,
+  Send,
+  AlertTriangle,
 } from 'lucide-react'
 import { getStudentsList } from './actions'
+import { StudentStatusToggle } from './student-status-toggle'
 
 interface Props {
   searchParams: Promise<{
@@ -70,7 +73,7 @@ export default async function AlunosPage({ searchParams }: Props) {
           />
         </form>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link
             href="/alunos"
             className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all ${
@@ -95,11 +98,21 @@ export default async function AlunosPage({ searchParams }: Props) {
             href="/alunos?status=paused"
             className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all ${
               params.status === 'paused'
-                ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                ? 'bg-amber-600 text-white border-amber-600'
+                : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50'
             }`}
           >
             Trancados
+          </Link>
+          <Link
+            href="/alunos?status=overdue"
+            className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all ${
+              params.status === 'overdue'
+                ? 'bg-red-600 text-white border-red-600'
+                : 'bg-white text-red-600 border-red-200 hover:bg-red-50'
+            }`}
+          >
+            🚨 Inadimplentes
           </Link>
         </div>
       </div>
@@ -144,6 +157,12 @@ export default async function AlunosPage({ searchParams }: Props) {
                   const enrollment = Array.isArray(st.enrollment) ? st.enrollment[0] : st.enrollment
                   const guardian = Array.isArray(st.guardian) ? st.guardian[0] : st.guardian
                   const guardianPhone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
+                  const todayIso = new Date().toISOString().slice(0, 10)
+                  const overdueInvoices = (st.invoices ?? []).filter(
+                    (i: any) => i.status === 'overdue' || (i.status === 'pending' && i.due_date < todayIso)
+                  )
+                  const isOverdue = overdueInvoices.length > 0
+                  const overdueTotal = overdueInvoices.reduce((acc: number, cur: any) => acc + Number(cur.amount), 0)
 
                   return (
                     <tr key={st.id} className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors">
@@ -219,20 +238,47 @@ export default async function AlunosPage({ searchParams }: Props) {
                         <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                           st.status === 'active'
                             ? 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20'
+                            : st.status === 'paused'
+                            ? 'bg-amber-100 text-amber-800 border-amber-300'
                             : 'bg-slate-100 text-slate-500 border-slate-200'
                         }`}>
-                          {st.status === 'active' ? 'Ativo' : 'Inativo'}
+                          {st.status === 'active' ? 'Ativo' : st.status === 'paused' ? 'Trancado' : 'Inativo'}
                         </span>
+                        {isOverdue && (
+                          <span className="block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-red-100 text-red-700 border border-red-200">
+                            🚨 {overdueInvoices.length} mensalidade(s)
+                          </span>
+                        )}
                       </td>
 
                       {/* Ação */}
                       <td className="px-5 py-4 text-right">
-                        <Link
-                          href={`/alunos/${st.id}`}
-                          className="px-3 py-1.5 bg-slate-100 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] text-slate-700 border border-slate-200 rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
-                        >
-                          Ver Ficha <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {/* Trancar / Reativar Matrícula */}
+                          <StudentStatusToggle studentId={st.id} currentStatus={st.status} compact={true} />
+
+                          {/* Cobrança WhatsApp se inadimplente */}
+                          {isOverdue && guardianPhone && (
+                            <a
+                              href={`https://wa.me/55${guardianPhone}?text=${encodeURIComponent(
+                                `Olá ${guardian?.name}! Aqui é da Academia do Gol. Notamos uma pendência de R$ ${overdueTotal.toFixed(2)} referente à mensalidade do atleta ${st.name}. Poderia nos enviar o comprovante ou nos avisar para gerarmos uma nova chave PIX? Obrigado!`
+                              )}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Enviar cobrança cordial no WhatsApp"
+                              className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
+                            >
+                              <Send className="w-3 h-3" /> Cobrar
+                            </a>
+                          )}
+
+                          <Link
+                            href={`/alunos/${st.id}`}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] text-slate-700 border border-slate-200 rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
+                          >
+                            Ficha <ChevronRight className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   )

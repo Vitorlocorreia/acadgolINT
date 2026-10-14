@@ -50,7 +50,62 @@ export async function sendEvolutionWhatsApp({
     return { success: false, error: err.message }
   }
 }
+export async function sendEvolutionWhatsAppMedia({
+  phone,
+  media,
+  mimetype = 'image/jpeg',
+  caption,
+  fileName = 'convocacao-sport.jpg',
+}: {
+  phone: string
+  media: string
+  mimetype?: string
+  caption: string
+  fileName?: string
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    let cleanPhone = phone.replace(/\D/g, '')
+    if (cleanPhone.length <= 11) {
+      cleanPhone = `55${cleanPhone}`
+    }
 
+    // Se for base64 com prefixo data:image..., extrai apenas o raw base64
+    const cleanMedia = media.includes('base64,') ? media.split('base64,')[1] : media
+
+    const res = await fetch(`${EVOLUTION_URL}/message/sendMedia/${INSTANCE_NAME}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: EVOLUTION_KEY,
+      },
+      body: JSON.stringify({
+        number: cleanPhone,
+        mediatype: 'image',
+        mimetype: mimetype,
+        media: cleanMedia,
+        caption: caption,
+        fileName: fileName,
+        options: {
+          delay: 1200,
+          presence: 'composing',
+        },
+      }),
+      signal: AbortSignal.timeout(15000),
+    })
+
+    if (!res.ok) {
+      const errText = await res.text()
+      console.warn(`Evolution API sendMedia HTTP ${res.status}: ${errText}. Fazendo fallback para texto...`)
+      return sendEvolutionWhatsApp({ phone, message: caption })
+    }
+
+    const data = await res.json()
+    return { success: true, messageId: data?.key?.id }
+  } catch (err: any) {
+    console.warn('Falha no sendMedia, executando fallback para texto:', err.message)
+    return sendEvolutionWhatsApp({ phone, message: caption })
+  }
+}
 // Verifica status da conexão do WhatsApp e dados do aparelho
 export async function getEvolutionInstanceStatus(): Promise<{
   connected: boolean

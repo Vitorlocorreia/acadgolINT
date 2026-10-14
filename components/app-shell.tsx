@@ -20,6 +20,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronRight,
+  Flame,
 } from 'lucide-react'
 import { ThemeToggle } from './theme-toggle'
 
@@ -44,14 +45,14 @@ const navItems = [
     label: 'Chamada na Quadra',
     icon: CheckSquare,
     badge: 'Campo',
-    badgeColor: 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20',
+    badgeColor: 'bg-red-500/10 text-[#D61F27] border-red-500/30',
   },
   {
     href: '/jogos',
     label: 'Jogos & Convocações',
     icon: Trophy,
-    badge: 'Jogos',
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    badge: 'FUT',
+    badgeColor: 'bg-[#FFE300] text-black font-extrabold border-amber-400',
   },
   {
     href: '/uniformes',
@@ -68,14 +69,14 @@ const navItems = [
     label: 'Aulas Experimentais',
     icon: Target,
     badge: 'Leads',
-    badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+    badgeColor: 'bg-amber-100 text-amber-900 border-amber-300',
   },
   {
     href: '/whatsapp',
     label: 'WhatsApp Robô',
     icon: Smartphone,
     badge: 'Auto',
-    badgeColor: 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/30',
+    badgeColor: 'bg-red-500/10 text-[#D61F27] border-red-500/30',
   },
 ]
 
@@ -85,8 +86,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  // Ignora o AppShell no portal público do responsável
-  const isPortal = pathname.startsWith('/portal')
+  // Ignora o AppShell no portal público do responsável e na página pública de convocação
+  const isPortal = pathname.startsWith('/portal') || pathname.startsWith('/convocacao')
 
   useEffect(() => {
     const saved = localStorage.getItem('acadgol_sidebar_collapsed')
@@ -116,7 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col lg:flex-row bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-200">
       {/* Mobile Top Header */}
       <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-[var(--bg-card)] border-b border-[var(--border-color)] sticky top-0 z-50 shadow-2xs">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="relative w-8 h-8 shrink-0">
             <Image
               src="/logo.png"
@@ -126,12 +127,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               priority
             />
           </div>
+          <div className="w-[1px] h-6 bg-slate-300 dark:bg-slate-700"></div>
+          <div className="relative w-6 h-8 shrink-0 drop-shadow-xs">
+            <Image
+              src="/sport-recife.svg"
+              alt="Sport Club do Recife"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
           <div>
-            <h1 className="font-bebas text-lg leading-none tracking-wider text-[#1A6B2E] dark:text-emerald-400">
-              Academia do Gol
-            </h1>
+            <div className="flex items-center gap-1">
+              <h1 className="font-bebas text-lg leading-none tracking-wider text-[#D61F27]">
+                Academia do Gol
+              </h1>
+              <span className="text-[9px] text-[#F5A623]">★ ★ ★</span>
+            </div>
             <p className="text-[9px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400">
-              Gestão Escolinha
+              DNA Rubro-Negro • Leão da Ilha
             </p>
           </div>
         </div>
@@ -153,27 +167,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         } ${isCollapsed ? 'lg:w-[76px]' : 'lg:w-[260px]'}`}
       >
-        {/* Header da Sidebar */}
-        <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between min-h-[72px]">
-          <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden">
-            <div className="relative w-10 h-10 shrink-0 drop-shadow-xs">
-              <Image
-                src="/logo.png"
-                alt="Logo Academia do Gol"
-                fill
-                className="object-contain"
-                priority
-              />
+        {/* Header da Sidebar com Escudos Combinados */}
+        <div className="p-3.5 border-b border-[var(--border-color)] flex items-center justify-between min-h-[72px]">
+          <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <div className="relative w-9 h-9 shrink-0 drop-shadow-xs">
+                <Image
+                  src="/logo.png"
+                  alt="Logo Academia do Gol"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <div className="w-[1px] h-7 bg-slate-200 dark:bg-slate-700"></div>
+              <div className="relative w-7 h-9 shrink-0 drop-shadow-xs">
+                <Image
+                  src="/sport-recife.svg"
+                  alt="Sport Club do Recife"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
             </div>
+
             {!isCollapsed && (
               <div className="truncate">
-                <h2 className="font-bebas text-xl leading-none tracking-wider text-[#1A6B2E] dark:text-emerald-400 truncate">
-                  ACADEMIA DO GOL
-                </h2>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-2 h-2 rounded-full bg-[#1A6B2E] dark:bg-emerald-400 shrink-0"></span>
-                  <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 truncate">
-                    Gestão Escolinha
+                <div className="flex items-center gap-1.5">
+                  <h2 className="font-bebas text-lg leading-none tracking-wider text-[#D61F27] truncate">
+                    ACADEMIA DO GOL
+                  </h2>
+                </div>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="text-[10px] text-[#F5A623]">★ ★ ★</span>
+                  <span className="text-[9px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 truncate">
+                    Leão da Ilha
                   </span>
                 </div>
               </div>
@@ -188,18 +217,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             title={isCollapsed ? 'Expandir Menu' : 'Recolher Menu'}
           >
             {isCollapsed ? (
-              <PanelLeftOpen className="w-4 h-4 text-[#1A6B2E] dark:text-emerald-400" />
+              <PanelLeftOpen className="w-4 h-4 text-[#D61F27]" />
             ) : (
               <PanelLeftClose className="w-4 h-4" />
             )}
           </button>
         </div>
 
+        {/* Faixa Rubro-Negra Decorativa */}
+        <div className="h-1 w-full bg-gradient-to-r from-[#D61F27] via-[#8B0D12] to-[#FFE300]"></div>
+
         {/* Itens de Navegação */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {!isCollapsed && (
-            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-              Menu Principal
+            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center justify-between">
+              <span>Menu Principal</span>
+              <span className="text-[9px] text-[#D61F27] font-bold">DNA Rubro-Negro</span>
             </div>
           )}
 
@@ -219,14 +252,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   isCollapsed ? 'justify-center px-2' : 'justify-between px-3'
                 } py-2.5 rounded-[6px] text-xs font-bold uppercase tracking-wider transition-all duration-150 relative group ${
                   isActive
-                    ? 'bg-[#1A6B2E] text-white shadow-xs dark:bg-emerald-600'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-[#0D4A1C] dark:hover:text-slate-100 hover:bg-[var(--bg-subtle)]'
+                    ? 'bg-gradient-to-r from-[#D61F27] to-[#8B0D12] text-white shadow-sm border-l-4 border-[#FFE300]'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-red-500/10 hover:text-[#D61F27] dark:hover:text-[#D61F27]'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <item.icon
-                    className={`w-4 h-4 shrink-0 ${
-                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-[#1A6B2E] dark:group-hover:text-emerald-400'
+                    className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
+                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-[#D61F27]'
                     }`}
                   />
                   {!isCollapsed && <span className="truncate">{item.label}</span>}
@@ -234,45 +267,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                 {!isCollapsed && item.badge && (
                   <span
-                    className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
-                      isActive
-                        ? 'bg-white/20 text-white border-white/30'
-                        : item.badgeColor
+                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border shrink-0 ${
+                      isActive ? 'bg-white/20 text-white border-white/30' : item.badgeColor
                     }`}
                   >
                     {item.badge}
                   </span>
-                )}
-
-                {/* Floating tooltip no modo colapsado */}
-                {isCollapsed && (
-                  <div className="fixed left-[84px] z-50 hidden group-hover:flex items-center px-2.5 py-1 rounded bg-slate-900 text-white text-xs font-bold whitespace-nowrap shadow-lg animate-in fade-in-50 duration-150 pointer-events-none">
-                    {item.label}
-                  </div>
                 )}
               </Link>
             )
           })}
         </nav>
 
-        {/* Rodapé da Sidebar: Tema Claro/Escuro & Status */}
-        <div className="p-3 border-t border-[var(--border-color)] bg-[var(--bg-card)] space-y-2">
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} gap-2`}>
-            {!isCollapsed && (
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                <span className="text-[11px] font-bold uppercase tracking-wider">Aparência</span>
-              </div>
-            )}
-            <ThemeToggle showLabel={!isCollapsed} />
-          </div>
-
+        {/* Rodapé da Sidebar */}
+        <div className="p-3 border-t border-[var(--border-color)]">
           {!isCollapsed && (
-            <div className="p-2.5 rounded-[6px] bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-0.5 shadow-2xs">
-              <div className="flex items-center gap-1.5 text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wider">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#1A6B2E] dark:text-emerald-400" />
-                <span>Base Oficial</span>
+            <div className="p-2.5 rounded-[6px] bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1 shadow-2xs">
+              <div className="flex items-center justify-between text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wider">
+                <span className="flex items-center gap-1.5">
+                  <Flame className="w-3.5 h-3.5 text-[#D61F27]" />
+                  <span>Pelo Sport Tudo!</span>
+                </span>
+                <span className="text-[10px] text-[#F5A623]">★ ★ ★</span>
               </div>
-              <p className="text-[9px] text-slate-400 font-mono">Supabase: acadgolint</p>
+              <p className="text-[9px] text-slate-400 font-mono">Sport Recife • 1987 | 2008</p>
             </div>
           )}
         </div>
@@ -296,11 +314,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               className="p-1.5 rounded-[6px] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-[var(--bg-subtle)] transition-all cursor-pointer"
               title={isCollapsed ? 'Expandir Menu Lateral' : 'Recolher Menu Lateral'}
             >
-              {isCollapsed ? <PanelLeftOpen className="w-5 h-5" /> : <PanelLeftClose className="w-5 h-5" />}
+              {isCollapsed ? <PanelLeftOpen className="w-5 h-5 text-[#D61F27]" /> : <PanelLeftClose className="w-5 h-5" />}
             </button>
 
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500">
-              <span>Academia do Gol</span>
+              <span className="text-[#D61F27] font-bold">Academia do Gol</span>
               <ChevronRight className="w-3.5 h-3.5" />
               <span className="text-[var(--text-primary)] font-bold">
                 {currentItem?.label || 'Painel de Controle'}
@@ -309,9 +327,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-[4px] bg-[#C8E6C9]/40 dark:bg-emerald-950/50 border border-[#1A6B2E]/20 dark:border-emerald-800 text-[#0D4A1C] dark:text-emerald-300 text-xs font-bold font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#1A6B2E] dark:bg-emerald-400 animate-pulse"></span>
-              <span>Temporada 2026</span>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-[4px] bg-red-500/10 dark:bg-red-950/40 border border-red-500/30 text-[#D61F27] dark:text-red-400 text-xs font-bold font-mono">
+              <span className="w-2 h-2 rounded-full bg-[#D61F27] animate-pulse"></span>
+              <span>Leão da Ilha • Temporada 2026</span>
+              <span className="text-[#F5A623]">★ ★ ★</span>
             </div>
 
             <ThemeToggle />

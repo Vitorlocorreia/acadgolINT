@@ -26,49 +26,65 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
-      {/* Top Banner / Welcome */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#0D4A1C] via-[#1A6B2E] to-[#0D4A1C] border border-[#0D4A1C] p-6 rounded-[6px] shadow-xs relative overflow-hidden text-white">
-        <div className="space-y-1 relative z-10">
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-white/20 text-white border border-white/30 backdrop-blur-xs">
-              Temporada 2026
-            </span>
-            <span className="text-xs text-[#C8E6C9] font-medium">Unidades Recife & Região Metropolitana</span>
-          </div>
-          <h1 className="font-bebas text-3xl sm:text-4xl tracking-wider leading-none">
-            Painel Geral da Escolinha
-          </h1>
-          <p className="text-xs text-white/90">
-            Controle de atletas, chamadas em quadra, mensalidades e desenvolvimento técnico.
-          </p>
+      {/* Top Banner / Welcome Sport Club do Recife Hero */}
+      <div className="relative rounded-[10px] overflow-hidden border border-[#FFE300]/30 shadow-lg text-white">
+        {/* Background Image: Estádio Ilha do Retiro */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/sport-stadium-hero.jpg"
+            alt="Ilha do Retiro - Sport Club do Recife"
+            className="w-full h-full object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/85 to-[#8B0D12]/75" />
         </div>
 
-        {/* Quick Actions */}
-        <div className="flex items-center gap-2.5 flex-wrap relative z-10">
-          <Link
-            href="/alunos/novo"
-            className="px-4 py-2.5 bg-white hover:bg-slate-100 text-[#0D4A1C] rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
-          >
-            <PlusCircle className="w-4 h-4 text-[#1A6B2E]" />
-            Nova Matrícula
-          </Link>
-          <Link
-            href="/chamada"
-            className="px-4 py-2.5 bg-[#0D4A1C]/80 hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 border border-white/20 transition-all cursor-pointer"
-          >
-            <Clock className="w-4 h-4 text-[#C8E6C9]" />
-            Fazer Chamada
-          </Link>
+        <div className="relative z-10 p-6 sm:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="relative w-7 h-9 shrink-0 drop-shadow-md">
+                <img src="/sport-recife.svg" alt="Sport Club do Recife" className="w-full h-full object-contain" />
+              </div>
+              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-[#D61F27] text-white border border-[#FFE300]/40 shadow-xs">
+                DNA Rubro-Negro • 1987 & 2008
+              </span>
+              <span className="text-xs text-[#FFE300] font-bold">★ ★ ★ Leão da Ilha</span>
+            </div>
+
+            <h1 className="font-bebas text-3xl sm:text-5xl tracking-wider leading-none">
+              Formando os Novos Leões da Ilha
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+              Academia do Gol em sintonia com a tradição rubro-negra. Gestão completa de atletas, chamadas de campo, convocações estilo FIFA e desenvolvimento de alta performance.
+            </p>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="flex items-center gap-3 flex-wrap shrink-0">
+            <Link
+              href="/alunos/novo"
+              className="px-4 py-2.5 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#A8131A] hover:to-[#6B080D] text-white rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer border border-[#FFE300]/40"
+            >
+              <PlusCircle className="w-4 h-4 text-[#FFE300]" />
+              Nova Matrícula
+            </Link>
+            <Link
+              href="/chamada"
+              className="px-4 py-2.5 bg-black/60 hover:bg-black/80 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-slate-700 backdrop-blur-xs transition-all cursor-pointer"
+            >
+              <Clock className="w-4 h-4 text-[#D61F27]" />
+              Fazer Chamada
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Alunos */}
-        <div className="card-light p-5 space-y-3 hover:border-[#1A6B2E]/50 transition-all">
+        <div className="card-light p-5 space-y-3 hover:border-[#D61F27]/50 transition-all border-l-4 border-l-[#D61F27]">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Atletas Ativos</span>
-            <div className="w-9 h-9 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/20 flex items-center justify-center text-[#1A6B2E]">
+            <div className="w-9 h-9 rounded-[4px] bg-red-500/10 border border-red-500/20 flex items-center justify-center text-[#D61F27]">
               <Users className="w-4 h-4" />
             </div>
           </div>
@@ -76,7 +92,7 @@ export default async function DashboardPage() {
             <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
               {data.activeStudents} <span className="text-sm font-sans text-slate-400 font-bold">/ {data.totalStudents} total</span>
             </div>
-            <p className="text-[11px] text-[#1A6B2E] font-semibold mt-1 flex items-center gap-1">
+            <p className="text-[11px] text-[#D61F27] font-semibold mt-1 flex items-center gap-1">
               <Flame className="w-3.5 h-3.5" /> 8 categorias em atividade
             </p>
           </div>
@@ -101,7 +117,7 @@ export default async function DashboardPage() {
           {/* Progress bar */}
           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#1A6B2E] rounded-full transition-all"
+              className="h-full bg-gradient-to-r from-[#D61F27] to-[#FFE300] rounded-full transition-all"
               style={{ width: `${Math.min(collectionRate, 100)}%` }}
             />
           </div>
