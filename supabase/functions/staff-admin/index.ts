@@ -127,9 +127,16 @@ Deno.serve(async req => {
     if (body.action === 'update') {
       if (!['admin','secretaria','financeiro','treinador'].includes(body.role) || typeof body.active !== 'boolean' || (body.role === 'treinador' && !body.coach_id)) return response({ error: 'Perfil inválido.' },400);
       if (target.id === actor.id && (!body.active || body.role !== 'admin')) return response({ error: 'Outro administrador deve alterar seu perfil.' },400);
-      const changed = await admin.from('staff_profiles').update({role:body.role,active:body.active,coach_id:body.role==='treinador'?body.coach_id:null,sessions_valid_after:new Date().toISOString(),updated_by:actor.id}).eq('id',target.id).eq('role',target.role).select('id').maybeSingle();
-      if (changed.error || !changed.data) return response({ error: 'Não foi possível alterar o acesso. Confira se há uma redefinição em andamento e mantenha pelo menos um administrador ativo.' },400);
-      return response({success:true});
+      if ((body.username !== undefined && typeof body.username !== 'string') || (body.email !== undefined && typeof body.email !== 'string')) return response({ error: 'Revise usuário e e-mail.' },400);
+      const username = (body.username ?? target.username).trim().toLowerCase();
+      const email = (body.email ?? target.email).trim().toLowerCase() || `${username}@accounts.acadgol.invalid`;
+      if (!/^[a-z0-9][a-z0-9._-]{2,39}$/.test(username) || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return response({ error: 'Informe um usuário válido e revise o e-mail.' },400);
+      // One atomic profile update changes both login aliases. Auth identity/password stay intact.
+      // Unique indexes arbitrate simultaneous edits; do not reveal the conflicting account.
+      const changed = await admin.from('staff_profiles').update({username,email,role:body.role,active:body.active,coach_id:body.role==='treinador'?body.coach_id:null,sessions_valid_after:new Date().toISOString(),updated_by:actor.id}).eq('id',target.id).eq('role',target.role).eq('username',target.username).eq('email',target.email).or(`credential_reset_until.is.null,credential_reset_until.lt.${new Date().toISOString()}`).select('id').maybeSingle();
+      if (changed.error?.code === '23505') return response({ error: 'Este usuário ou e-mail já está em uso. Informe outros dados.' },409);
+      if (changed.error || !changed.data) return response({ error: 'Não foi possível alterar o acesso. Atualize a página, confira se há uma redefinição em andamento e mantenha pelo menos um administrador ativo.' },409);
+      return response({success:true,selfUpdated:target.id===actor.id});
     }
     return response({ error: 'Operação desconhecida.' },400);
   } catch { return response({ error: 'Não foi possível concluir a solicitação.' },500); }

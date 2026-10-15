@@ -24,6 +24,8 @@ No agendamento da aula experimental, assinale a autorização do responsável pa
 
 Em **Equipe e acessos**, a secretaria cria, bloqueia e redefine os acessos dos treinadores. Na criação, pode cadastrar um novo treinador com o nome informado ou vincular um cadastro existente. O treinador acessa a chamada e os jogos das turmas vinculadas a esse cadastro. O administrador pode gerenciar todos os cargos. O e-mail é opcional; o usuário funciona sem e-mail.
 
+Use **Editar acesso** para alterar o **usuário** e o **e-mail**, inclusive os dados do próprio administrador. O sistema impede usuário ou e-mail repetido. A alteração preserva a senha, os vínculos e o histórico; no próximo acesso, use os dados atualizados. Ao editar a própria conta, você sai do sistema e entra novamente. O administrador não pode se bloquear ou alterar o próprio cargo por essa tela. A secretaria continua limitada aos acessos dos treinadores.
+
 | Perfil | Rotina permitida |
 | --- | --- |
 | Administrador | Todos os módulos e gestão de acessos |

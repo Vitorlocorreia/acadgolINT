@@ -23,12 +23,15 @@ export async function createStaffAction(data: unknown) {
   return result
 }
 export async function updateStaffAction(data: unknown) {
-  const {staff}=await requireStaff('staff.coaches.manage')
-  const input = z.object({ user_id: z.uuid(), role: z.enum(roles), active: z.boolean(), coach_id: z.uuid().nullable().optional() }).safeParse(data)
+  const {staff,db}=await requireStaff('staff.coaches.manage')
+  const input = z.object({ user_id: z.uuid(), username: z.string().trim().toLowerCase().regex(/^[a-z0-9][a-z0-9._-]{2,39}$/), email: z.union([z.email().max(254),z.literal('')]).transform(value=>value.trim().toLowerCase()), role: z.enum(roles), active: z.boolean(), coach_id: z.uuid().nullable().optional() }).safeParse(data)
   if (!input.success) return { error: 'Revise o acesso selecionado.' }
   if(staff.role==='secretaria'&&input.data.role!=='treinador')return {error:'A secretaria pode gerenciar apenas acessos de treinadores.'}
   const result = await manageStaff({ action:'update', ...input.data })
-  if (result.success) { revalidatePath('/equipe'); revalidatePath('/turmas') }
+  if (result.success) {
+    revalidatePath('/equipe'); revalidatePath('/turmas')
+    if (result.selfUpdated) await db.auth.signOut({scope:'local'})
+  }
   return result
 }
 export async function resetStaffPasswordAction(userId: string) {

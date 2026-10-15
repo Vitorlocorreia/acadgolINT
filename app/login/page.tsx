@@ -9,5 +9,5 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const context = await getStaffSession()
   if (context?.staff.active && context.staff.session_valid) redirect(context.staff.must_change_password ? '/alterar-senha' : homeForRole(context.staff.role))
   const params = await searchParams
-  return <AuthLayout title="Bem-vindo de volta" description="Entre para acompanhar a rotina da escolinha."><LoginForm next={params.next} expired={params.reason === 'expired'} /></AuthLayout>
+  return <AuthLayout title="Bem-vindo de volta" description="Entre para acompanhar a rotina da escolinha.">{params.reason==='access_updated'&&<p role="status" className="notice mb-5">Acesso atualizado. Entre com seu novo usuário ou e-mail e a mesma senha.</p>}<LoginForm next={params.next} expired={params.reason === 'expired'} /></AuthLayout>
 }
