@@ -166,10 +166,10 @@ export default async function DashboardPage() {
                 <div key={item.id} className="dashboard-training">
                   <div className="min-w-[54px] text-center">
                     <p className="text-lg font-bold tracking-tight">
-                      {item.start_time?.slice(0, 5)}
+                      {item.start_time?.slice(0, 5) || (item.shift === 'morning' ? 'Manhã' : item.shift === 'afternoon' ? 'Tarde' : item.shift === 'evening' ? 'Noite' : 'A definir')}
                     </p>
                     <p className="text-xs text-[var(--text-muted)]">
-                      {item.end_time?.slice(0, 5)}
+                      {item.end_time?.slice(0, 5) || 'Hora a confirmar'}
                     </p>
                   </div>
                   <div className="min-w-0 flex-1">

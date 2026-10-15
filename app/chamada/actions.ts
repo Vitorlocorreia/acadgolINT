@@ -10,7 +10,7 @@ export async function getClassesForAttendance() {
   const { data: classes, error } = await supabase
     .from("classes")
     .select(
-      "id, name, start_time, end_time, unit:units(name), category:categories(name)",
+      "id, name, start_time, end_time, shift, unit:units(name), category:categories(name)",
     )
     .eq("is_active", true)
     .order("start_time");

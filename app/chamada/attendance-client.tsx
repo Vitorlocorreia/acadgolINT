@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Dialog } from "@/components/dialog";
 import { formatDate } from "@/lib/format";
+import { classScheduleLabel } from '@/lib/class-schedule';
 import {
   saveAttendanceAction,
   notifySingleStudentAttendanceAction,
@@ -47,8 +48,9 @@ interface ClassInfo {
   name: string;
   unit?: { name: string } | null;
   category?: { name: string } | null;
-  start_time?: string;
-  end_time?: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  shift?: string | null;
 }
 interface Session {
   key: string;
@@ -325,9 +327,7 @@ export function AttendanceClient({
             {selectedClass?.unit && (
               <p className="mt-2 text-xs text-[var(--text-muted)]">
                 {selectedClass.unit.name}
-                {selectedClass.start_time
-                  ? ` · ${selectedClass.start_time.slice(0, 5)}`
-                  : ""}
+                {` · ${classScheduleLabel(selectedClass)}`}
               </p>
             )}
           </div>

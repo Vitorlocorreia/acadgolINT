@@ -14,6 +14,8 @@ import {
 } from 'lucide-react'
 import { getClassesList, getUnitsAndCategoriesForClasses, createClassAction } from './actions'
 import { CategorySelect } from './category-select'
+import { classScheduleLabel } from '@/lib/class-schedule'
+import { EditClass } from './edit-class'
 
 export default async function TurmasPage() {
   const {staff}=await requirePage('classes.read');
@@ -51,14 +53,14 @@ export default async function TurmasPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <span className="px-2 py-0.5 rounded text-xs font-bold tracking-normal bg-[#c81930]/10 text-[#a71327] border border-[#c81930]/20">
-                            {cls.category?.name || 'Geral'}
+                            {cls.category?.name || 'Categoria a confirmar'}
                           </span>
                           <h3 className="section-title  text-[var(--text-primary)] tracking-tight mt-1.5 leading-tight">
                             {cls.name}
                           </h3>
                         </div>
                         <span className="text-xs font-mono font-bold text-[var(--text-secondary)]">
-                          {cls.start_time?.slice(0, 5)} - {cls.end_time?.slice(0, 5)}
+                          {classScheduleLabel(cls)}
                         </span>
                       </div>
 
@@ -80,21 +82,23 @@ export default async function TurmasPage() {
                         <div className="flex justify-between text-xs">
                           <span className="text-[var(--text-muted)] font-medium">Atletas Matriculados</span>
                           <span className="font-mono font-bold text-[var(--text-primary)]">
-                            {cls.active_students_count} / {cls.max_students}
+                            {cls.active_students_count}{cls.max_students != null ? ` / ${cls.max_students}` : ' ativos · capacidade a confirmar'}
                           </span>
                         </div>
-                        <div className="h-1.5 bg-[var(--bg-subtle)] rounded-full overflow-hidden border border-[var(--border-color)]">
+                        {cls.max_students != null && <div className="h-1.5 bg-[var(--bg-subtle)] rounded-full overflow-hidden border border-[var(--border-color)]">
                           <div
                             className={`h-full rounded-full transition-all ${
                               occupancyPct >= 90 ? 'bg-amber-500' : 'bg-[#c81930]'
                             }`}
                             style={{ width: `${Math.min(occupancyPct, 100)}%` }}
                           />
-                        </div>
+                        </div>}
                       </div>
+                      {cls.import_source && <p className="text-xs text-[var(--text-muted)]">Organização por dias e turno da planilha. Confira os horários e a divisão por idade com a equipe.</p>}
                     </div>
 
-                    <div className="pt-3 border-t border-[var(--border-color)] flex items-center justify-between">
+                    <div className="pt-3 border-t border-[var(--border-color)] space-y-2">
+                      {staff.role !== 'treinador' && <EditClass value={cls} categories={categories} coaches={coaches} />}
                       <Link
                         href={`/chamada?classId=${cls.id}`}
                         className="button w-full py-2 bg-[#c81930]/10 hover:bg-[#c81930] hover:text-white text-[#a71327] text-xs font-bold tracking-normal rounded-lg text-center transition-all flex items-center justify-center gap-1 cursor-pointer border border-[#c81930]/20"

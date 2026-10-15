@@ -337,10 +337,9 @@ export default async function NovoAlunoPage({searchParams}:{searchParams:Promise
                   <option value="">Nenhuma turma cadastrada</option>
                 ) : (
                   classes.map((cls: any) => (
-                    <option key={cls.id} value={cls.id}>
+                    <option key={cls.id} value={cls.id} disabled={!cls.start_time || !cls.category_id || cls.max_students == null}>
                       {cls.name} (
-                      {cls.start_time?.slice(0, 5)} -{" "}
-                      {cls.end_time?.slice(0, 5)})
+                      {cls.start_time ? `${cls.start_time.slice(0, 5)} - ${cls.end_time?.slice(0, 5)}` : 'horário a confirmar'}){(!cls.start_time || !cls.category_id || cls.max_students == null) && ' · completar turma antes de novas matrículas'}
                     </option>
                   ))
                 )}

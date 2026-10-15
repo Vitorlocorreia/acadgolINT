@@ -26,6 +26,7 @@ function scenario(people = [activeTrainer]) {
     '@/lib/supabase/admin': { createAdminClient: async permission => { permissions.push(permission); return db } },
     'next/cache': { revalidatePath() {} },
     'next/navigation': { redirect() { throw new Error('REDIRECT') } },
+    '@/lib/class-schedule': loadTS('lib/class-schedule.ts'),
   }, { process: { env: { SCHOOL_UNIT_ID: 'school-unit' } } })
   return { actions, writes, permissions, tables }
 }

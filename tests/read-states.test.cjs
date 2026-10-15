@@ -16,6 +16,7 @@ function loadReadActions(file, failingTable) {
     'next/navigation': { redirect() { throw Error('Read must not redirect'); } },
     '@/lib/whatsapp/evolution': {}, './utils': {}, fs: {}, path: {},
     '@/lib/whatsapp/tracked': {},
+    '@/lib/class-schedule': loadTS('lib/class-schedule.ts'),
     '@/lib/supabase/family': {},
     '@/lib/callups/model': {}, '@/lib/callups/card': {},
   });

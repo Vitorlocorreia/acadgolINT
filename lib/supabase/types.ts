@@ -139,12 +139,14 @@ export interface Database {
           id: string
           name: string
           unit_id: string
-          category_id: string
+          category_id: string | null
           coach_id: string | null
           days_of_week: string[]
-          start_time: string
-          end_time: string
-          max_students: number
+          start_time: string | null
+          end_time: string | null
+          max_students: number | null
+          shift: string | null
+          import_source: Json | null
           is_active: boolean
           created_at: string
         }
@@ -152,12 +154,14 @@ export interface Database {
           id?: string
           name: string
           unit_id: string
-          category_id: string
+          category_id: string | null
           coach_id?: string | null
           days_of_week: string[]
-          start_time: string
-          end_time: string
-          max_students?: number
+          start_time: string | null
+          end_time: string | null
+          max_students?: number | null
+          shift?: string | null
+          import_source?: Json | null
           is_active?: boolean
           created_at?: string
         }
@@ -165,12 +169,14 @@ export interface Database {
           id?: string
           name?: string
           unit_id?: string
-          category_id?: string
+          category_id?: string | null
           coach_id?: string | null
           days_of_week?: string[]
-          start_time?: string
-          end_time?: string
-          max_students?: number
+          start_time?: string | null
+          end_time?: string | null
+          max_students?: number | null
+          shift?: string | null
+          import_source?: Json | null
           is_active?: boolean
           created_at?: string
         }

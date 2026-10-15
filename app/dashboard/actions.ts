@@ -9,8 +9,9 @@ interface NamedRelation {
 export interface DashboardClass {
   id: string;
   name: string;
-  start_time: string;
-  end_time: string;
+  start_time: string | null;
+  end_time: string | null;
+  shift: string | null;
   days_of_week: string[];
   unit: NamedRelation | null;
   category: NamedRelation | null;
@@ -63,7 +64,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       db
         .from("classes")
         .select(
-          "id, name, start_time, end_time, days_of_week, unit:units(name), category:categories(name), coach:coaches(name)",
+          "id, name, start_time, end_time, shift, days_of_week, unit:units(name), category:categories(name), coach:coaches(name)",
         )
         .eq("is_active", true)
         .order("start_time"),

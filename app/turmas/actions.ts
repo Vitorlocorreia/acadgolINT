@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { shiftFromTime } from '@/lib/class-schedule'
 
 export async function getClassesList() {
   const supabase = await createAdminClient('classes.read')
@@ -62,6 +63,7 @@ export async function createClassAction(formData: FormData) {
     coach_id: coachId,
     days_of_week: days_of_week,
     start_time: String(formData.get('start_time')),
+    shift: shiftFromTime(String(formData.get('start_time'))),
     end_time: String(formData.get('end_time')),
     max_students: parseInt(String(formData.get('max_students') || '20')),
     is_active: true,
@@ -77,4 +79,22 @@ export async function createClassAction(formData: FormData) {
   revalidatePath('/chamada')
   revalidatePath('/dashboard')
   redirect('/turmas')
+}
+
+export async function updateClassAction(form: FormData) {
+  const db = await createAdminClient('classes.write')
+  const payload = {
+    name: String(form.get('name') || '').trim(),
+    category_id: String(form.get('category_id') || '').trim() || null,
+    coach_id: String(form.get('coach_id') || '').trim() || null,
+    shift: String(form.get('shift') || ''),
+    days_of_week: form.getAll('days_of_week').map(String),
+    start_time: String(form.get('start_time') || '') || null,
+    end_time: String(form.get('end_time') || '') || null,
+    max_students: String(form.get('max_students') || '').trim() || null,
+  }
+  const { error } = await db.rpc('update_class_details', { p_class: String(form.get('id') || ''), p_details: payload })
+  if (error) return { error: error.message }
+  for (const path of ['/turmas', '/chamada', '/dashboard', '/alunos']) revalidatePath(path)
+  return { success: true }
 }
