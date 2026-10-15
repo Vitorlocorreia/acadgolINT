@@ -56,6 +56,8 @@ interface Props {
   }
   currentMonth: string
   currentStatus: string
+  pagination:{page:number;pageSize:number;total:number;pages:number}
+  filterCounts:Record<'all'|'pending'|'paid'|'unconfirmed'|'overdue',number>
   targetDate: string
   todayStr: string
   overdueInvoices: any[]
@@ -99,6 +101,7 @@ export function FinanceiroClient({
   stats,
   currentMonth,
   currentStatus,
+  pagination,filterCounts,
   targetDate,
   todayStr,
   overdueInvoices,
@@ -109,6 +112,8 @@ export function FinanceiroClient({
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isNavigating,navigate]=useTransition()
+  const goTo=(url:string)=>navigate(()=>router.push(url))
   const [activeTab, setActiveTab] = useState<FinanceTab>(
     ['mensalidades','inadimplentes','caixa_diario','relatorios','auditoria'].includes(initialTab) ? initialTab as FinanceTab : 'mensalidades'
   )
@@ -128,15 +133,15 @@ export function FinanceiroClient({
 
   // Filtros de data e mês
   const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    router.push(`/financeiro?month=${e.target.value}&status=${currentStatus}&date=${targetDate}&tab=${activeTab}`)
+    goTo(`/financeiro?month=${e.target.value}&status=${currentStatus}&date=${targetDate}&tab=${activeTab}`)
   }
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    router.push(`/financeiro?month=${currentMonth}&status=${currentStatus}&date=${e.target.value}&tab=${activeTab}`)
+    goTo(`/financeiro?month=${currentMonth}&status=${currentStatus}&date=${e.target.value}&tab=${activeTab}`)
   }
 
   const handleStatusFilter = (status: string) => {
-    router.push(`/financeiro?month=${currentMonth}&status=${status}&date=${targetDate}&tab=${activeTab}`)
+    goTo(`/financeiro?month=${currentMonth}&status=${status}&date=${targetDate}&tab=${activeTab}`)
   }
 
   const handleOpenPaymentModal=(invoice:any)=>{setFeedback(null);setModalInvoice({...invoice,idempotencyKey:crypto.randomUUID()})}
@@ -186,7 +191,8 @@ export function FinanceiroClient({
   const totalOverdueDebt = overdueInvoices.reduce((acc, curr) => acc + Number(curr.amount), 0)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-busy={isNavigating}>
+      {isNavigating&&<p role="status" className="notice text-sm flex items-center gap-2"><Loader2 size={16} className="animate-spin"/>Atualizando mensalidades…</p>}
       {/* NAVEGAÇÃO POR ABAS SUPERIORES */}
       <div className="section-tabs">
         <button aria-pressed={activeTab === 'mensalidades'}
@@ -194,7 +200,7 @@ export function FinanceiroClient({
           className={`button ${activeTab === 'mensalidades' ? 'button-primary' : 'button-quiet'}`}
         >
           <Receipt className="w-4 h-4" />
-          <span>Mensalidades ({invoices.length})</span>
+          <span>Mensalidades ({filterCounts.all})</span>
         </button>
 
         <button aria-pressed={activeTab === 'inadimplentes'}
@@ -305,19 +311,19 @@ export function FinanceiroClient({
             <div className="card-light p-4 space-y-2">
               <span className="text-xs text-[var(--text-muted)] font-bold tracking-normal">Total Previsto</span>
               <div className="stat-number  text-[var(--text-primary)] tracking-tight leading-tight">{fmt(stats.total)}</div>
-              <p className="text-xs text-[var(--text-muted)]">{invoices.length} faturas emitidas</p>
+              <p className="text-xs text-[var(--text-muted)]">{filterCounts.all} faturas emitidas</p>
             </div>
 
             <div className="card-light p-4 space-y-2 border-[var(--success)]/20 bg-[var(--success-bg)]">
-              <span className="text-xs text-[#a71327] font-bold tracking-normal">Total Recebido</span>
+              <span className="text-xs text-[#a71327] font-bold tracking-normal">Recebido no sistema</span>
               <div className="stat-number  text-[#c81930] tracking-tight leading-tight">{fmt(stats.collected)}</div>
               <p className="text-xs text-[#a71327] font-bold">{collectionPct.toFixed(1)}% arrecadado</p>
             </div>
 
             <div className="card-light p-4 space-y-2">
-              <span className="text-xs text-[var(--text-muted)] font-bold tracking-normal">Pendente (No Prazo)</span>
-              <div className="stat-number  text-[var(--text-secondary)] tracking-tight leading-tight">{fmt(stats.pending)}</div>
-              <p className="text-xs text-[var(--text-muted)]">A vencer neste mês</p>
+              <span className="text-xs text-[var(--text-muted)] font-bold tracking-normal">Pendentes de baixa</span>
+              <div className="stat-number  text-[var(--text-secondary)] tracking-tight leading-tight">{fmt(stats.pending+stats.overdue+stats.unconfirmed)}</div>
+              <p className="text-xs text-[var(--text-muted)]">{filterCounts.pending} mensalidade(s) sem quitação confirmada</p>
             </div>
 
             <div className="card-light p-4 space-y-2 border-amber-200 bg-amber-50/40">
@@ -330,7 +336,7 @@ export function FinanceiroClient({
           {/* Filtros de Status */}
           {(stats.openingPaidCount>0||stats.unconfirmedCount>0)&&<div className="notice text-sm space-y-2"><p><strong>Conferência da importação:</strong> {stats.openingPaidCount} mensalidade(s) já quitada(s), no total de {fmt(stats.openingPaid)}, sem nova entrada no caixa.</p><p>{stats.unconfirmedCount} pagamento(s) a confirmar ({fmt(stats.unconfirmed)}). Campo vazio na planilha não foi tratado como inadimplência.</p></div>}
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={()=>handleStatusFilter('unconfirmed')} className={`button text-xs ${currentStatus==='unconfirmed'?'button-primary':''}`}>A confirmar</button>
+            <button type="button" aria-pressed={currentStatus==='unconfirmed'} onClick={()=>handleStatusFilter('unconfirmed')} className={`button text-xs ${currentStatus==='unconfirmed'?'button-primary':''}`}>A confirmar ({filterCounts.unconfirmed})</button>
             <button
               onClick={() => handleStatusFilter('all')}
               className={`button px-3 py-1.5 rounded-lg text-xs font-bold  tracking-normal border transition-all cursor-pointer ${
@@ -339,7 +345,7 @@ export function FinanceiroClient({
                   : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-card-hover)]'
               }`}
             >
-              Todas ({invoices.length})
+              Todas ({filterCounts.all})
             </button>
             <button
               onClick={() => handleStatusFilter('pending')}
@@ -349,7 +355,7 @@ export function FinanceiroClient({
                   : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-card-hover)]'
               }`}
             >
-              Pendentes
+              Pendentes ({filterCounts.pending})
             </button>
             <button
               onClick={() => handleStatusFilter('paid')}
@@ -359,7 +365,7 @@ export function FinanceiroClient({
                   : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-card-hover)]'
               }`}
             >
-              Pagas
+              Pagas ({filterCounts.paid})
             </button>
           </div>
 
@@ -373,7 +379,7 @@ export function FinanceiroClient({
               </p>
             </div>
           ) : (
-            <div className="card-light overflow-hidden">
+            <div className="card-light overflow-hidden" inert={isNavigating} style={isNavigating?{opacity:0.5}:undefined}>
               <div className="overflow-x-auto">
                 <table className="data-table mobile-data-table">
                   <thead className="bg-[var(--bg-card-hover)] border-b border-[var(--border-color)] text-[var(--text-secondary)]  tracking-normal font-bold">
@@ -494,6 +500,7 @@ export function FinanceiroClient({
               </div>
             </div>
           )}
+          <nav aria-label="Paginação de mensalidades" className="card-light p-4 flex flex-wrap justify-between items-center gap-3"><p className="text-sm">{pagination.total?`${(pagination.page-1)*pagination.pageSize+1}–${Math.min(pagination.page*pagination.pageSize,pagination.total)} de ${pagination.total}`:'Nenhum registro'} · Página {pagination.page} de {pagination.pages}</p><div className="flex gap-2"><button type="button" className="button" disabled={isNavigating||pagination.page<=1} onClick={()=>goTo(`/financeiro?month=${currentMonth}&status=${currentStatus}&date=${targetDate}&tab=${activeTab}&page=${pagination.page-1}`)}>Anterior</button><button type="button" className="button" disabled={isNavigating||pagination.page>=pagination.pages} onClick={()=>goTo(`/financeiro?month=${currentMonth}&status=${currentStatus}&date=${targetDate}&tab=${activeTab}&page=${pagination.page+1}`)}>Próxima</button></div></nav>
         </div>
       )}
 

@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createHash } from 'node:crypto'
-import {paymentPartsProblem,paymentTotals,summarizeInvoices} from '@/lib/finance/payment-parts'
+import {paymentPartsProblem,paymentTotals,financeFilterStatuses} from '@/lib/finance/payment-parts'
 import { PAYMENT_PROOF_BUCKET, paymentProofProblem, paymentProofHasSignature, paymentProofName, paymentProofExtension, type PaymentProofType } from '@/lib/finance/payment-proof'
 
 import { getBrDateStr, calculateOverdueCharges, type OverdueCalculation } from './calc'
@@ -37,150 +37,61 @@ export interface ManualPaymentPayload {
 export async function getFinanceiroEscolinhaData(
   referenceMonth?: string,
   statusFilter?: string,
-  closingDate?: string
+  closingDate?: string,
+  requestedPage = 1,
 ) {
   const supabase = await createAdminClient('finance.read')
   const todayStr = getBrDateStr()
   const targetDate = closingDate || todayStr
-
   const targetMonth = referenceMonth || todayStr.slice(0,7)
-
-  // 1. Faturas do mês selecionado
-  let monthQuery = supabase
-    .from('finance_invoices').select('*')
-    .eq('reference_month', targetMonth)
-    .order('due_date', { ascending: true })
-
-  if (statusFilter && statusFilter !== 'all') {
-    monthQuery = monthQuery.eq('status', statusFilter)
+  const currentStatus=(['all','pending','paid','unconfirmed','overdue'].includes(statusFilter||'')?statusFilter!:'all') as 'all'|'pending'|'paid'|'unconfirmed'|'overdue'
+  const pageSize=50
+  const page=Number.isInteger(requestedPage)&&requestedPage>0?Math.min(requestedPage,100000):1
+  const statuses=financeFilterStatuses(currentStatus)
+  function monthPage(selectedPage:number){
+    let query=supabase.from('finance_invoices').select('*')
+      .eq('reference_month',targetMonth).order('due_date',{ascending:true}).order('id',{ascending:true})
+    query=statuses.length?query.in('status',statuses):query.neq('status','cancelled')
+    return query.range((selectedPage-1)*pageSize,selectedPage*pageSize-1)
   }
-
-  const { data: monthInvoices, error: monthError } = await monthQuery
-
-  if (monthError) {
-    console.error('Erro ao buscar financeiro do mês:', monthError)
+  const startIso = new Date(`${targetDate}T00:00:00-03:00`).toISOString()
+  const endIso = new Date(`${targetDate}T23:59:59.999-03:00`).toISOString()
+  const past7Days: {date:string;label:string;total:number;dinheiro:number;pix:number;cartao:number}[]=[]
+  for(let i=6;i>=0;i--){
+    const d=new Date(`${targetDate}T12:00:00Z`);d.setUTCDate(d.getUTCDate()-i)
+    past7Days.push({date:getBrDateStr(d),label:d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit',timeZone:'America/Recife'}),total:0,dinheiro:0,pix:0,cartao:0})
   }
-
-  const list = monthInvoices ?? []
-
-  const stats = summarizeInvoices(list,todayStr)
-  const {total,collected,pending,overdue}=stats
-
-  // 2. Busca TODAS as faturas inadimplentes (qualquer mês)
-  const { data: allPendingOrOverdue, error: overdueError } = await supabase
-    .from('finance_invoices').select('*')
-    .in('status', ['pending', 'overdue'])
-    .lt('due_date', todayStr)
-    .order('due_date', { ascending: true })
-
-  const overdueInvoices = (allPendingOrOverdue ?? []).map((inv) => {
-    const charges = calculateOverdueCharges(Number(inv.amount), inv.due_date, todayStr)
-    return {
-      ...inv,
-      charges,
-    }
-  })
-
-  // 3. Fechamento de Caixa do Dia Selecionado (targetDate)
-  const startIso = `${targetDate}T00:00:00-03:00`
-  const endIso = `${targetDate}T23:59:59-03:00`
-
-  const { data: dailyPaid, error: dailyError } = await supabase
-    .from('finance_invoices').select('*')
-    .eq('status', 'paid')
-    .eq('settled_before_import', false)
-    .gte('paid_at', new Date(startIso).toISOString())
-    .lte('paid_at', new Date(endIso).toISOString())
-    .order('paid_at', { ascending: false })
-
-  const dailyItems = dailyPaid ?? []
-
-  const {dinheiro:dailyDinheiro,pix:dailyPix,debito:dailyDebito,credito:dailyCredito}=paymentTotals(dailyItems)
-
-  const dailyTotal = dailyDinheiro + dailyPix + dailyDebito + dailyCredito
-
-  // 4. Fechamento Semanal (Últimos 7 dias até targetDate)
-  const past7Days: { date: string; label: string; total: number; dinheiro: number; pix: number; cartao: number }[] = []
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(`${targetDate}T12:00:00Z`)
-    d.setDate(d.getDate() - i)
-    const dStr = getBrDateStr(d)
-    const dayLabel = d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
-    past7Days.push({
-      date: dStr,
-      label: dayLabel,
-      total: 0,
-      dinheiro: 0,
-      pix: 0,
-      cartao: 0,
-    })
+  const weekStartIso=new Date(`${past7Days[0].date}T00:00:00-03:00`).toISOString()
+  const [monthResult,summaryResult,overdueResult,dailyResult,weekResult]=await Promise.all([
+    monthPage(page),
+    supabase.rpc('finance_month_summary',{p_month:targetMonth}),
+    supabase.from('finance_invoices').select('*').in('status',['pending','overdue']).lt('due_date',todayStr).order('due_date',{ascending:true}),
+    supabase.from('finance_invoices').select('*').eq('status','paid').eq('settled_before_import',false).gte('paid_at',startIso).lte('paid_at',endIso).order('paid_at',{ascending:false}),
+    supabase.from('finance_invoices').select('amount,paid_amount,payment_method,paid_at,receipt,settled_before_import').eq('status','paid').eq('settled_before_import',false).gte('paid_at',weekStartIso).lte('paid_at',endIso),
+  ])
+  if([monthResult,summaryResult,overdueResult,dailyResult,weekResult].some(r=>r.error)||!summaryResult.data?.stats||!summaryResult.data?.counts||!summaryResult.data?.methods)throw new Error('Não foi possível carregar todos os dados financeiros. Atualize a página antes de conferir os valores.')
+  const stats=summaryResult.data.stats as {total:number;collected:number;pending:number;overdue:number;openingPaid:number;openingPaidCount:number;unconfirmed:number;unconfirmedCount:number}
+  const filterCounts=summaryResult.data.counts as Record<'all'|'pending'|'paid'|'unconfirmed'|'overdue',number>
+  const filteredTotal=filterCounts[currentStatus]
+  const pages=Math.max(1,Math.ceil(filteredTotal/pageSize)),actualPage=Math.min(page,pages)
+  let list=monthResult.data??[]
+  if(actualPage!==page){const result=await monthPage(actualPage);if(result.error)throw new Error('Não foi possível carregar as mensalidades.');list=result.data??[]}
+  const dailyItems=dailyResult.data??[]
+  const dailySplit=paymentTotals(dailyItems),monthlySplit=summaryResult.data.methods as {dinheiro:number;pix:number;debito:number;credito:number}
+  for(const inv of weekResult.data??[]){
+    if(!inv.paid_at)continue
+    const bucket=past7Days.find(day=>day.date===getBrDateStr(inv.paid_at))
+    if(!bucket)continue
+    const split=paymentTotals([inv])
+    bucket.total+=Number(inv.paid_amount??inv.amount);bucket.dinheiro+=split.dinheiro;bucket.pix+=split.pix;bucket.cartao+=split.debito+split.credito
   }
-
-  const weekStartIso = `${past7Days[0].date}T00:00:00-03:00`
-  const { data: weekPaid,error:weekError } = await supabase
-    .from('finance_invoices')
-    .select('amount, paid_amount, payment_method, paid_at, receipt, settled_before_import')
-    .eq('status', 'paid')
-    .eq('settled_before_import', false)
-    .gte('paid_at', new Date(weekStartIso).toISOString())
-    .lte('paid_at', new Date(endIso).toISOString())
-
-  ;(weekPaid ?? []).forEach((inv) => {
-    if (!inv.paid_at) return
-    const invDateStr = getBrDateStr(inv.paid_at)
-    const dayBucket = past7Days.find((d) => d.date === invDateStr)
-    if (dayBucket) {
-      const amt = Number(inv.paid_amount ?? inv.amount)
-      dayBucket.total += amt
-      const split=paymentTotals([inv])
-      dayBucket.dinheiro+=split.dinheiro;dayBucket.pix+=split.pix;dayBucket.cartao+=split.debito+split.credito
-    }
-  })
-
-  // 5. Relatório Mensal Consolidado do targetMonth
-  const { data: monthPaidAll,error:reportError } = await supabase
-    .from('finance_invoices')
-    .select('amount, paid_amount, payment_method, receipt, settled_before_import')
-    .eq('reference_month', targetMonth)
-    .eq('status', 'paid')
-    .eq('settled_before_import', false)
-
-  const monthSplit=paymentTotals(monthPaidAll||[])
-  const monthDinheiro=monthSplit.dinheiro,monthPix=monthSplit.pix,monthCartao=monthSplit.debito+monthSplit.credito
-
-  if([monthError,overdueError,dailyError,weekError,reportError].some(Boolean))throw new Error('Não foi possível carregar todos os dados financeiros. Atualize a página antes de conferir os valores.');
   return {
-    invoices: list,
-    stats,
-    targetMonth,
-    targetDate,
-    todayStr,
-    overdueInvoices,
-    dailyCash: {
-      date: targetDate,
-      total: dailyTotal,
-      dinheiro: dailyDinheiro,
-      pix: dailyPix,
-      debito: dailyDebito,
-      credito: dailyCredito,
-      count: dailyItems.length,
-      items: dailyItems,
-    },
-    weeklyCash: {
-      days: past7Days,
-      totalWeek: past7Days.reduce((acc, d) => acc + d.total, 0),
-    },
-    monthlyCash: {
-      month: targetMonth,
-      totalExpected: total,
-      totalCollected: collected,
-      totalPending: pending,
-      totalOverdue: overdue,
-      collectionRate: total > 0 ? (collected / total) * 100 : 0,
-      dinheiro: monthDinheiro,
-      pix: monthPix,
-      cartao: monthCartao,
-    },
+    invoices:list,stats,targetMonth,targetDate,todayStr,filterCounts,currentStatus,
+    pagination:{page:actualPage,pageSize,total:filteredTotal,pages},
+    overdueInvoices:(overdueResult.data??[]).map(inv=>({...inv,charges:calculateOverdueCharges(Number(inv.amount),inv.due_date,todayStr)})),
+    dailyCash:{date:targetDate,total:dailySplit.dinheiro+dailySplit.pix+dailySplit.debito+dailySplit.credito,...dailySplit,count:dailyItems.length,items:dailyItems},
+    weeklyCash:{days:past7Days,totalWeek:past7Days.reduce((sum,day)=>sum+day.total,0)},
+    monthlyCash:{month:targetMonth,totalExpected:stats.total,totalCollected:stats.collected,totalPending:stats.pending,totalOverdue:stats.overdue,collectionRate:stats.total>0?stats.collected/stats.total*100:0,dinheiro:monthlySplit.dinheiro,pix:monthlySplit.pix,cartao:monthlySplit.debito+monthlySplit.credito},
   }
 }
 

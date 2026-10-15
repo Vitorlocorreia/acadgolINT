@@ -3,85 +3,21 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { schoolClock } from "@/lib/format";
 
 export async function getStudentsList(filters?: {
   search?: string;
   categoryId?: string;
   unitId?: string;
   status?: string;
+  page?: number;
 }) {
   const supabase = await createAdminClient('students.read');
-
-  let query = supabase
-    .from("students")
-    .select(
-      `
-      *,
-      guardian:guardians(*),
-      medical_record:medical_records(*),
-      enrollment:enrollments(
-        id, status, monthly_fee, due_day,
-        class:classes(id, name, unit:units(name), category:categories(name), coach:coaches(name)),
-        plan:plans(name)
-      ),
-      invoices:invoices(id, status, due_date, amount, reference_month)
-    `,
-    )
-    .order("name", { ascending: true });
-
-  if (
-    filters?.status &&
-    filters.status !== "all" &&
-    filters.status !== "overdue"
-  ) {
-    query = query.eq("status", filters.status);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("Erro ao buscar alunos:", error);
-    throw new Error("Não foi possível carregar os atletas. Tente novamente.");
-  }
-
-  let results = data ?? [];
-  const todayIso = schoolClock().date;
-
-  // Filtro de Inadimplentes (alunos com faturas em atraso)
-  if (filters?.status === "overdue") {
-    results = results.filter((st: any) => {
-      const invs = st.invoices ?? [];
-      return invs.some(
-        (i: any) =>
-          i.status === "overdue" ||
-          (i.status === "pending" && i.due_date < todayIso),
-      );
-    });
-  }
-
-  if (filters?.search) {
-    const s = filters.search.trim().toLocaleLowerCase("pt-BR");
-    const digits = s.replace(/\D/g, "");
-    results = results.filter((st: any) => {
-      const guardians = Array.isArray(st.guardian)
-        ? st.guardian
-        : st.guardian
-          ? [st.guardian]
-          : [];
-      return (
-        st.name.toLocaleLowerCase("pt-BR").includes(s) ||
-        guardians.some(
-          (guardian: { name?: string; phone?: string }) =>
-            guardian.name?.toLocaleLowerCase("pt-BR").includes(s) ||
-            (digits.length > 0 &&
-              guardian.phone?.replace(/\D/g, "").includes(digits)),
-        )
-      );
-    });
-  }
-
-  return results;
+  const rawPage=filters?.page??1;
+  const page=Number.isInteger(rawPage)&&rawPage>0?Math.min(rawPage,100000):1;
+  const status=['all','active','paused','trial','overdue'].includes(filters?.status||'')?filters!.status!:'all';
+  const {data,error}=await supabase.rpc('student_directory',{p_search:(filters?.search||'').trim().slice(0,120),p_status:status,p_page:page});
+  if(error||!data||!Array.isArray(data.students))throw new Error('Não foi possível carregar os atletas. Tente novamente.');
+  return data as {students:unknown[];total:number;page:number;pages:number;pageSize:number};
 }
 
 export async function toggleStudentStatusAction(

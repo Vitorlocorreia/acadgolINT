@@ -89,7 +89,7 @@ export default async function AlunoProfilePage({ params }: Props) {
           <div className="min-w-0 flex-1">
             <p className="eyebrow mb-2">Ficha do atleta</p>
             <h1 id="athlete-name" className="page-title">{student.name}</h1>
-            <div className="record-facts"><span>{age} anos · {student.birth_date?.split('-').reverse().join('/')}</span><span>{student.preferred_position || 'Posição a definir'}</span><span>{student.dominant_foot || 'Pé dominante não informado'}</span></div>
+            <div className="record-facts"><span>{age===null?'Nascimento não informado':`${age} anos · ${student.birth_date?.split('-').reverse().join('/')}`}</span><span>{student.preferred_position || 'Posição a definir'}</span><span>{student.dominant_foot || 'Pé dominante não informado'}</span></div>
             {enrollment?.class && <div className="mt-4 rounded-lg bg-[var(--bg-subtle)] p-3 text-sm"><strong>{enrollment.class.name}</strong><p className="mt-1 text-[var(--text-secondary)]">{enrollment.class.unit?.name} · {enrollment.class.coach?.name || 'Treinador a definir'}</p></div>}
           </div>
           <div className="flex flex-wrap sm:flex-col gap-3 items-start"><span className={`badge ${student.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{student.status === 'active' ? 'Ativo' : student.status === 'paused' ? 'Trancado' : 'Inativo'}</span><StudentStatusToggle studentId={student.id} currentStatus={student.status} compact /></div>
@@ -97,6 +97,7 @@ export default async function AlunoProfilePage({ params }: Props) {
       </section>
 
       <FamilyAccessControls studentId={student.id} enabled={student.portal_access_enabled} expiresAt={student.portal_token_expires_at}/>
+      {student.archive_note&&<p className="notice notice-warning text-sm">{student.archive_note}</p>}
       {enrollment?.import_source&&importOptions&&<ImportedEnrollment studentId={student.id} enrollment={enrollment} classes={importOptions.classes} plans={importOptions.plans}/>}
       {/* Foto Oficial do Atleta para Card FIFA FUT 3D */}
       <div className="card-light p-5">

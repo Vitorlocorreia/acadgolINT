@@ -42,7 +42,7 @@ export function formatMonth(month: string) {
   return formatDate(`${month}-01`, { month: "long", year: "numeric" });
 }
 
-export function calculateAge(birthDate: string, today = schoolClock().date) {
+export function calculateAge(birthDate: string | null | undefined, today = schoolClock().date) {
   if (!birthDate || birthDate > today) return null;
   const [year, month, day] = birthDate.split("-").map(Number);
   const [thisYear, thisMonth, thisDay] = today.split("-").map(Number);

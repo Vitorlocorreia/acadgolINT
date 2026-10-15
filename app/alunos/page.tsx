@@ -10,11 +10,12 @@ import {
 } from "lucide-react";
 import { calculateAge, schoolClock } from "@/lib/format";
 import { getStudentsList } from "./actions";
+import {ListPagination} from '@/components/list-pagination';
 
 interface Student {
   id: string;
   name: string;
-  birth_date: string;
+  birth_date: string | null;
   status: string;
   photo_url?: string | null;
   preferred_position?: string;
@@ -26,20 +27,22 @@ interface Student {
     status: string;
     class: { name: string; unit: { name: string } | null } | null;
   }[];
-  invoices: { status: string; due_date: string }[];
+  overdue_count: number;
 }
 
 export default async function AlunosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; status?: string }>;
+  searchParams: Promise<{ search?: string; status?: string;page?:string }>;
 }) {
   await requirePage('students.read');
   const params = await searchParams;
-  const students = (await getStudentsList({
+  const directory = await getStudentsList({
     search: params.search,
     status: params.status,
-  })) as Student[];
+    page:Number(params.page||1),
+  });
+  const students=directory.students as Student[];
   const today = schoolClock().date;
   const filterLink = (status: string) => {
     const query = new URLSearchParams();
@@ -55,12 +58,7 @@ export default async function AlunosPage({
       student.enrollment?.find((item) =>
         ["active", "trial"].includes(item.status),
       ) || student.enrollment?.[0];
-    const overdue =
-      student.invoices?.filter(
-        (invoice) =>
-          invoice.status === "overdue" ||
-          (invoice.status === "pending" && invoice.due_date < today),
-      ).length || 0;
+    const overdue = student.overdue_count || 0;
     const phone = guardian?.phone?.replace(/\D/g, "");
     return {
       guardian,
@@ -92,7 +90,7 @@ export default async function AlunosPage({
           <h1 className="page-title">
             Atletas{" "}
             <span className="text-[var(--text-muted)]">
-              ({students.length})
+              ({directory.total})
             </span>
           </h1>
           <p className="page-subtitle">
@@ -208,6 +206,7 @@ export default async function AlunosPage({
                     <Link
                       className="button flex-1"
                       href={`/alunos/${student.id}`}
+                      prefetch={false}
                     >
                       Ver ficha <ArrowRight size={15} />
                     </Link>
@@ -259,6 +258,7 @@ export default async function AlunosPage({
                             <div>
                               <Link
                                 href={`/alunos/${student.id}`}
+                                prefetch={false}
                                 className="font-semibold hover:underline"
                               >
                                 {student.name}
@@ -302,6 +302,7 @@ export default async function AlunosPage({
                         <td className="text-right">
                           <Link
                             href={`/alunos/${student.id}`}
+                            prefetch={false}
                             className="button whitespace-nowrap"
                           >
                             Ver ficha <ArrowRight size={14} />
@@ -316,6 +317,7 @@ export default async function AlunosPage({
           </div>
         </>
       )}
+      <ListPagination {...directory} path="/alunos" filters={{search:params.search,status:params.status}}/>
     </div>
   );
 }

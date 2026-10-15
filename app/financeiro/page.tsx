@@ -12,13 +12,14 @@ interface Props {
     status?: string
     date?: string
     tab?: string
+    page?: string
   }>
 }
 
 export default async function FinanceiroPage({ searchParams }: Props) {
   const {staff}=await requirePage('finance.read');
   const params = await searchParams
-  const data = await getFinanceiroEscolinhaData(params.month, params.status, params.date)
+  const data = await getFinanceiroEscolinhaData(params.month, params.status, params.date,Number(params.page||1))
 
   return (
     <div className="page-container space-y-6">
@@ -31,7 +32,9 @@ export default async function FinanceiroPage({ searchParams }: Props) {
         invoices={data.invoices}
         stats={data.stats}
         currentMonth={data.targetMonth}
-        currentStatus={params.status || 'all'}
+        currentStatus={data.currentStatus}
+        pagination={data.pagination}
+        filterCounts={data.filterCounts}
         targetDate={data.targetDate}
         todayStr={data.todayStr}
         overdueInvoices={data.overdueInvoices}

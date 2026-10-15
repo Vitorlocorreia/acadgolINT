@@ -3,6 +3,11 @@ export type PaymentMethod=typeof PAYMENT_METHODS[number]
 export interface PaymentPart {method:PaymentMethod|'pix_whatsapp';amount:number}
 export const paymentMethodLabels:Record<string,string>={dinheiro:'Dinheiro',pix:'PIX',pix_whatsapp:'PIX / WhatsApp',cartao_debito:'Cartão de débito',cartao_credito:'Cartão de crédito',misto:'Pagamento dividido'}
 export const moneyCents=(amount:number)=>Math.round(amount*100)
+export function financeFilterStatuses(status:string){
+ if(status==='pending')return ['pending','overdue','unconfirmed']
+ if(['paid','unconfirmed','overdue'].includes(status))return [status]
+ return []
+}
 export function paymentPartsProblem(parts:PaymentPart[],total:number){
  if(!parts.length||parts.length>4)return 'Informe de uma a quatro formas de pagamento.'
  if(new Set(parts.map(p=>p.method)).size!==parts.length)return 'Use cada forma de pagamento uma única vez.'
