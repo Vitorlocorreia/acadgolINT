@@ -63,6 +63,16 @@ Nas novas matrículas, informe separadamente o **valor acordado da matrícula** 
 
 Na aula experimental, escolha a turma e a data. O atleta aparece na chamada da data agendada. A data de nascimento calculada a partir da idade é provisória. Após o comparecimento, use **Matricular** e confirme os dados; a matrícula aproveita a ficha do mesmo atleta.
 
+## Trancar, excluir e recuperar atletas
+
+Use **Trancar** na ficha quando o atleta interromper os treinos e precisar manter o cadastro na relação de trancados.
+
+Para retirar um cadastro da operação, administrador e secretaria podem usar **Excluir** na lista de atletas ou na ficha. Confira o nome, informe o motivo e confirme. O atleta sai da lista principal, das chamadas e das próximas emissões de mensalidade. Os links da família e das convocações são desativados, e os avisos ainda na fila são cancelados. A operação registra usuário, data e motivo na auditoria.
+
+As cobranças já emitidas, os recebimentos e o histórico de presença são preservados. Excluir o cadastro não cancela nem estorna lançamentos financeiros. A ficha excluída mantém uma consulta do histórico financeiro.
+
+Em **Atletas → Excluídos**, use **Recuperar** se houver exclusão por engano. O cadastro retorna **trancado**; a recuperação não reativa links, avisos ou mensalidades futuras. Confira a matrícula antes de usar **Reativar**. Atletas históricos sem data de nascimento precisam completar esse dado antes da reativação.
+
 ## Chamada
 
 Escolha a turma e a data, marque presença, falta ou justificativa e salve. Uma chamada vazia não é registrada como ausência automática. O treinador só registra atletas de suas turmas. As notificações respeitam a opção de cada responsável e dependem de o WhatsApp estar configurado.

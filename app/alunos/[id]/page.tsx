@@ -22,6 +22,7 @@ import {ImportedEnrollment} from '../imported-enrollment'
 import { StudentStatusToggle } from '../student-status-toggle'
 import { StudentGuardiansList } from './student-guardians-list'
 import { StudentPhotoUpload } from '../student-photo-upload'
+import { StudentDeleteButton } from '../student-delete-button'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -39,6 +40,12 @@ export default async function AlunoProfilePage({ params }: Props) {
   if (!student) {
     notFound()
   }
+
+  if (student.deleted_at) return <div className="page-container space-y-6">
+    <Link href="/alunos?status=deleted" className="button"><ChevronLeft size={16}/>Voltar para excluídos</Link>
+    <section className="card-light p-6 space-y-4"><span className="badge badge-warning">Atleta excluído</span><h1 className="page-title">{student.name}</h1><p className="text-sm">Excluído em {new Date(student.deleted_at).toLocaleString('pt-BR',{timeZone:'America/Recife'})}.</p><p className="notice text-sm">Motivo: {student.deletion_reason}</p><p className="text-sm text-[var(--text-secondary)]">Este cadastro está fora da operação. Ao recuperar, ele volta como trancado, sem reativar cobranças futuras, links da família ou avisos suspensos.</p><div className="flex flex-wrap gap-3"><StudentDeleteButton studentId={student.id} studentName={student.name} deletedAt={student.deleted_at}/><Link className="button" href={`/financeiro?q=${encodeURIComponent(student.name)}`}>Abrir financeiro</Link></div></section>
+    <section className="card-light p-5 space-y-3"><h2 className="section-title">Histórico financeiro preservado</h2>{student.invoices?.length ? <div className="overflow-x-auto"><table className="data-table"><thead><tr><th>Referência</th><th>Valor</th><th>Situação</th></tr></thead><tbody>{student.invoices.map((invoice:{id:string;reference_month:string;amount:number;status:string})=><tr key={invoice.id}><td>{invoice.reference_month}</td><td>{fmt(invoice.amount)}</td><td>{invoice.status==='paid'?'Quitado':invoice.status==='unconfirmed'?'A confirmar':invoice.status==='cancelled'?'Cancelado':invoice.status==='overdue'?'Em atraso':'Pendente'}</td></tr>)}</tbody></table></div>:<p className="text-sm">Nenhuma cobrança emitida para este cadastro.</p>}</section>
+  </div>
 
   const age = calculateAge(student.birth_date)
   const enrollment = Array.isArray(student.enrollment) ? student.enrollment[0] : student.enrollment
@@ -92,7 +99,7 @@ export default async function AlunoProfilePage({ params }: Props) {
             <div className="record-facts"><span>{age===null?'Nascimento não informado':`${age} anos · ${student.birth_date?.split('-').reverse().join('/')}`}</span><span>{student.preferred_position || 'Posição a definir'}</span><span>{student.dominant_foot || 'Pé dominante não informado'}</span></div>
             {enrollment?.class && <div className="mt-4 rounded-lg bg-[var(--bg-subtle)] p-3 text-sm"><strong>{enrollment.class.name}</strong><p className="mt-1 text-[var(--text-secondary)]">{enrollment.class.unit?.name} · {enrollment.class.coach?.name || 'Treinador a definir'}</p></div>}
           </div>
-          <div className="flex flex-wrap sm:flex-col gap-3 items-start"><span className={`badge ${student.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{student.status === 'active' ? 'Ativo' : student.status === 'paused' ? 'Trancado' : 'Inativo'}</span><StudentStatusToggle studentId={student.id} currentStatus={student.status} compact /></div>
+          <div className="flex flex-wrap sm:flex-col gap-3 items-start"><span className={`badge ${student.status === 'active' ? 'badge-success' : 'badge-warning'}`}>{student.status === 'active' ? 'Ativo' : student.status === 'paused' ? 'Trancado' : 'Inativo'}</span><StudentStatusToggle studentId={student.id} currentStatus={student.status} compact /><StudentDeleteButton studentId={student.id} studentName={student.name}/></div>
         </div>
       </section>
 

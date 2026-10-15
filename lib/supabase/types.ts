@@ -193,6 +193,9 @@ export interface Database {
           dominant_foot: string
           uniform_size: string | null
           status: 'active' | 'paused' | 'cancelled'
+          deleted_at: string | null
+          deleted_by: string | null
+          deletion_reason: string | null
           portal_token: string
           signature_url: string | null
           created_at: string
@@ -209,6 +212,9 @@ export interface Database {
           dominant_foot?: string
           uniform_size?: string | null
           status?: 'active' | 'paused' | 'cancelled'
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           portal_token?: string
           signature_url?: string | null
           created_at?: string
@@ -225,6 +231,9 @@ export interface Database {
           dominant_foot?: string
           uniform_size?: string | null
           status?: 'active' | 'paused' | 'cancelled'
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deletion_reason?: string | null
           portal_token?: string
           signature_url?: string | null
           created_at?: string

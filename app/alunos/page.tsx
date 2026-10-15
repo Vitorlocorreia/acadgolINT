@@ -11,12 +11,14 @@ import {
 import { calculateAge, schoolClock } from "@/lib/format";
 import { getStudentsList } from "./actions";
 import {ListPagination} from '@/components/list-pagination';
+import {StudentDeleteButton} from './student-delete-button';
 
 interface Student {
   id: string;
   name: string;
   birth_date: string | null;
   status: string;
+  deleted_at?: string | null;
   photo_url?: string | null;
   preferred_position?: string;
   guardian:
@@ -64,7 +66,7 @@ export default async function AlunosPage({
       guardian,
       enrollment,
       overdue,
-      contact: phone
+      contact: phone && !student.deleted_at
         ? `https://wa.me/${phone.length <= 11 ? "55" : ""}${phone}`
         : null,
     };
@@ -73,7 +75,7 @@ export default async function AlunosPage({
     <span
       className={`badge ${student.status === "active" ? "badge-success" : student.status === "paused" || student.status === "trial" ? "badge-warning" : ""}`}
     >
-      {student.status === "active"
+      {student.deleted_at ? 'Excluído' : student.status === "active"
         ? "Ativo"
         : student.status === "paused"
           ? "Trancado"
@@ -128,6 +130,7 @@ export default async function AlunosPage({
             ["active", "Ativos"],
             ["paused", "Trancados"],
             ["overdue", "Com pendências"],
+            ["deleted", "Excluídos"],
           ].map(([value, label]) => (
             <Link
               key={value}
@@ -142,6 +145,7 @@ export default async function AlunosPage({
           ))}
         </nav>
       </div>
+      {params.status === 'deleted' && <p className="notice text-sm">Cadastros excluídos ficam fora da operação. Ao recuperar, o atleta volta como trancado. As cobranças e os pagamentos permanecem no financeiro.</p>}
       {!students.length ? (
         <div className="surface empty-state">
           <Users size={32} />
@@ -203,6 +207,7 @@ export default async function AlunosPage({
                     </p>
                   )}
                   <div className="mt-4 flex gap-2 border-t border-[var(--border-color)] pt-4">
+                    <StudentDeleteButton studentId={student.id} studentName={student.name} deletedAt={student.deleted_at}/>
                     <Link
                       className="button flex-1"
                       href={`/alunos/${student.id}`}
@@ -300,6 +305,8 @@ export default async function AlunosPage({
                           )}
                         </td>
                         <td className="text-right">
+                          <div className="flex flex-wrap justify-end gap-2">
+                          <StudentDeleteButton studentId={student.id} studentName={student.name} deletedAt={student.deleted_at}/>
                           <Link
                             href={`/alunos/${student.id}`}
                             prefetch={false}
@@ -307,6 +314,7 @@ export default async function AlunosPage({
                           >
                             Ver ficha <ArrowRight size={14} />
                           </Link>
+                          </div>
                         </td>
                       </tr>
                     );

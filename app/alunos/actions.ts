@@ -14,7 +14,7 @@ export async function getStudentsList(filters?: {
   const supabase = await createAdminClient('students.read');
   const rawPage=filters?.page??1;
   const page=Number.isInteger(rawPage)&&rawPage>0?Math.min(rawPage,100000):1;
-  const status=['all','active','paused','trial','overdue'].includes(filters?.status||'')?filters!.status!:'all';
+  const status=['all','active','paused','trial','overdue','deleted'].includes(filters?.status||'')?filters!.status!:'all';
   const {data,error}=await supabase.rpc('student_directory',{p_search:(filters?.search||'').trim().slice(0,120),p_status:status,p_page:page});
   if(error||!data||!Array.isArray(data.students))throw new Error('Não foi possível carregar os atletas. Tente novamente.');
   return data as {students:unknown[];total:number;page:number;pages:number;pageSize:number};

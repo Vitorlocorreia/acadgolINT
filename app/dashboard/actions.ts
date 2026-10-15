@@ -56,7 +56,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   const { date: today } = schoolClock();
   const [students, active, classes, invoices, trials, matches] =
     await Promise.all([
-      db.from("students").select("id", { count: "exact", head: true }),
+      db.from("students").select("id", { count: "exact", head: true }).is('deleted_at',null),
       db
         .from("students")
         .select("id", { count: "exact", head: true })
