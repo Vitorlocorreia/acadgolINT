@@ -11,7 +11,7 @@ function scenario({ unauthorized = false, data = { invoice: { id: invoiceId }, e
     } },
     'next/cache': { revalidatePath() { throw new Error('History reads cannot mutate financial data') } },
     zod: require('zod'), './calc': {}, 'node:crypto': require('node:crypto'),
-    '@/lib/finance/payment-parts': loadTS('lib/finance/payment-parts.ts'),
+    '@/lib/finance/filters':loadTS('lib/finance/filters.ts'),'@/lib/finance/payment-parts': loadTS('lib/finance/payment-parts.ts'),
     '@/lib/finance/payment-proof': loadTS('lib/finance/payment-proof.ts'),
   })
   return { actions, calls, permissions }

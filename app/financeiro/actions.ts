@@ -6,7 +6,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createHash } from 'node:crypto'
-import {paymentPartsProblem,paymentTotals,financeFilterStatuses} from '@/lib/finance/payment-parts'
+import {paymentPartsProblem,paymentTotals} from '@/lib/finance/payment-parts'
+import { normalizeFinanceFilters, type FinanceFilters } from '@/lib/finance/filters'
 import { PAYMENT_PROOF_BUCKET, paymentProofProblem, paymentProofHasSignature, paymentProofName, paymentProofExtension, type PaymentProofType } from '@/lib/finance/payment-proof'
 
 import { getBrDateStr, calculateOverdueCharges, type OverdueCalculation } from './calc'
@@ -39,21 +40,15 @@ export async function getFinanceiroEscolinhaData(
   statusFilter?: string,
   closingDate?: string,
   requestedPage = 1,
+  requestedFilters: Partial<FinanceFilters> = {},
 ) {
   const supabase = await createAdminClient('finance.read')
   const todayStr = getBrDateStr()
-  const targetDate = closingDate || todayStr
-  const targetMonth = referenceMonth || todayStr.slice(0,7)
+  const targetDate = closingDate && z.iso.date().safeParse(closingDate).success ? closingDate : todayStr
+  const targetMonth = /^20\d{2}-(0[1-9]|1[0-2])$/.test(referenceMonth || '') ? referenceMonth! : todayStr.slice(0,7)
   const currentStatus=(['all','pending','paid','unconfirmed','overdue'].includes(statusFilter||'')?statusFilter!:'all') as 'all'|'pending'|'paid'|'unconfirmed'|'overdue'
-  const pageSize=50
   const page=Number.isInteger(requestedPage)&&requestedPage>0?Math.min(requestedPage,100000):1
-  const statuses=financeFilterStatuses(currentStatus)
-  function monthPage(selectedPage:number){
-    let query=supabase.from('finance_invoices').select('*')
-      .eq('reference_month',targetMonth).order('due_date',{ascending:true}).order('id',{ascending:true})
-    query=statuses.length?query.in('status',statuses):query.neq('status','cancelled')
-    return query.range((selectedPage-1)*pageSize,selectedPage*pageSize-1)
-  }
+  const filters=normalizeFinanceFilters(requestedFilters)
   const startIso = new Date(`${targetDate}T00:00:00-03:00`).toISOString()
   const endIso = new Date(`${targetDate}T23:59:59.999-03:00`).toISOString()
   const past7Days: {date:string;label:string;total:number;dinheiro:number;pix:number;cartao:number}[]=[]
@@ -63,19 +58,15 @@ export async function getFinanceiroEscolinhaData(
   }
   const weekStartIso=new Date(`${past7Days[0].date}T00:00:00-03:00`).toISOString()
   const [monthResult,summaryResult,overdueResult,dailyResult,weekResult]=await Promise.all([
-    monthPage(page),
+    supabase.rpc('finance_invoice_directory',{p_month:targetMonth,p_filters:{...filters,status:currentStatus},p_page:page}),
     supabase.rpc('finance_month_summary',{p_month:targetMonth}),
     supabase.from('finance_invoices').select('*').in('status',['pending','overdue']).lt('due_date',todayStr).order('due_date',{ascending:true}),
     supabase.from('finance_invoices').select('*').eq('status','paid').eq('settled_before_import',false).gte('paid_at',startIso).lte('paid_at',endIso).order('paid_at',{ascending:false}),
     supabase.from('finance_invoices').select('amount,paid_amount,payment_method,paid_at,receipt,settled_before_import').eq('status','paid').eq('settled_before_import',false).gte('paid_at',weekStartIso).lte('paid_at',endIso),
   ])
-  if([monthResult,summaryResult,overdueResult,dailyResult,weekResult].some(r=>r.error)||!summaryResult.data?.stats||!summaryResult.data?.counts||!summaryResult.data?.methods)throw new Error('Não foi possível carregar todos os dados financeiros. Atualize a página antes de conferir os valores.')
+  if([monthResult,summaryResult,overdueResult,dailyResult,weekResult].some(r=>r.error)||!summaryResult.data?.stats||!summaryResult.data?.counts||!summaryResult.data?.methods||!Array.isArray(monthResult.data?.invoices)||!monthResult.data?.counts||!monthResult.data?.pagination||!Array.isArray(monthResult.data?.classes))throw new Error('Não foi possível carregar todos os dados financeiros. Atualize a página antes de conferir os valores.')
   const stats=summaryResult.data.stats as {total:number;collected:number;pending:number;overdue:number;openingPaid:number;openingPaidCount:number;unconfirmed:number;unconfirmedCount:number}
-  const filterCounts=summaryResult.data.counts as Record<'all'|'pending'|'paid'|'unconfirmed'|'overdue',number>
-  const filteredTotal=filterCounts[currentStatus]
-  const pages=Math.max(1,Math.ceil(filteredTotal/pageSize)),actualPage=Math.min(page,pages)
-  let list=monthResult.data??[]
-  if(actualPage!==page){const result=await monthPage(actualPage);if(result.error)throw new Error('Não foi possível carregar as mensalidades.');list=result.data??[]}
+  const filterCounts=monthResult.data.counts as Record<'all'|'pending'|'paid'|'unconfirmed'|'overdue',number>
   const dailyItems=dailyResult.data??[]
   const dailySplit=paymentTotals(dailyItems),monthlySplit=summaryResult.data.methods as {dinheiro:number;pix:number;debito:number;credito:number}
   for(const inv of weekResult.data??[]){
@@ -86,8 +77,10 @@ export async function getFinanceiroEscolinhaData(
     bucket.total+=Number(inv.paid_amount??inv.amount);bucket.dinheiro+=split.dinheiro;bucket.pix+=split.pix;bucket.cartao+=split.debito+split.credito
   }
   return {
-    invoices:list,stats,targetMonth,targetDate,todayStr,filterCounts,currentStatus,
-    pagination:{page:actualPage,pageSize,total:filteredTotal,pages},
+    invoices:monthResult.data.invoices,stats,targetMonth,targetDate,todayStr,filterCounts,currentStatus,filters,
+    classOptions:monthResult.data.classes as {id:string;name:string}[],
+    monthCounts:summaryResult.data.counts as typeof filterCounts,
+    pagination:monthResult.data.pagination as {page:number;pageSize:number;total:number;pages:number},
     overdueInvoices:(overdueResult.data??[]).map(inv=>({...inv,charges:calculateOverdueCharges(Number(inv.amount),inv.due_date,todayStr)})),
     dailyCash:{date:targetDate,total:dailySplit.dinheiro+dailySplit.pix+dailySplit.debito+dailySplit.credito,...dailySplit,count:dailyItems.length,items:dailyItems},
     weeklyCash:{days:past7Days,totalWeek:past7Days.reduce((sum,day)=>sum+day.total,0)},

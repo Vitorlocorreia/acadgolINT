@@ -24,7 +24,7 @@ function scenario(){
  const writes=[];
  const actions=loadTS('app/financeiro/actions.ts',{
   '@/lib/supabase/admin':{createAdminClient:async()=>({rpc:async(name,args)=>{writes.push(args.p_payload);return {data:{success:true},error:null};}})},
-  '@/lib/finance/payment-parts':payments,'@/lib/finance/payment-proof':loadTS('lib/finance/payment-proof.ts'),'node:crypto':require('node:crypto'),'next/cache':{revalidatePath:()=>{}},zod:require('zod'),'./calc':{},
+  '@/lib/finance/filters':loadTS('lib/finance/filters.ts'),'@/lib/finance/payment-parts':payments,'@/lib/finance/payment-proof':loadTS('lib/finance/payment-proof.ts'),'node:crypto':require('node:crypto'),'next/cache':{revalidatePath:()=>{}},zod:require('zod'),'./calc':{},
  });return {actions,writes};
 }
 test('manual action accepts explicitly marked discounts with optional justification and a split receipt',async()=>{
@@ -39,8 +39,8 @@ test('inconsistent split data cannot reach the financial transaction',async()=>{
 test('daily, weekly and monthly reports preserve mixed payment methods after querying the financial view',async()=>{
  const row={id:valid.invoiceId,amount:120,paid_amount:100,status:'paid',payment_method:'misto',paid_at:'2026-10-15T12:00:00Z',receipt:{payment_parts:split},due_date:'2026-10-10'};
  const actions=loadTS('app/financeiro/actions.ts',{
-  '@/lib/supabase/admin':{createAdminClient:async()=>({rpc:async()=>({data:{stats:{total:120,collected:100,pending:0,overdue:0,openingPaid:0,openingPaidCount:0,unconfirmed:0,unconfirmedCount:0},counts:{all:1,pending:0,paid:1,unconfirmed:0,overdue:0},methods:{dinheiro:80,pix:20,debito:0,credito:0}},error:null}),from:table=>{assert.equal(table,'finance_invoices');let overdue=false;const q={select:()=>q,eq:()=>q,neq:()=>q,range:()=>q,in:()=>{overdue=true;return q;},lt:()=>q,gte:()=>q,lte:()=>q,order:()=>q,then:(resolve,reject)=>Promise.resolve({data:overdue?[]:[row],error:null}).then(resolve,reject)};return q;}})},
-  '@/lib/finance/payment-parts':payments,'@/lib/finance/payment-proof':loadTS('lib/finance/payment-proof.ts'),'node:crypto':require('node:crypto'),'next/cache':{},zod:require('zod'),'./calc':loadTS('app/financeiro/calc.ts'),
+  '@/lib/supabase/admin':{createAdminClient:async()=>({rpc:async(name)=>name==='finance_invoice_directory'?{data:{invoices:[row],classes:[],counts:{all:1,pending:0,paid:1,unconfirmed:0,overdue:0},pagination:{page:1,pageSize:50,total:1,pages:1}},error:null}:({data:{stats:{total:120,collected:100,pending:0,overdue:0,openingPaid:0,openingPaidCount:0,unconfirmed:0,unconfirmedCount:0},counts:{all:1,pending:0,paid:1,unconfirmed:0,overdue:0},methods:{dinheiro:80,pix:20,debito:0,credito:0}},error:null}),from:table=>{assert.equal(table,'finance_invoices');let overdue=false;const q={select:()=>q,eq:()=>q,neq:()=>q,range:()=>q,in:()=>{overdue=true;return q;},lt:()=>q,gte:()=>q,lte:()=>q,order:()=>q,then:(resolve,reject)=>Promise.resolve({data:overdue?[]:[row],error:null}).then(resolve,reject)};return q;}})},
+  '@/lib/finance/filters':loadTS('lib/finance/filters.ts'),'@/lib/finance/payment-parts':payments,'@/lib/finance/payment-proof':loadTS('lib/finance/payment-proof.ts'),'node:crypto':require('node:crypto'),'next/cache':{},zod:require('zod'),'./calc':loadTS('app/financeiro/calc.ts'),
  });
  const result=await actions.getFinanceiroEscolinhaData('2026-10','all','2026-10-15');
  assert.equal(result.dailyCash.total,100);assert.equal(result.dailyCash.dinheiro,80);assert.equal(result.dailyCash.pix,20);

@@ -4,7 +4,7 @@ function scenario(error=null){
  const calls=[],refreshes=[];const actions=loadTS('app/financeiro/actions.ts',{
   '@/lib/supabase/admin':{createAdminClient:async permission=>{assert.equal(permission,'finance.write');return {rpc:async(name,args)=>{calls.push({name,args});return {data:{success:true},error}}}}},
   'next/cache':{revalidatePath:path=>refreshes.push(path)},zod:require('zod'),'./calc':{},
-  'node:crypto':require('node:crypto'),'@/lib/finance/payment-parts':loadTS('lib/finance/payment-parts.ts'),'@/lib/finance/payment-proof':loadTS('lib/finance/payment-proof.ts'),
+  'node:crypto':require('node:crypto'),'@/lib/finance/filters':loadTS('lib/finance/filters.ts'),'@/lib/finance/payment-parts':loadTS('lib/finance/payment-parts.ts'),'@/lib/finance/payment-proof':loadTS('lib/finance/payment-proof.ts'),
  });return {actions,calls,refreshes};
 }
 test('manual receipt rejects missing identity, nonpositive amounts and unsupported methods before writing',async()=>{

@@ -15,7 +15,7 @@ function scenario({uploadError=null,existing=null,networkError=false}={}){
  }},rpc:async(name,args)=>{calls.push({name,args});return {data:{paymentId:'receipt'},error:null};}};
  const actions=loadTS('app/financeiro/actions.ts',{
   '@/lib/supabase/admin':{createAdminClient:async permission=>{assert.equal(permission,'finance.write');return db;}},
-  'next/cache':{revalidatePath:path=>refreshes.push(path)},zod:require('zod'),'./calc':{},'node:crypto':crypto,'@/lib/finance/payment-parts':loadTS('lib/finance/payment-parts.ts'),'@/lib/finance/payment-proof':helpers,
+  'next/cache':{revalidatePath:path=>refreshes.push(path)},zod:require('zod'),'./calc':{},'node:crypto':crypto,'@/lib/finance/filters':loadTS('lib/finance/filters.ts'),'@/lib/finance/payment-parts':loadTS('lib/finance/payment-parts.ts'),'@/lib/finance/payment-proof':helpers,
  },{File,Uint8Array});
  return {actions,calls,uploads,refreshes};
 }

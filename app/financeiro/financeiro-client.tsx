@@ -7,6 +7,8 @@ import {ManualPaymentDialog} from './manual-payment-dialog'
 import {paymentPartsLabel} from '@/lib/finance/payment-parts'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { financeHref, defaultFinanceFilters, normalizeFinanceFilters, type FinanceFilters } from '@/lib/finance/filters'
+import { FinanceFilterPanel } from './finance-filters'
 import {
   DollarSign,
   CheckCircle2,
@@ -58,6 +60,9 @@ interface Props {
   currentStatus: string
   pagination:{page:number;pageSize:number;total:number;pages:number}
   filterCounts:Record<'all'|'pending'|'paid'|'unconfirmed'|'overdue',number>
+  monthCounts:Record<'all'|'pending'|'paid'|'unconfirmed'|'overdue',number>
+  filters:FinanceFilters
+  classOptions:{id:string;name:string}[]
   targetDate: string
   todayStr: string
   overdueInvoices: any[]
@@ -101,7 +106,7 @@ export function FinanceiroClient({
   stats,
   currentMonth,
   currentStatus,
-  pagination,filterCounts,
+  pagination,filterCounts,monthCounts,filters,classOptions,
   targetDate,
   todayStr,
   overdueInvoices,
@@ -131,17 +136,15 @@ export function FinanceiroClient({
   const [revertInvoiceId, setRevertInvoiceId] = useState<string | null>(null)
   const [revertReason, setRevertReason] = useState('')
 
-  // Filtros de data e mês
-  const handleMonthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    goTo(`/financeiro?month=${e.target.value}&status=${currentStatus}&date=${targetDate}&tab=${activeTab}`)
-  }
-
+  const currentContext = { month: currentMonth, status: currentStatus, date: targetDate, tab: activeTab }
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    goTo(`/financeiro?month=${currentMonth}&status=${currentStatus}&date=${e.target.value}&tab=${activeTab}`)
+    goTo(financeHref({...currentContext,date:e.target.value},filters))
   }
-
   const handleStatusFilter = (status: string) => {
-    goTo(`/financeiro?month=${currentMonth}&status=${status}&date=${targetDate}&tab=${activeTab}`)
+    goTo(financeHref({...currentContext,status},filters))
+  }
+  const handleFiltersApply = (month:string, next:FinanceFilters) => {
+    goTo(financeHref({...currentContext,month},normalizeFinanceFilters(next)))
   }
 
   const handleOpenPaymentModal=(invoice:any)=>{setFeedback(null);setModalInvoice({...invoice,idempotencyKey:crypto.randomUUID()})}
@@ -200,7 +203,7 @@ export function FinanceiroClient({
           className={`button ${activeTab === 'mensalidades' ? 'button-primary' : 'button-quiet'}`}
         >
           <Receipt className="w-4 h-4" />
-          <span>Mensalidades ({filterCounts.all})</span>
+          <span>Mensalidades ({monthCounts.all})</span>
         </button>
 
         <button aria-pressed={activeTab === 'inadimplentes'}
@@ -266,23 +269,13 @@ export function FinanceiroClient({
         <div className="space-y-6">
           {/* Barra de Filtro de Mês e Ações */}
           <div className="card-light p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 bg-[var(--bg-card-hover)] border border-[var(--border-color)] rounded-lg px-3 py-2">
-                <Calendar className="w-4 h-4 text-[#c81930]" />
-                <span className="text-[var(--text-secondary)] text-xs font-bold ">Mês de Referência:</span>
-                <input
-                  type="month" aria-label="Mês de referência"
-                  defaultValue={currentMonth}
-                  onChange={handleMonthChange}
-                  className="bg-transparent text-[var(--text-primary)] text-xs font-mono font-bold outline-none cursor-pointer"
-                />
-              </div>
-            </div>
+            <div><h2 className="section-title">Mensalidades e matrículas</h2><p className="text-xs text-[var(--text-muted)] mt-1">Consulte os lançamentos e registre os recebimentos.</p></div>
 
             <div className="flex items-center gap-2 flex-wrap">
               {pendingInvoices.length > 0 && (
                 <button
                   onClick={() => setShowReguaModal(true)}
+                  disabled={isNavigating}
                   className="button px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#a71327] border border-[#c81930]/30 rounded-lg text-xs font-bold  tracking-normal flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
                 >
                   <Smartphone className="w-4 h-4 text-[#c81930]" />
@@ -292,7 +285,7 @@ export function FinanceiroClient({
 
               <button
                 onClick={handleGenerateInvoices}
-                disabled={isPending}
+                disabled={isPending || isNavigating}
                 className="button px-4 py-2 rounded-lg text-xs font-bold tracking-normal flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
@@ -301,17 +294,13 @@ export function FinanceiroClient({
             </div>
           </div>
 
-          <div className="notice flex items-start gap-3">
-            <Calendar className="w-5 h-5 shrink-0 mt-0.5" />
-            <div><p className="font-semibold text-sm">Emissão automática mensal</p><p className="text-xs mt-1">{currentMonth>todayStr.slice(0,7) ? 'As mensalidades deste mês serão emitidas no início dele. Use “Antecipar mensalidades” somente se precisar emitir antes.' : 'As mensalidades são emitidas no início de cada mês, mesmo com o sistema fechado. “Gerar faltantes” permite uma conferência extra, sem duplicar cobranças.'}</p></div>
-          </div>
-
+          <p className="text-xs font-semibold text-[var(--text-secondary)]">Resumo geral de {currentMonth.split('-').reverse().join('/')} · valores de todo o mês, independentemente da pesquisa</p>
           {/* Cards KPI */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card-light p-4 space-y-2">
               <span className="text-xs text-[var(--text-muted)] font-bold tracking-normal">Total Previsto</span>
               <div className="stat-number  text-[var(--text-primary)] tracking-tight leading-tight">{fmt(stats.total)}</div>
-              <p className="text-xs text-[var(--text-muted)]">{filterCounts.all} faturas emitidas</p>
+              <p className="text-xs text-[var(--text-muted)]">{monthCounts.all} faturas emitidas</p>
             </div>
 
             <div className="card-light p-4 space-y-2 border-[var(--success)]/20 bg-[var(--success-bg)]">
@@ -323,7 +312,7 @@ export function FinanceiroClient({
             <div className="card-light p-4 space-y-2">
               <span className="text-xs text-[var(--text-muted)] font-bold tracking-normal">Pendentes de baixa</span>
               <div className="stat-number  text-[var(--text-secondary)] tracking-tight leading-tight">{fmt(stats.pending+stats.overdue+stats.unconfirmed)}</div>
-              <p className="text-xs text-[var(--text-muted)]">{filterCounts.pending} mensalidade(s) sem quitação confirmada</p>
+              <p className="text-xs text-[var(--text-muted)]">{monthCounts.pending} mensalidade(s) sem quitação confirmada</p>
             </div>
 
             <div className="card-light p-4 space-y-2 border-amber-200 bg-amber-50/40">
@@ -333,49 +322,18 @@ export function FinanceiroClient({
             </div>
           </div>
 
-          {/* Filtros de Status */}
-          {(stats.openingPaidCount>0||stats.unconfirmedCount>0)&&<div className="notice text-sm space-y-2"><p><strong>Conferência da importação:</strong> {stats.openingPaidCount} mensalidade(s) já quitada(s), no total de {fmt(stats.openingPaid)}, sem nova entrada no caixa.</p><p>{stats.unconfirmedCount} pagamento(s) a confirmar ({fmt(stats.unconfirmed)}). Campo vazio na planilha não foi tratado como inadimplência.</p></div>}
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" aria-pressed={currentStatus==='unconfirmed'} onClick={()=>handleStatusFilter('unconfirmed')} className={`button text-xs ${currentStatus==='unconfirmed'?'button-primary':''}`}>A confirmar ({filterCounts.unconfirmed})</button>
-            <button
-              onClick={() => handleStatusFilter('all')}
-              className={`button px-3 py-1.5 rounded-lg text-xs font-bold  tracking-normal border transition-all cursor-pointer ${
-                currentStatus === 'all'
-                  ? 'bg-[#c81930] text-white border-[#c81930]'
-                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-card-hover)]'
-              }`}
-            >
-              Todas ({filterCounts.all})
-            </button>
-            <button
-              onClick={() => handleStatusFilter('pending')}
-              className={`button px-3 py-1.5 rounded-lg text-xs font-bold  tracking-normal border transition-all cursor-pointer ${
-                currentStatus === 'pending'
-                  ? 'bg-[#c81930] text-white border-[#c81930]'
-                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-card-hover)]'
-              }`}
-            >
-              Pendentes ({filterCounts.pending})
-            </button>
-            <button
-              onClick={() => handleStatusFilter('paid')}
-              className={`button px-3 py-1.5 rounded-lg text-xs font-bold  tracking-normal border transition-all cursor-pointer ${
-                currentStatus === 'paid'
-                  ? 'bg-[#c81930] text-white border-[#c81930]'
-                  : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-card-hover)]'
-              }`}
-            >
-              Pagas ({filterCounts.paid})
-            </button>
-          </div>
+          <FinanceFilterPanel filters={filters} month={currentMonth} status={currentStatus} counts={filterCounts} classes={classOptions} total={pagination.total} pending={isNavigating}
+            onApply={handleFiltersApply} onStatus={handleStatusFilter} onClear={()=>goTo(financeHref({...currentContext,status:'all'},defaultFinanceFilters))}/>
+          <details className="card-light p-4 text-sm"><summary className="cursor-pointer font-semibold">Emissão automática e conferência da importação</summary><div className="space-y-2 text-xs text-[var(--text-secondary)] mt-3"><p>{currentMonth>todayStr.slice(0,7) ? 'As mensalidades deste mês serão emitidas no início dele. Use “Antecipar mensalidades” somente se precisar emitir antes.' : 'As mensalidades são emitidas no início de cada mês. “Gerar faltantes” permite uma conferência extra, sem duplicar cobranças.'}</p>
+            {(stats.openingPaidCount>0||stats.unconfirmedCount>0)&&<><p>{stats.openingPaidCount} mensalidade(s) quitada(s) antes da importação, no total de {fmt(stats.openingPaid)}, sem nova entrada no caixa.</p><p>{stats.unconfirmedCount} pagamento(s) a confirmar ({fmt(stats.unconfirmed)}). Campo vazio na planilha não foi tratado como inadimplência.</p></>}</div></details>
 
           {/* Tabela de Mensalidades */}
           {invoices.length === 0 ? (
             <div className="card-light py-16 text-center space-y-2">
               <DollarSign className="w-12 h-12 text-[var(--text-muted)] mx-auto" />
-              <p className="text-sm font-bold text-[var(--text-secondary)]">Nenhuma mensalidade encontrada para o período.</p>
+              <p className="text-sm font-bold text-[var(--text-secondary)]">Nenhuma cobrança corresponde aos filtros.</p>
               <p className="text-xs text-[var(--text-muted)]">
-                Clique em &quot;Gerar Mensalidades do Mês&quot; para emitir as cobranças dos alunos ativos.
+                Confira o nome, a turma e o mês selecionados, ou use “Limpar filtros”.
               </p>
             </div>
           ) : (
@@ -406,7 +364,7 @@ export function FinanceiroClient({
                         <tr key={inv.id} className="hover:bg-[var(--bg-card-hover)]/80 transition-colors">
                           <td data-label="Atleta / Aluno" className="px-5 py-3.5">
                             <div className="font-bold text-[var(--text-primary)]">{inv.student?.name || 'Aluno'}</div>
-                            <p className="text-xs text-[var(--text-muted)] mt-1">{inv.charge_type==='registration'?'Matrícula':'Mensalidade'}</p>
+                            <p className="text-xs text-[var(--text-muted)] mt-1">{inv.charge_type==='registration'?'Matrícula':'Mensalidade'} · {inv.class_name || 'Sem turma definida'}</p>
                             {inv.notes && (
                               <div className="text-xs text-[var(--text-muted)] line-clamp-1 max-w-xs" title={inv.notes}>
                                 📝 {inv.notes}
@@ -500,7 +458,7 @@ export function FinanceiroClient({
               </div>
             </div>
           )}
-          <nav aria-label="Paginação de mensalidades" className="card-light p-4 flex flex-wrap justify-between items-center gap-3"><p className="text-sm">{pagination.total?`${(pagination.page-1)*pagination.pageSize+1}–${Math.min(pagination.page*pagination.pageSize,pagination.total)} de ${pagination.total}`:'Nenhum registro'} · Página {pagination.page} de {pagination.pages}</p><div className="flex gap-2"><button type="button" className="button" disabled={isNavigating||pagination.page<=1} onClick={()=>goTo(`/financeiro?month=${currentMonth}&status=${currentStatus}&date=${targetDate}&tab=${activeTab}&page=${pagination.page-1}`)}>Anterior</button><button type="button" className="button" disabled={isNavigating||pagination.page>=pagination.pages} onClick={()=>goTo(`/financeiro?month=${currentMonth}&status=${currentStatus}&date=${targetDate}&tab=${activeTab}&page=${pagination.page+1}`)}>Próxima</button></div></nav>
+          <nav aria-label="Paginação de mensalidades" className="card-light p-4 flex flex-wrap justify-between items-center gap-3"><p className="text-sm">{pagination.total?`${(pagination.page-1)*pagination.pageSize+1}–${Math.min(pagination.page*pagination.pageSize,pagination.total)} de ${pagination.total}`:'Nenhum registro'} · Página {pagination.page} de {pagination.pages}</p><div className="flex gap-2"><button type="button" className="button" disabled={isNavigating||pagination.page<=1} onClick={()=>goTo(financeHref({...currentContext,page:pagination.page-1},filters))}>Anterior</button><button type="button" className="button" disabled={isNavigating||pagination.page>=pagination.pages} onClick={()=>goTo(financeHref({...currentContext,page:pagination.page+1},filters))}>Próxima</button></div></nav>
         </div>
       )}
 
