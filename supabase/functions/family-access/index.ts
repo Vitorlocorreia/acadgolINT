@@ -14,7 +14,7 @@ Deno.serve(async req=>{
   const limit=await db.rpc('consume_request_limit',{p_bucket:`family:${hash}`,p_limit:300,p_seconds:300});
   if(limit.error||!limit.data)return reply({error:'Aguarde alguns minutos e tente novamente.'},429);
   if(action==='portal'){
-   const student=await db.from('students').select('id,name,birth_date,status,photo_url,preferred_position,dominant_foot,uniform_size,enrollment:enrollments(id,status,plan:plans(name),class:classes(name,days_of_week,start_time,end_time,unit:units(name),coach:coaches(name))),invoices:invoices(id,reference_month,due_date,amount,paid_amount,status,paid_at,charge_type)').eq('portal_token',token).eq('portal_access_enabled',true).gt('portal_token_expires_at',new Date().toISOString()).maybeSingle();
+   const student=await db.from('students').select('id,name,birth_date,status,photo_url,preferred_position,dominant_foot,uniform_size,enrollment:enrollments(id,status,plan:plans(name),class:classes(name,days_of_week,start_time,end_time,unit:units(name),coach:coaches(name))),invoices:invoices(id,reference_month,due_date,amount,paid_amount,status,paid_at,charge_type,settled_before_import)').eq('portal_token',token).eq('portal_access_enabled',true).gt('portal_token_expires_at',new Date().toISOString()).maybeSingle();
    if(student.error)throw student.error;if(!student.data)return reply({data:null});
    const id=student.data.id;
    const [attendance,evaluation,callups]=await Promise.all([
