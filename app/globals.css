@@ -224,6 +224,10 @@
   .icon-button {
     width: 44px;
     padding: 10px;
+    flex-shrink: 0;
+  }
+  .icon-button > svg {
+    flex-shrink: 0;
   }
   .text-link {
     color: var(--brand);
@@ -828,7 +832,7 @@
   .workspace-create { order: -1; align-self: flex-end; }
   .workspace-layout > :not(.workspace-create) { min-width: 0; }
   .create-panel-content { padding: 28px; display: grid; gap: 24px; }
-  .create-panel-content > :first-child { padding-right: 48px; }
+  .create-panel-content > .create-panel-close + * { padding-right: 60px; }
   .create-panel-close { position: absolute; top: 18px; right: 18px; }
   .modal-frame { width: min(560px, calc(100% - 32px)); }
   .modal-wide { width: min(760px, calc(100% - 32px)); }
