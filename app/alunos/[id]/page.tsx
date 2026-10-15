@@ -17,7 +17,8 @@ import {
   Sparkles,
   ExternalLink,
 } from 'lucide-react'
-import { getStudentById } from '../actions'
+import { getStudentById, getFormDataForEnrollment } from '../actions'
+import {ImportedEnrollment} from '../imported-enrollment'
 import { StudentStatusToggle } from '../student-status-toggle'
 import { StudentGuardiansList } from './student-guardians-list'
 import { StudentPhotoUpload } from '../student-photo-upload'
@@ -43,6 +44,7 @@ export default async function AlunoProfilePage({ params }: Props) {
   const enrollment = Array.isArray(student.enrollment) ? student.enrollment[0] : student.enrollment
   const guardian = Array.isArray(student.guardian) ? student.guardian[0] : student.guardian
   const medical = Array.isArray(student.medical_record) ? student.medical_record[0] : student.medical_record
+  const importOptions=enrollment?.import_source?await getFormDataForEnrollment():null
 
   return (
     <div className="page-container space-y-6">
@@ -95,6 +97,7 @@ export default async function AlunoProfilePage({ params }: Props) {
       </section>
 
       <FamilyAccessControls studentId={student.id} enabled={student.portal_access_enabled} expiresAt={student.portal_token_expires_at}/>
+      {enrollment?.import_source&&importOptions&&<ImportedEnrollment studentId={student.id} enrollment={enrollment} classes={importOptions.classes} plans={importOptions.plans}/>}
       {/* Foto Oficial do Atleta para Card FIFA FUT 3D */}
       <div className="card-light p-5">
         <StudentPhotoUpload
@@ -191,18 +194,18 @@ export default async function AlunoProfilePage({ params }: Props) {
                         <td data-label="Vencimento" className="px-4 py-3 font-mono text-[var(--text-secondary)]">
                           {inv.due_date?.split('-').reverse().join('/')}
                         </td>
-                        <td data-label="Valor" className="px-4 py-3 font-mono font-bold text-[var(--text-primary)]">{fmt(inv.amount)}{isPaid&&<p className="text-xs font-normal mt-1">Recebido: {fmt(inv.paid_amount??inv.amount)}{Number(inv.paid_amount??inv.amount)<Number(inv.amount)?' · com desconto':''}</p>}</td>
+                        <td data-label="Valor" className="px-4 py-3 font-mono font-bold text-[var(--text-primary)]">{fmt(inv.amount)}{isPaid&&!inv.settled_before_import&&<p className="text-xs font-normal mt-1">Recebido: {fmt(inv.paid_amount??inv.amount)}{Number(inv.paid_amount??inv.amount)<Number(inv.amount)?' · com desconto':''}</p>}{inv.settled_before_import&&<p className="text-xs font-normal mt-1">Sem nova entrada no caixa</p>}</td>
                         <td data-label="Status" className="px-4 py-3 text-center">
                           <span className={`px-2 py-0.5 rounded text-xs font-bold tracking-normal border ${
                             isPaid
                               ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
                               : 'bg-amber-50 text-amber-800 border-amber-200'
                           }`}>
-                            {isPaid ? 'Pago' : 'Pendente'}
+                            {isPaid ? (inv.settled_before_import?'Quitado na importação':'Pago') : inv.status==='unconfirmed'?'A confirmar':'Pendente'}
                           </span>
                         </td>
                         <td data-label="Ação" className="px-4 py-3 text-right">
-                          {!isPaid && guardian?.phone && (
+                          {!isPaid && inv.status!=='unconfirmed' && guardian?.phone && (
                             <a
                               href={`https://wa.me/55${guardian.phone.replace(/\D/g, '')}?text=${encodeURIComponent(
                                 `🔴⚫ *ESCOLINHA DE FUTEBOL • SPORT RECIFE*\n\nOlá ${guardian.name}, tudo bem? Segue a mensalidade do atleta ${student.name} referente a ${inv.reference_month} no valor de ${fmt(inv.amount)}.\n\nPara facilitar o pagamento, você pode acessar direto pelo Portal: ${appUrl()}/portal/${student.portal_token}\n\nObrigado!`

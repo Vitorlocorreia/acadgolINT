@@ -49,6 +49,10 @@ interface Props {
     collected: number
     pending: number
     overdue: number
+    openingPaid: number
+    openingPaidCount: number
+    unconfirmed: number
+    unconfirmedCount: number
   }
   currentMonth: string
   currentStatus: string
@@ -324,7 +328,9 @@ export function FinanceiroClient({
           </div>
 
           {/* Filtros de Status */}
-          <div className="flex items-center gap-2">
+          {(stats.openingPaidCount>0||stats.unconfirmedCount>0)&&<div className="notice text-sm space-y-2"><p><strong>Conferência da importação:</strong> {stats.openingPaidCount} mensalidade(s) já quitada(s), no total de {fmt(stats.openingPaid)}, sem nova entrada no caixa.</p><p>{stats.unconfirmedCount} pagamento(s) a confirmar ({fmt(stats.unconfirmed)}). Campo vazio na planilha não foi tratado como inadimplência.</p></div>}
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" onClick={()=>handleStatusFilter('unconfirmed')} className={`button text-xs ${currentStatus==='unconfirmed'?'button-primary':''}`}>A confirmar</button>
             <button
               onClick={() => handleStatusFilter('all')}
               className={`button px-3 py-1.5 rounded-lg text-xs font-bold  tracking-normal border transition-all cursor-pointer ${
@@ -383,7 +389,8 @@ export function FinanceiroClient({
                   <tbody className="divide-y divide-[var(--border-color)]">
                     {invoices.map((inv) => {
                       const isPaid = inv.status === 'paid'
-                      const isOverdue = !isPaid && (inv.due_date < todayStr || inv.status === 'overdue')
+                      const isUnconfirmed = inv.status === 'unconfirmed'
+                      const isOverdue = !isPaid && !isUnconfirmed && inv.status!=='cancelled' && (inv.due_date < todayStr || inv.status === 'overdue')
                       const guardian = Array.isArray(inv.student?.guardian) ? inv.student.guardian[0] : inv.student?.guardian
                       const guardianPhone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
 
@@ -412,7 +419,7 @@ export function FinanceiroClient({
                             {inv.due_date?.split('-').reverse().join('/')}
                           </td>
 
-                          <td data-label="Valor" className="px-5 py-3.5 font-mono font-bold text-[var(--text-primary)]">{fmt(inv.amount)}{inv.status==='paid'&&<p className="text-xs font-normal mt-1">Recebido: {fmt(inv.paid_amount??inv.amount)}</p>}{Number(inv.receipt?.discount_amount)>0&&<p className="text-xs text-emerald-700 mt-1">Com desconto: {fmt(Number(inv.receipt.discount_amount))}</p>}</td>
+                          <td data-label="Valor" className="px-5 py-3.5 font-mono font-bold text-[var(--text-primary)]">{fmt(inv.amount)}{inv.status==='paid'&&!inv.settled_before_import&&<p className="text-xs font-normal mt-1">Recebido: {fmt(inv.paid_amount??inv.amount)}</p>}{inv.settled_before_import&&<p className="text-xs font-normal mt-1">Quitação informada na planilha</p>}{Number(inv.receipt?.discount_amount)>0&&<p className="text-xs text-emerald-700 mt-1">Com desconto: {fmt(Number(inv.receipt.discount_amount))}</p>}</td>
 
                           <td data-label="Status" className="px-5 py-3.5 text-center">
                             <span
@@ -424,14 +431,14 @@ export function FinanceiroClient({
                                   : 'bg-amber-50 text-amber-700 border-amber-200'
                               }`}
                             >
-                              {isPaid ? 'Pago' : isOverdue ? 'Atrasado' : 'Pendente'}
+                              {isPaid ? (inv.settled_before_import?'Quitado na importação':'Pago') : isUnconfirmed?'A confirmar':isOverdue ? 'Atrasado' : 'Pendente'}
                             </span>
                           </td>
 
                           <td data-label="Ações" className="px-5 py-3.5 text-right">
                             <div className="flex flex-wrap items-center justify-end gap-2">
                               <InvoiceProofsButton invoiceId={inv.id} count={Number(inv.proof_count||0)}/>
-                              {!isPaid && guardianPhone && (
+                              {!isPaid && !isUnconfirmed && guardianPhone && (
                                 <a
                                   href={`https://wa.me/55${guardianPhone}?text=${encodeURIComponent(whatsappMsg)}`}
                                   target="_blank"
@@ -450,7 +457,7 @@ export function FinanceiroClient({
                                 >
                                   <Check className="w-3 h-3" /> Dar Baixa
                                 </button>
-                              ) : (
+                              ) : inv.settled_before_import ? <span className="text-xs text-[var(--text-muted)]">Sem movimentação de caixa</span> : (
                                 <div className="flex items-center gap-2 justify-end">
                                   {(() => {
                                     const origin = getPaymentOriginDetails(inv.payment_method, inv.notes)

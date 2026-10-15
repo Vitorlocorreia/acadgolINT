@@ -152,9 +152,9 @@ export async function getStudentById(id: string) {
       guardian:guardians(*),
       medical_record:medical_records(*),
       enrollment:enrollments(
-        id, status, monthly_fee, due_day, start_date,
+        id, status, monthly_fee, due_day, start_date, import_source,
         class:classes(id, name, start_time, end_time, days_of_week, unit:units(name), category:categories(name), coach:coaches(name, phone)),
-        plan:plans(name, duration_months, includes_uniform)
+        plan:plans(id, name, duration_months, includes_uniform)
       ),
       invoices:invoices(*),
       evaluations:technical_evaluations(*, coach:coaches(name))

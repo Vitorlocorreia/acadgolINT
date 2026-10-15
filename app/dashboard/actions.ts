@@ -69,7 +69,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         .order("start_time"),
       db
         .from("invoices")
-        .select("amount, paid_amount, status, due_date")
+        .select("amount, paid_amount, status, due_date, settled_before_import")
         .eq("reference_month", today.slice(0, 7))
         .neq("status", "cancelled"),
       db
@@ -116,7 +116,8 @@ export async function getDashboardData(): Promise<DashboardData> {
   for (const invoice of invoices.data || []) {
     const amount = Number(invoice.amount);
     revenue.total += amount;
-    if (invoice.status === "paid") revenue.collected += Number(invoice.paid_amount ?? invoice.amount);
+    if (invoice.status === "paid") { if(!invoice.settled_before_import) revenue.collected += Number(invoice.paid_amount ?? invoice.amount); }
+    else if(invoice.status==='unconfirmed') continue;
     else if (invoice.status === "overdue" || invoice.due_date < today) {
       revenue.overdue += amount;
       revenue.overdueCount++;

@@ -38,6 +38,7 @@ interface Invoice {
   amount: number;
   charge_type?: 'monthly'|'registration';
   paid_amount?: number|null;
+  settled_before_import?: boolean;
   status: string;
   pix_code?: string | null;
   paid_at?: string | null;
@@ -645,7 +646,8 @@ export function PortalClient({ data }: { data: PortalData }) {
                             className={`badge ${invoice.status === "paid" ? "badge-success" : late ? "badge-danger" : isPending ? "badge-warning" : ""}`}
                           >
                             {invoice.status === "paid"
-                              ? "Pago"
+                              ? (invoice.settled_before_import?"Quitado na importação":"Pago")
+                              : invoice.status === 'unconfirmed' ? 'A confirmar com a secretaria'
                               : invoice.status === "cancelled"
                                 ? "Cancelada"
                                 : late
@@ -656,7 +658,8 @@ export function PortalClient({ data }: { data: PortalData }) {
                         <p className="mt-5 text-2xl font-bold tracking-tight tabular-nums">
                           {formatMoney(invoice.amount)}
                         </p>
-                        {invoice.status==='paid'&&<p className="text-sm mt-2">Recebido: <strong>{formatMoney(Number(invoice.paid_amount??invoice.amount))}</strong>{Number(invoice.paid_amount??invoice.amount)<Number(invoice.amount)&&<span> · com desconto de {formatMoney(Number(invoice.amount)-Number(invoice.paid_amount))}</span>}</p>}
+                        {invoice.status==='paid'&&!invoice.settled_before_import&&<p className="text-sm mt-2">Recebido: <strong>{formatMoney(Number(invoice.paid_amount??invoice.amount))}</strong>{Number(invoice.paid_amount??invoice.amount)<Number(invoice.amount)&&<span> · com desconto de {formatMoney(Number(invoice.amount)-Number(invoice.paid_amount))}</span>}</p>}
+                        {invoice.settled_before_import&&<p className="text-sm mt-2">Quitação informada na planilha anterior.</p>}
                         {isPending && (
                           <div className="mt-5 border-t border-[var(--border-color)] pt-4">
                             {invoice.pix_code ? (

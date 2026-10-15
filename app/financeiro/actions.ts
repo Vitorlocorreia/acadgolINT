@@ -6,7 +6,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import { createHash } from 'node:crypto'
-import {paymentPartsProblem,paymentTotals} from '@/lib/finance/payment-parts'
+import {paymentPartsProblem,paymentTotals,summarizeInvoices} from '@/lib/finance/payment-parts'
 import { PAYMENT_PROOF_BUCKET, paymentProofProblem, paymentProofHasSignature, paymentProofName, paymentProofExtension, type PaymentProofType } from '@/lib/finance/payment-proof'
 
 import { getBrDateStr, calculateOverdueCharges, type OverdueCalculation } from './calc'
@@ -63,22 +63,8 @@ export async function getFinanceiroEscolinhaData(
 
   const list = monthInvoices ?? []
 
-  let total = 0
-  let collected = 0
-  let pending = 0
-  let overdue = 0
-
-  list.forEach((inv) => {
-    const val = Number(inv.amount)
-    total += val
-    if (inv.status === 'paid') {
-      collected += Number(inv.paid_amount ?? inv.amount)
-    } else if (inv.due_date < todayStr || inv.status === 'overdue') {
-      overdue += val
-    } else {
-      pending += val
-    }
-  })
+  const stats = summarizeInvoices(list,todayStr)
+  const {total,collected,pending,overdue}=stats
 
   // 2. Busca TODAS as faturas inadimplentes (qualquer mês)
   const { data: allPendingOrOverdue, error: overdueError } = await supabase
@@ -102,6 +88,7 @@ export async function getFinanceiroEscolinhaData(
   const { data: dailyPaid, error: dailyError } = await supabase
     .from('finance_invoices').select('*')
     .eq('status', 'paid')
+    .eq('settled_before_import', false)
     .gte('paid_at', new Date(startIso).toISOString())
     .lte('paid_at', new Date(endIso).toISOString())
     .order('paid_at', { ascending: false })
@@ -132,8 +119,9 @@ export async function getFinanceiroEscolinhaData(
   const weekStartIso = `${past7Days[0].date}T00:00:00-03:00`
   const { data: weekPaid,error:weekError } = await supabase
     .from('finance_invoices')
-    .select('amount, paid_amount, payment_method, paid_at, receipt')
+    .select('amount, paid_amount, payment_method, paid_at, receipt, settled_before_import')
     .eq('status', 'paid')
+    .eq('settled_before_import', false)
     .gte('paid_at', new Date(weekStartIso).toISOString())
     .lte('paid_at', new Date(endIso).toISOString())
 
@@ -152,9 +140,10 @@ export async function getFinanceiroEscolinhaData(
   // 5. Relatório Mensal Consolidado do targetMonth
   const { data: monthPaidAll,error:reportError } = await supabase
     .from('finance_invoices')
-    .select('amount, paid_amount, payment_method, receipt')
+    .select('amount, paid_amount, payment_method, receipt, settled_before_import')
     .eq('reference_month', targetMonth)
     .eq('status', 'paid')
+    .eq('settled_before_import', false)
 
   const monthSplit=paymentTotals(monthPaidAll||[])
   const monthDinheiro=monthSplit.dinheiro,monthPix=monthSplit.pix,monthCartao=monthSplit.debito+monthSplit.credito
@@ -162,7 +151,7 @@ export async function getFinanceiroEscolinhaData(
   if([monthError,overdueError,dailyError,weekError,reportError].some(Boolean))throw new Error('Não foi possível carregar todos os dados financeiros. Atualize a página antes de conferir os valores.');
   return {
     invoices: list,
-    stats: { total, collected, pending, overdue },
+    stats,
     targetMonth,
     targetDate,
     todayStr,
