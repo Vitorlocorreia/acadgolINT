@@ -1,5 +1,7 @@
 'use client'
 
+import {buildCallupCaption,callupInstructions} from '@/lib/callups/model'
+import { ModalFrame } from '@/components/modal-frame'
 import { useState, useTransition, useMemo } from 'react'
 import Link from 'next/link'
 import {
@@ -95,7 +97,7 @@ export function JogosClient({
       setDispatchingMatchId(null)
       if (res.success) {
         setFeedback(
-          `🤖 Convocação anunciada com sucesso! ${res.sentCount} de ${res.totalGuardians} responsáveis notificados no WhatsApp com a Figurinha Oficial de Convocado!`
+          `${res.sentCount} imagens aceitas pelo WhatsApp. ${res.skippedCount || 0} avisos já enviados foram preservados.`
         )
       } else {
         setFeedback(`❌ Erro no anúncio: ${res.error || 'Falha ao conectar com o WhatsApp.'}`)
@@ -171,7 +173,7 @@ export function JogosClient({
   return (
     <div className="space-y-6">
       {feedback && (
-        <div className="p-3.5 rounded-[8px] bg-gradient-to-r from-[#1A0406] to-[#0A0A0C] border-2 border-[#D61F27] text-white text-xs font-bold flex items-center gap-2.5 shadow-md">
+        <div className="p-3.5 rounded-lg bg-gradient-to-r from-[#1A0406] to-[#0A0A0C] border-2 border-[#c81930] text-white text-xs font-bold flex items-center gap-2.5 shadow-md">
           <CheckCircle2 className="w-4 h-4 text-[#FFE300] shrink-0" />
           <span>{feedback}</span>
         </div>
@@ -179,9 +181,9 @@ export function JogosClient({
 
       {matches.length === 0 ? (
         <div className="card-light py-16 text-center space-y-2">
-          <Trophy className="w-12 h-12 text-slate-300 mx-auto" />
-          <p className="text-sm font-bold text-slate-700">Nenhum jogo ou campeonato agendado.</p>
-          <p className="text-xs text-slate-500">Agende um amistoso ou partida oficial pelo formulário ao lado.</p>
+          <Trophy className="w-12 h-12 text-[var(--text-muted)] mx-auto" />
+          <p className="text-sm font-bold text-[var(--text-secondary)]">Nenhum jogo ou campeonato agendado.</p>
+          <p className="text-xs text-[var(--text-muted)]">Agende um amistoso ou partida oficial pelo formulário ao lado.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
@@ -195,31 +197,31 @@ export function JogosClient({
             return (
               <div
                 key={match.id}
-                className="card-light p-5 space-y-4 hover:border-[#D61F27]/50 transition-all shadow-xs border-l-4 border-l-[#D61F27]"
+                className="card-light p-5 space-y-4 hover:border-[#c81930]/50 transition-all shadow-xs border-l-4 border-l-[#c81930]"
               >
                 {/* Header do Jogo */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-color)] pb-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#D61F27]/10 text-[#D61F27] border border-[#D61F27]/20">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#c81930]/10 text-[#c81930] border border-[#c81930]/20">
                         {match.category?.name || 'Geral'}
                       </span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 flex items-center gap-1">
                         <span>★</span>
                         <span>{match.match_type === 'championship' ? 'Campeonato Oficial' : 'Amistoso Rubro-Negro'}</span>
                       </span>
                       {fee > 0 ? (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#D61F27]/10 text-[#D61F27] border border-[#D61F27]/30 flex items-center gap-1">
-                          <DollarSign className="w-3 h-3 text-[#D61F27]" />
+                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-[#c81930]/10 text-[#c81930] border border-[#c81930]/30 flex items-center gap-1">
+                          <DollarSign className="w-3 h-3 text-[#c81930]" />
                           <span>Inscrição: R$ {fee.toFixed(2).replace('.', ',')} (Coordenação)</span>
                         </span>
                       ) : (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
                           🎟️ Gratuito
                         </span>
                       )}
                     </div>
-                    <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none mt-1">
+                    <h3 className="section-title  text-[var(--text-primary)] tracking-tight leading-tight mt-1">
                       {match.title} vs {match.opponent}
                     </h3>
                   </div>
@@ -227,18 +229,18 @@ export function JogosClient({
                   {/* Placar */}
                   <div className="flex items-center gap-3">
                     {isFinished ? (
-                      <div className="px-4 py-2 bg-[#0A0A0C] text-[#FFE300] border border-amber-400/30 rounded font-bebas text-2xl tracking-wider leading-none shadow-xs">
+                      <div className="px-4 py-2 bg-[#0A0A0C] text-[#FFE300] border border-amber-400/30 rounded stat-number  tracking-tight leading-tight shadow-xs">
                         {match.our_score ?? 0} x {match.opponent_score ?? 0}
                       </div>
                     ) : (
-                      <span className="px-3 py-1 rounded text-xs font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="px-3 py-1 rounded text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
                         Agendado
                       </span>
                     )}
 
                     <button
                       onClick={() => handleOpenScoreModal(match)}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold uppercase cursor-pointer"
+                      className="button px-3 py-1.5 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-secondary)] rounded text-xs font-bold  cursor-pointer"
                     >
                       {isFinished ? 'Editar Placar' : 'Lançar Resultado'}
                     </button>
@@ -246,9 +248,9 @@ export function JogosClient({
                 </div>
 
                 {/* Dados da Partida */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-600">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-[var(--text-secondary)]">
                   <div className="flex items-center gap-1.5 font-mono">
-                    <Calendar className="w-3.5 h-3.5 text-[#D61F27]" />
+                    <Calendar className="w-3.5 h-3.5 text-[#c81930]" />
                     <span>
                       {match.match_date?.split('-').reverse().join('/')}{' '}
                       {match.match_time ? `às ${match.match_time.slice(0, 5)}` : ''}
@@ -268,22 +270,22 @@ export function JogosClient({
                 </div>
 
                 {/* Lista de Convocados e Botões de Disparo */}
-                <div className="pt-2 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="pt-2 border-t border-[var(--border-color)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 flex-wrap">
                     {callups.map((c: any) => {
                       const isConf = c.status === 'confirmed'
                       return (
-                        <div
+                        <button type="button"
                           key={c.id}
                           onClick={() => setViewingCardCallup({ callup: c, match })}
-                          className={`px-2.5 py-1 rounded text-[11px] font-bold flex items-center gap-1.5 cursor-pointer transition-all border ${
+                          className={`button px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all border ${
                             isConf
                               ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'
-                              : 'bg-slate-50 text-slate-800 border-slate-200 hover:bg-slate-100'
+                              : 'bg-[var(--bg-card-hover)] text-[var(--text-primary)] border-[var(--border-color)] hover:bg-[var(--bg-subtle)]'
                           }`}
                           title="Clique para ver o Card FIFA 3D deste atleta"
                         >
-                          <div className="w-4 h-4 rounded-full overflow-hidden bg-amber-400/20 shrink-0 flex items-center justify-center text-[8px]">
+                          <span className="w-5 h-5 rounded-full overflow-hidden bg-[var(--bg-subtle)] shrink-0 flex items-center justify-center text-[8px]">
                             {c.student?.photo_url ? (
                               <img
                                 src={c.student.photo_url}
@@ -293,20 +295,20 @@ export function JogosClient({
                             ) : (
                               '⭐'
                             )}
-                          </div>
+                          </span>
                           <span>{c.student?.name}</span>
                           {isConf ? (
                             <span className="text-[9px] text-emerald-600">✅</span>
                           ) : (
                             <span className="text-[9px] text-amber-500">⏳</span>
                           )}
-                        </div>
+                        </button>
                       )
                     })}
 
                     {callups.length === 0 && (
-                      <span className="text-xs text-slate-400 italic">
-                        Nenhum atleta convocado ainda. Clique em "Editar Convocação" para selecionar os jogadores.
+                      <span className="text-xs text-[var(--text-muted)] italic">
+                        Nenhum atleta convocado ainda. Clique em &quot;Editar Convocação&quot; para selecionar os jogadores.
                       </span>
                     )}
                   </div>
@@ -314,21 +316,21 @@ export function JogosClient({
                   {/* Ações da Partida */}
                   <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
                     {/* Botão de Editar Convocação */}
-                    <button
+                    <button aria-label="Editar adversário, data, local, taxa e lista de atletas convocados"
                       onClick={() => handleOpenEditModal(match)}
-                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border border-slate-300 cursor-pointer"
+                      className="button px-3 py-1.5 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-primary)] rounded text-xs font-bold  tracking-normal flex items-center justify-center gap-1.5 border border-[var(--border-color)] cursor-pointer"
                       title="Editar adversário, data, local, taxa e lista de atletas convocados"
                     >
-                      <Edit3 className="w-3.5 h-3.5 text-slate-600" />
+                      <Edit3 className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
                       <span>Editar Convocação</span>
                     </button>
 
                     {/* Botão de Anunciar Convocação (só envia quando clicar aqui e confirmar) */}
                     {callups.length > 0 && (
-                      <button
+                      <button aria-label="Anunciar oficialmente e disparar WhatsApp para os responsáveis"
                         onClick={() => setAnnounceConfirmMatch(match)}
                         disabled={isPending || isDispatchingThis}
-                        className="px-3.5 py-1.5 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-sm border border-amber-400/40 cursor-pointer disabled:opacity-50"
+                        className="button px-3.5 py-1.5 bg-gradient-to-r from-[#c81930] to-[#a71327] hover:from-[#c81930] hover:to-[#a71327] text-white rounded text-xs font-bold  tracking-normal flex items-center justify-center gap-1.5 shadow-sm border border-amber-400/40 cursor-pointer disabled:opacity-50"
                         title="Anunciar oficialmente e disparar WhatsApp para os responsáveis"
                       >
                         {isDispatchingThis ? (
@@ -342,13 +344,13 @@ export function JogosClient({
 
                     {/* Botão de Cards & Detalhes */}
                     {callups.length > 0 && (
-                      <button
+                      <button aria-label="Ver lista de convocações individuais e artes de convocação"
                         onClick={() => setSelectedMatch(match)}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
-                        title="Ver lista de convocações individuais e figurinhas oficiais"
+                        className="button px-3 py-1.5 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-secondary)] rounded text-xs font-bold  tracking-normal flex items-center justify-center gap-1.5 cursor-pointer"
+                        title="Ver lista de convocações individuais e artes de convocação"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Figurinhas & Detalhes</span>
+                        <span>Convocações e detalhes</span>
                       </button>
                     )}
                   </div>
@@ -361,35 +363,35 @@ export function JogosClient({
 
       {/* Modal Disparo de Convocação WhatsApp com Link do Card FIFA */}
       {selectedMatch && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[10px] max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <ModalFrame label="Atletas convocados" onClose={() => setSelectedMatch(null)} wide>
+          <div className="bg-[var(--bg-card)] rounded-[10px] max-w-2xl w-full p-6 space-y-4 shadow-2xl border border-[var(--border-color)] max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
               <div>
-                <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
+                <h3 className="section-title  text-[var(--text-primary)] tracking-tight leading-tight flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-amber-500" />
                   Cards FIFA & Convocação Oficial — {selectedMatch.title} vs {selectedMatch.opponent}
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">
-                  Envie a mensagem no WhatsApp dos pais contendo o link da figurinha 3D do atleta.
+                <p className="text-xs text-[var(--text-muted)] mt-1">
+                  Confira a arte de cada atleta, baixe a imagem ou envie aos responsáveis pelo WhatsApp.
                 </p>
               </div>
-              <button
+              <button aria-label="Fechar janela"
                 onClick={() => setSelectedMatch(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold"
+                className="button text-[var(--text-muted)] hover:text-[var(--text-secondary)] font-bold"
               >
                 ✕
               </button>
             </div>
 
             {/* Banner de Disparo Automático no Modal */}
-            <div className="p-3 bg-gradient-to-r from-[#0A0A0C] to-[#1F0406] rounded-[8px] border border-amber-400/40 flex items-center justify-between gap-3 text-white">
+            <div className="p-3 bg-gradient-to-r from-[#0A0A0C] to-[#1F0406] rounded-lg border border-amber-400/40 flex items-center justify-between gap-3 text-white">
               <div className="flex items-center gap-2.5">
                 <Bot className="w-5 h-5 text-[#FFE300] shrink-0" />
                 <div>
-                  <h4 className="text-xs font-bold text-white uppercase tracking-wider">
+                  <h4 className="text-xs font-bold text-white tracking-tight">
                     Disparo Automático em Lote (Robô Evolution)
                   </h4>
-                  <p className="text-[11px] text-slate-300">
+                  <p className="text-xs text-[var(--text-muted)]">
                     Envia para todos os pais elegíveis de uma só vez.
                   </p>
                 </div>
@@ -402,7 +404,7 @@ export function JogosClient({
                   setAnnounceConfirmMatch(m)
                 }}
                 disabled={isPending || dispatchingMatchId === selectedMatch.id}
-                className="px-4 py-2 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm border border-amber-400/40 cursor-pointer disabled:opacity-50 shrink-0"
+                className="button px-4 py-2 bg-gradient-to-r from-[#c81930] to-[#a71327] hover:from-[#c81930] hover:to-[#a71327] text-white rounded text-xs font-bold  tracking-normal flex items-center gap-1.5 shadow-sm border border-amber-400/40 cursor-pointer disabled:opacity-50 shrink-0"
               >
                 <Zap className="w-3.5 h-3.5 text-[#FFE300]" />
                 <span>📢 Anunciar Todos</span>
@@ -415,20 +417,15 @@ export function JogosClient({
                 const phone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
                 const isConfirmed = c.status === 'confirmed'
 
-                const fee = extractMatchFee(selectedMatch.notes)
-                const feeSection = fee > 0
-                  ? `💰 *TAXA DE INSCRIÇÃO:* R$ ${fee.toFixed(2).replace('.', ',')} *(A ser paga diretamente na Coordenação / Secretaria)*\n⚠️ *Atenção:* Favor procurar a coordenação da escolinha para acertar o pagamento da inscrição do atleta.\n`
-                  : `💰 *TAXA DE INSCRIÇÃO:* Isento / Gratuito\n`
-
-                const msg = `🏆 *CONVOCAÇÃO OFICIAL - SPORT CLUB DO RECIFE* 🔴⚫🦁\n★ ★ ★ *FIGURINHA OFICIAL DE CONVOCADO • ÁLBUM 2026*\n\nSensacional, Sr(a). *${guardian?.name || 'Responsável'}*!\nO atleta *${c.student?.name}* foi CONVOCADO para defender o Sport Club do Recife no próximo confronto:\n\n⚔️ Partida: *${selectedMatch.title} vs ${selectedMatch.opponent}*\n📅 Data: *${selectedMatch.match_date?.split('-').reverse().join('/')}* às *${selectedMatch.match_time?.slice(0, 5)}*\n📍 Local: *${selectedMatch.location}*\n🎽 Categoria: *${selectedMatch.category?.name || 'Oficial'}*\n\n${feeSection}\n📸 *A Figurinha Oficial de Convocado do atleta foi gerada e enviada anexa acima!*\nContamos com a presença do nosso atleta em campo!\n"Pelo Sport tudo!" 🔴⚫🦁⚽`
+                const msg = buildCallupCaption({...c,match:selectedMatch},guardian?.name,false)
 
                 return (
                   <div
                     key={c.id}
-                    className="p-3 bg-slate-50 rounded-[8px] border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                    className="p-3 bg-[var(--bg-card-hover)] rounded-lg border border-[var(--border-color)] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-[6px] bg-slate-900 border border-amber-400/50 flex items-center justify-center overflow-hidden shrink-0">
+                      <div className="w-10 h-10 rounded-lg bg-slate-900 border border-amber-400/50 flex items-center justify-center overflow-hidden shrink-0">
                         {c.student?.photo_url ? (
                           <img
                             src={c.student.photo_url}
@@ -441,10 +438,10 @@ export function JogosClient({
                       </div>
 
                       <div>
-                        <div className="font-bold text-slate-900 flex items-center gap-2">
+                        <div className="font-bold text-[var(--text-primary)] flex items-center gap-2">
                           <span>{c.student?.name}</span>
                           <span
-                            className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase ${
+                            className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${
                               isConfirmed
                                 ? 'bg-emerald-100 text-emerald-800'
                                 : 'bg-amber-100 text-amber-800'
@@ -453,28 +450,28 @@ export function JogosClient({
                             {isConfirmed ? 'Confirmado' : 'Aguardando'}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="text-xs text-[var(--text-muted)]">
                           Resp: {guardian?.name || '—'} • {guardian?.phone || 'Sem telefone'}
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap justify-end">
-                      <button
+                      <button aria-label="Ver Arte personalizada de convocação"
                         type="button"
                         onClick={() => setViewingCardCallup({ callup: c, match: selectedMatch })}
-                        className="px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 cursor-pointer"
-                        title="Ver Figurinha Oficial de Convocado"
+                        className="button px-2.5 py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-subtle)] text-[var(--text-secondary)] border border-[var(--border-color)] rounded text-xs font-bold  tracking-normal inline-flex items-center gap-1 cursor-pointer"
+                        title="Ver Arte personalizada de convocação"
                       >
                         <Eye className="w-3.5 h-3.5 text-amber-500" />
-                        <span>Figurinha</span>
+                        <span>Ver arte</span>
                       </button>
 
                       {phone ? (
                         <>
-                          <button
+                          <button aria-label="Disparar Arte de Convocação e anúncio oficial diretamente no WhatsApp do responsável (Robô)"
                             type="button"
-                            disabled={sendingSingleCallupId === c.id}
+                            disabled={sendingSingleCallupId === c.id || !c.student?.photo_url}
                             onClick={async () => {
                               setSendingSingleCallupId(c.id)
                               try {
@@ -490,29 +487,29 @@ export function JogosClient({
                                 setSendingSingleCallupId(null)
                               }
                             }}
-                            className="px-3 py-1.5 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-2xs border border-amber-400/30 shrink-0 cursor-pointer disabled:opacity-50"
-                            title="Disparar Figurinha de Copa e anúncio oficial diretamente no WhatsApp do responsável (Robô)"
+                            className="button px-3 py-1.5 bg-gradient-to-r from-[#c81930] to-[#a71327] hover:from-[#c81930] hover:to-[#a71327] text-white rounded text-xs font-bold  tracking-normal inline-flex items-center gap-1.5 shadow-2xs border border-amber-400/30 shrink-0 cursor-pointer disabled:opacity-50"
+                            title="Disparar Arte de Convocação e anúncio oficial diretamente no WhatsApp do responsável (Robô)"
                           >
                             {sendingSingleCallupId === c.id ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin text-[#FFE300]" />
                             ) : (
                               <Bot className="w-3.5 h-3.5 text-[#FFE300]" />
                             )}
-                            <span>{sendingSingleCallupId === c.id ? 'Enviando...' : 'Robô c/ Figurinha'}</span>
+                            <span>{sendingSingleCallupId === c.id ? 'Enviando...' : 'Enviar imagem'}</span>
                           </button>
 
                           <a
                             href={`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 border border-slate-300 shrink-0"
+                            className="button px-2.5 py-1.5 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-secondary)] rounded text-xs font-bold tracking-normal inline-flex items-center gap-1 border border-[var(--border-color)] shrink-0"
                             title="Enviar mensagem manualmente pelo WhatsApp Web/App (sem links)"
                           >
                             <Send className="w-3 h-3 text-emerald-600" /> Manual
                           </a>
                         </>
                       ) : (
-                        <span className="text-[11px] text-slate-400 italic">Sem WhatsApp</span>
+                        <span className="text-xs text-[var(--text-muted)] italic">Sem WhatsApp</span>
                       )}
                     </div>
                   </div>
@@ -520,177 +517,177 @@ export function JogosClient({
               })}
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex justify-end">
+            <div className="pt-3 border-t border-[var(--border-color)] flex justify-end">
               <button
                 onClick={() => setSelectedMatch(null)}
-                className="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold uppercase cursor-pointer"
+                className="button px-5 py-2 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-secondary)] rounded text-xs font-bold  cursor-pointer"
               >
                 Concluído
               </button>
             </div>
           </div>
-        </div>
+        </ModalFrame>
       )}
 
       {/* Modal Preview Card FIFA */}
       {viewingCardCallup && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <ModalFrame label="Arte da convocação" onClose={() => setViewingCardCallup(null)}>
           <div className="bg-[#0A0A0C] text-white rounded-[12px] p-6 max-w-lg w-full space-y-4 border border-amber-400/40 relative max-h-[95vh] overflow-y-auto flex flex-col items-center shadow-2xl">
-            <button
+            <button aria-label="Fechar janela"
               onClick={() => setViewingCardCallup(null)}
-              className="absolute top-3 right-3 text-slate-400 hover:text-white font-bold text-lg cursor-pointer"
+              className="button absolute top-3 right-3 text-[var(--text-muted)] hover:text-white font-bold text-lg cursor-pointer"
             >
               ✕
             </button>
 
             <div className="text-center space-y-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#FFE300]">
-                ★ Sport Club do Recife • Álbum de Figurinhas 2026 ★
+              <span className="text-xs font-bold tracking-normal text-[#FFE300]">
+                Sport Club do Recife · Convocação individual
               </span>
-              <h3 className="font-bebas text-2xl text-white tracking-wider">
-                Figurinha Oficial de Convocado
+              <h3 className="section-title  text-white tracking-tight">
+                Arte personalizada de convocação
               </h3>
-              <p className="text-[11px] text-slate-300">
-                Esta é a figurinha de copa oficial em alta resolução enviada diretamente no WhatsApp dos pais.
+              <p className="text-xs text-[var(--text-muted)]">
+                A foto e os dados do atleta preenchem este modelo automaticamente. Confira a imagem antes do envio.
               </p>
             </div>
 
-            {/* Imagem Real da Figurinha de Copa */}
+            {/* Imagem Real da Arte de Convocação */}
             <div className="max-w-[340px] w-full rounded-[16px] overflow-hidden border-2 border-amber-400/60 shadow-2xl bg-black">
               <img
-                src={`/api/og/card/${viewingCardCallup.callup.id}`}
-                alt="Figurinha Oficial de Convocado"
+                src={`/api/og/card/${viewingCardCallup.callup.access_token}`}
+                alt="Arte personalizada de convocação"
                 className="w-full h-auto object-contain"
               />
             </div>
 
             <div className="pt-2 flex items-center gap-3 justify-center">
               <a
-                href={`/api/og/card/${viewingCardCallup.callup.id}`}
-                download={`figurinha_sport_${viewingCardCallup.callup.student?.name?.replace(/\s+/g, '_')}.png`}
+                href={`/api/og/card/${viewingCardCallup.callup.access_token}`}
+                download={`convocacao_sport_${viewingCardCallup.callup.student?.name?.replace(/\s+/g, '_')}.png`}
                 target="_blank"
-                className="px-3.5 py-1.5 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm border border-amber-400/30"
+                className="button px-3.5 py-1.5 bg-gradient-to-r from-[#c81930] to-[#a71327] hover:from-[#c81930] hover:to-[#a71327] text-white rounded text-xs font-bold tracking-normal inline-flex items-center gap-1.5 shadow-sm border border-amber-400/30"
               >
-                <span>Baixar Figurinha</span>
+                <span>Baixar convocação</span>
                 <span>⬇</span>
               </a>
               <Link
-                href={`/convocacao/${viewingCardCallup.callup.id}`}
+                href={`/convocacao/${viewingCardCallup.callup.access_token}`}
                 target="_blank"
-                className="text-xs text-amber-400 hover:text-amber-300 font-bold uppercase tracking-wider underline flex items-center gap-1 justify-center"
+                className="text-xs text-amber-400 hover:text-amber-300 font-bold tracking-normal underline flex items-center gap-1 justify-center"
               >
                 <span>Página Pública</span>
                 <span>↗</span>
               </Link>
             </div>
           </div>
-        </div>
+        </ModalFrame>
       )}
 
       {/* Modal Lançar Placar */}
       {scoreModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[10px] max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200">
-            <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none">
+        <ModalFrame label="Registrar resultado" onClose={() => setScoreModal(null)}>
+          <div className="bg-[var(--bg-card)] rounded-[10px] max-w-md w-full p-6 space-y-4 shadow-2xl border border-[var(--border-color)]">
+            <h3 className="section-title  text-[var(--text-primary)] tracking-tight leading-tight">
               Lançar Placar Final
             </h3>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-[var(--text-muted)]">
               {scoreModal.title} vs {scoreModal.opponent}
             </p>
 
             <div className="grid grid-cols-2 gap-4 py-2 text-center">
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">
+                <label htmlFor="field-appjogosjogosclienttsx-101" className="block text-xs font-bold  text-[var(--text-secondary)] mb-1">
                   Sport Club do Recife
                 </label>
-                <input
+                <input id="field-appjogosjogosclienttsx-101"
                   type="number"
                   min="0"
                   value={ourScore}
                   onChange={(e) => setOurScore(parseInt(e.target.value) || 0)}
-                  className="input-escolinha text-center font-bebas text-3xl h-14 font-bold text-[#D61F27]"
+                  className="input-escolinha text-center font-semibold text-3xl h-14 font-bold text-[#c81930]"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase text-slate-600 mb-1">
+                <label htmlFor="field-appjogosjogosclienttsx-102" className="block text-xs font-bold  text-[var(--text-secondary)] mb-1">
                   {scoreModal.opponent}
                 </label>
-                <input
+                <input id="field-appjogosjogosclienttsx-102"
                   type="number"
                   min="0"
                   value={opponentScore}
                   onChange={(e) => setOpponentScore(parseInt(e.target.value) || 0)}
-                  className="input-escolinha text-center font-bebas text-3xl h-14 font-bold text-slate-800"
+                  className="input-escolinha text-center font-semibold text-3xl h-14 font-bold text-[var(--text-primary)]"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[var(--border-color)]">
               <button
                 onClick={() => setScoreModal(null)}
-                className="px-4 py-2 bg-slate-100 text-slate-700 rounded text-xs font-bold uppercase cursor-pointer"
+                className="button px-4 py-2 bg-[var(--bg-subtle)] text-[var(--text-secondary)] rounded text-xs font-bold  cursor-pointer"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSaveScore}
                 disabled={isPending}
-                className="px-6 py-2 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white rounded text-xs font-bold uppercase shadow-sm flex items-center gap-1.5 border border-amber-400/30 cursor-pointer"
+                className="button px-6 py-2 bg-gradient-to-r from-[#c81930] to-[#a71327] hover:from-[#c81930] hover:to-[#a71327] text-white rounded text-xs font-bold  shadow-sm flex items-center gap-1.5 border border-amber-400/30 cursor-pointer"
               >
                 {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                 Salvar Placar
               </button>
             </div>
           </div>
-        </div>
+        </ModalFrame>
       )}
 
       {/* Modal de Confirmação para Anunciar Convocação */}
       {announceConfirmMatch && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[12px] max-w-lg w-full p-6 space-y-4 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-              <div className="w-10 h-10 rounded-full bg-[#D61F27]/10 flex items-center justify-center text-xl shrink-0">
+        <ModalFrame label="Revisar envio de convocação" onClose={() => setAnnounceConfirmMatch(null)}>
+          <div className="bg-[var(--bg-card)] rounded-[12px] max-w-lg w-full p-6 space-y-4 shadow-2xl border border-[var(--border-color)] animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 border-b border-[var(--border-color)] pb-3">
+              <div className="w-10 h-10 rounded-full bg-[#c81930]/10 flex items-center justify-center text-xl shrink-0">
                 📢
               </div>
               <div>
-                <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none">
+                <h3 className="section-title  text-[var(--text-primary)] tracking-tight leading-tight">
                   Anunciar Convocação Oficial
                 </h3>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-[var(--text-muted)] mt-1">
                   Sport Club do Recife vs {announceConfirmMatch.opponent}
                 </p>
               </div>
             </div>
 
-            <div className="space-y-2 text-xs text-slate-600 bg-slate-50 p-4 rounded-[8px] border border-slate-200">
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="font-bold text-slate-700">⚔️ Partida:</span>
-                <span className="font-medium text-slate-900">
+            <div className="space-y-2 text-xs text-[var(--text-secondary)] bg-[var(--bg-card-hover)] p-4 rounded-lg border border-[var(--border-color)]">
+              <div className="flex justify-between py-1 border-b border-[var(--border-color)]/60">
+                <span className="font-bold text-[var(--text-secondary)]">⚔️ Partida:</span>
+                <span className="font-medium text-[var(--text-primary)]">
                   {announceConfirmMatch.title} vs {announceConfirmMatch.opponent}
                 </span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="font-bold text-slate-700">📅 Data e Horário:</span>
-                <span className="font-medium text-slate-900">
+              <div className="flex justify-between py-1 border-b border-[var(--border-color)]/60">
+                <span className="font-bold text-[var(--text-secondary)]">📅 Data e Horário:</span>
+                <span className="font-medium text-[var(--text-primary)]">
                   {announceConfirmMatch.match_date?.split('-').reverse().join('/')} às{' '}
                   {announceConfirmMatch.match_time?.slice(0, 5) || 'A definir'}
                 </span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="font-bold text-slate-700">📍 Local:</span>
-                <span className="font-medium text-slate-900 truncate max-w-[240px]">
+              <div className="flex justify-between py-1 border-b border-[var(--border-color)]/60">
+                <span className="font-bold text-[var(--text-secondary)]">📍 Local:</span>
+                <span className="font-medium text-[var(--text-primary)] truncate max-w-[240px]">
                   {announceConfirmMatch.location}
                 </span>
               </div>
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="font-bold text-slate-700">👥 Atletas Convocados:</span>
-                <span className="font-bold text-[#D61F27]">
+              <div className="flex justify-between py-1 border-b border-[var(--border-color)]/60">
+                <span className="font-bold text-[var(--text-secondary)]">👥 Atletas Convocados:</span>
+                <span className="font-bold text-[#c81930]">
                   {announceConfirmMatch.callups?.length || 0} atleta(s)
                 </span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="font-bold text-slate-700">💰 Taxa de Inscrição:</span>
+                <span className="font-bold text-[var(--text-secondary)]">💰 Taxa de Inscrição:</span>
                 <span className="font-bold text-emerald-700">
                   {extractMatchFee(announceConfirmMatch.notes) > 0
                     ? `R$ ${extractMatchFee(announceConfirmMatch.notes).toFixed(2).replace('.', ',')} (Coordenação)`
@@ -699,14 +696,14 @@ export function JogosClient({
               </div>
             </div>
 
-            <div className="p-3 bg-amber-50 border border-amber-300 rounded-[8px] text-[11px] text-amber-900 space-y-1">
+            <div className="p-3 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-900 space-y-1">
               <div className="font-bold flex items-center gap-1.5 text-amber-950">
                 <span>⚠️ O que acontece ao clicar em anunciar?</span>
               </div>
               <p>
-                O robô oficial irá gerar a <strong>Figurinha Oficial de Convocado</strong> personalizada para cada um dos {announceConfirmMatch.callups?.length || 0} atletas e enviará a foto com o comunicado oficial no WhatsApp dos responsáveis elegíveis.
+                O robô oficial irá gerar a <strong>Arte personalizada de convocação</strong> personalizada para cada um dos {announceConfirmMatch.callups?.length || 0} atletas e enviará a foto com o comunicado oficial no WhatsApp dos responsáveis elegíveis.
               </p>
-              <p className="text-[10px] text-amber-800">
+              <p className="text-xs text-amber-800">
                 * A mensagem NÃO contém links do sistema, apenas a foto oficial e os dados da partida.
               </p>
             </div>
@@ -715,7 +712,7 @@ export function JogosClient({
               <button
                 type="button"
                 onClick={() => setAnnounceConfirmMatch(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold uppercase cursor-pointer"
+                className="button px-4 py-2 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-secondary)] rounded text-xs font-bold  cursor-pointer"
               >
                 Cancelar
               </button>
@@ -727,37 +724,37 @@ export function JogosClient({
                   setAnnounceConfirmMatch(null)
                   handleAutoDispatch(mId)
                 }}
-                className="px-5 py-2 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white rounded text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md border border-amber-400/40 cursor-pointer disabled:opacity-50"
+                className="button px-5 py-2 bg-gradient-to-r from-[#c81930] to-[#a71327] hover:from-[#c81930] hover:to-[#a71327] text-white rounded text-xs font-bold  tracking-normal flex items-center gap-2 shadow-md border border-amber-400/40 cursor-pointer disabled:opacity-50"
               >
                 <Bot className="w-4 h-4 text-[#FFE300]" />
                 <span>Sim, Anunciar Convocação Agora 📢</span>
               </button>
             </div>
           </div>
-        </div>
+        </ModalFrame>
       )}
 
       {/* Modal de Edição da Convocação */}
       {editingMatch && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-[12px] max-w-3xl w-full p-6 space-y-5 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <ModalFrame label="Editar partida e convocados" onClose={() => setEditingMatch(null)} wide>
+          <div className="bg-[var(--bg-card)] rounded-[12px] max-w-3xl w-full p-6 space-y-5 shadow-2xl border border-[var(--border-color)] max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full bg-[#D61F27]/10 flex items-center justify-center text-[#D61F27]">
+                <div className="w-9 h-9 rounded-full bg-[#c81930]/10 flex items-center justify-center text-[#c81930]">
                   <Edit3 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none">
+                  <h3 className="section-title  text-[var(--text-primary)] tracking-tight leading-tight">
                     Editar Convocação & Partida
                   </h3>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-[var(--text-muted)] mt-1">
                     Altere os dados do jogo, taxa de inscrição e selecione os atletas convocados.
                   </p>
                 </div>
               </div>
-              <button
+              <button aria-label="Fechar janela"
                 onClick={() => setEditingMatch(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer"
+                className="button text-[var(--text-muted)] hover:text-[var(--text-secondary)] font-bold text-lg cursor-pointer"
               >
                 ✕
               </button>
@@ -768,10 +765,10 @@ export function JogosClient({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="field-appjogosjogosclienttsx-103" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                     Título do Jogo / Torneio <span className="text-red-500">*</span>
                   </label>
-                  <input
+                  <input id="field-appjogosjogosclienttsx-103"
                     type="text"
                     name="title"
                     required
@@ -781,10 +778,10 @@ export function JogosClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="field-appjogosjogosclienttsx-104" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                     Time Adversário <span className="text-red-500">*</span>
                   </label>
-                  <input
+                  <input id="field-appjogosjogosclienttsx-104"
                     type="text"
                     name="opponent"
                     required
@@ -796,10 +793,10 @@ export function JogosClient({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="jogos-field-1" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                     Tipo de Jogo
                   </label>
-                  <select
+                  <select id="jogos-field-1"
                     name="match_type"
                     defaultValue={editingMatch.match_type || 'friendly'}
                     className="input-escolinha cursor-pointer"
@@ -811,10 +808,10 @@ export function JogosClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="jogos-field-2" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                     Categoria
                   </label>
-                  <select
+                  <select id="jogos-field-2"
                     name="category_id"
                     defaultValue={editingMatch.category_id || ''}
                     className="input-escolinha cursor-pointer"
@@ -828,10 +825,10 @@ export function JogosClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="jogos-field-3" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                     Treinador Responsável
                   </label>
-                  <select
+                  <select id="jogos-field-3"
                     name="coach_id"
                     defaultValue={editingMatch.coach_id || ''}
                     className="input-escolinha cursor-pointer"
@@ -848,10 +845,10 @@ export function JogosClient({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="field-appjogosjogosclienttsx-105" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                     Data da Partida <span className="text-red-500">*</span>
                   </label>
-                  <input
+                  <input id="field-appjogosjogosclienttsx-105"
                     type="date"
                     name="match_date"
                     required
@@ -861,10 +858,10 @@ export function JogosClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="field-appjogosjogosclienttsx-106" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                     Horário de Início
                   </label>
-                  <input
+                  <input id="field-appjogosjogosclienttsx-106"
                     type="time"
                     name="match_time"
                     defaultValue={editingMatch.match_time ? editingMatch.match_time.slice(0, 5) : ''}
@@ -873,10 +870,10 @@ export function JogosClient({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="field-appjogosjogosclienttsx-107" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                     Taxa de Inscrição (R$)
                   </label>
-                  <input
+                  <input id="field-appjogosjogosclienttsx-107"
                     type="number"
                     step="0.01"
                     min="0"
@@ -893,10 +890,10 @@ export function JogosClient({
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="field-appjogosjogosclienttsx-108" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Local da Partida <span className="text-red-500">*</span>
                 </label>
-                <input
+                <input id="field-appjogosjogosclienttsx-108"
                   type="text"
                   name="location"
                   required
@@ -905,16 +902,17 @@ export function JogosClient({
                 />
               </div>
 
+<div><label htmlFor="edit-callup-instructions" className="field-label">Orientações da convocação</label><textarea id="edit-callup-instructions" name="user_notes" maxLength={500} rows={3} className="input-escolinha" defaultValue={callupInstructions(editingMatch.notes)} placeholder="Apresentação, uniforme e o que levar."/></div>
               {/* SELEÇÃO DE ATLETAS CONVOCADOS */}
-              <div className="pt-3 border-t border-slate-200 space-y-3">
+              <div className="pt-3 border-t border-[var(--border-color)] space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                      <Users className="w-4 h-4 text-[#D61F27]" />
+                    <h4 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
+                      <Users className="w-4 h-4 text-[#c81930]" />
                       Atletas Convocados ({selectedStudentIdsForEdit.length} selecionados)
                     </h4>
-                    <p className="text-[11px] text-slate-500">
-                      Marque os atletas que receberão a figurinha e o anúncio oficial.
+                    <p className="text-xs text-[var(--text-muted)]">
+                      Marque os atletas que receberão a arte e os dados da convocação.
                     </p>
                   </div>
 
@@ -922,23 +920,23 @@ export function JogosClient({
                     <button
                       type="button"
                       onClick={handleSelectAllVisible}
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-bold cursor-pointer"
+                      className="button px-2.5 py-1 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-secondary)] rounded text-xs font-bold cursor-pointer"
                     >
                       Marcar Visíveis
                     </button>
                     <button
                       type="button"
                       onClick={handleClearAllVisible}
-                      className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-bold cursor-pointer"
+                      className="button px-2.5 py-1 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-secondary)] rounded text-xs font-bold cursor-pointer"
                     >
                       Desmarcar Visíveis
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-50 p-2.5 rounded-[8px] border border-slate-200">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-[var(--bg-card-hover)] p-2.5 rounded-lg border border-[var(--border-color)]">
                   <div className="relative">
-                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-3 text-slate-400" />
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-3 text-[var(--text-muted)]" />
                     <input
                       type="text"
                       placeholder="Buscar atleta por nome..."
@@ -949,7 +947,7 @@ export function JogosClient({
                   </div>
 
                   <div className="relative">
-                    <Filter className="w-3.5 h-3.5 absolute left-2.5 top-3 text-slate-400" />
+                    <Filter className="w-3.5 h-3.5 absolute left-2.5 top-3 text-[var(--text-muted)]" />
                     <select
                       value={editCategoryFilter}
                       onChange={(e) => setEditCategoryFilter(e.target.value)}
@@ -965,9 +963,9 @@ export function JogosClient({
                   </div>
                 </div>
 
-                <div className="max-h-60 overflow-y-auto space-y-1.5 p-2 bg-slate-50 rounded-[8px] border border-slate-200 divide-y divide-slate-100">
+                <div className="max-h-60 overflow-y-auto space-y-1.5 p-2 bg-[var(--bg-card-hover)] rounded-lg border border-[var(--border-color)] divide-y divide-[var(--border-color)]">
                   {filteredStudentsForEdit.length === 0 ? (
-                    <div className="py-6 text-center text-xs text-slate-400 italic">
+                    <div className="py-6 text-center text-xs text-[var(--text-muted)] italic">
                       Nenhum atleta encontrado com estes filtros.
                     </div>
                   ) : (
@@ -982,22 +980,22 @@ export function JogosClient({
                         <div
                           key={student.id}
                           onClick={() => toggleStudentForEdit(student.id)}
-                          className={`pt-1.5 pb-1 px-2 rounded-[6px] flex items-center justify-between gap-3 text-xs cursor-pointer transition-all ${
+                          className={`pt-1.5 pb-1 px-2 rounded-lg flex items-center justify-between gap-3 text-xs cursor-pointer transition-all ${
                             isSelected
-                              ? 'bg-red-50/80 text-red-950 border border-[#D61F27]/30'
-                              : 'hover:bg-slate-100/70 text-slate-700'
+                              ? 'bg-red-50/80 text-red-950 border border-[#c81930]/30'
+                              : 'hover:bg-[var(--bg-subtle)]/70 text-[var(--text-secondary)]'
                           }`}
                         >
                           <div className="flex items-center gap-2.5">
-                            <div className="w-4 h-4 text-[#D61F27] shrink-0">
+                            <div className="w-4 h-4 text-[#c81930] shrink-0">
                               {isSelected ? (
-                                <CheckSquare className="w-4 h-4 text-[#D61F27]" />
+                                <CheckSquare className="w-4 h-4 text-[#c81930]" />
                               ) : (
-                                <Square className="w-4 h-4 text-slate-400" />
+                                <Square className="w-4 h-4 text-[var(--text-muted)]" />
                               )}
                             </div>
 
-                            <div className="w-7 h-7 rounded-full overflow-hidden bg-amber-400/20 shrink-0 flex items-center justify-center text-[10px] border border-amber-400/30">
+                            <div className="w-7 h-7 rounded-full overflow-hidden bg-amber-400/20 shrink-0 flex items-center justify-center text-xs border border-amber-400/30">
                               {student.photo_url ? (
                                 <img
                                   src={student.photo_url}
@@ -1012,11 +1010,11 @@ export function JogosClient({
                             <div>
                               <div className="font-bold flex items-center gap-2">
                                 <span>{student.name}</span>
-                                <span className="text-[10px] font-medium text-slate-500">
+                                <span className="text-xs font-medium text-[var(--text-muted)]">
                                   ({student.category?.name || 'Geral'})
                                 </span>
                               </div>
-                              <div className="text-[10px] text-slate-400">
+                              <div className="text-xs text-[var(--text-muted)]">
                                 Resp: {guardian?.name || '—'} {phone ? `• ${phone}` : '• Sem tel'}
                               </div>
                             </div>
@@ -1024,10 +1022,10 @@ export function JogosClient({
 
                           <div className="shrink-0 text-right">
                             <span
-                              className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                              className={`text-xs font-bold px-2 py-0.5 rounded ${
                                 isSelected
-                                  ? 'bg-[#D61F27] text-white'
-                                  : 'bg-slate-200 text-slate-600'
+                                  ? 'bg-[#c81930] text-white'
+                                  : 'bg-slate-200 text-[var(--text-secondary)]'
                               }`}
                             >
                               {isSelected ? 'Convocado' : 'Disponível'}
@@ -1040,18 +1038,18 @@ export function JogosClient({
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-color)]">
                 <button
                   type="button"
                   onClick={() => setEditingMatch(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-xs font-bold uppercase cursor-pointer"
+                  className="button px-4 py-2 bg-[var(--bg-subtle)] hover:bg-slate-200 text-[var(--text-secondary)] rounded text-xs font-bold  cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={isUpdatingMatch}
-                  className="px-6 py-2 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white rounded text-xs font-bold uppercase shadow-sm flex items-center gap-1.5 border border-amber-400/30 cursor-pointer disabled:opacity-50"
+                  className="button px-6 py-2 bg-gradient-to-r from-[#c81930] to-[#a71327] hover:from-[#c81930] hover:to-[#a71327] text-white rounded text-xs font-bold  shadow-sm flex items-center gap-1.5 border border-amber-400/30 cursor-pointer disabled:opacity-50"
                 >
                   {isUpdatingMatch ? (
                     <Loader2 className="w-4 h-4 animate-spin text-[#FFE300]" />
@@ -1063,7 +1061,7 @@ export function JogosClient({
               </div>
             </form>
           </div>
-        </div>
+        </ModalFrame>
       )}
     </div>
   )

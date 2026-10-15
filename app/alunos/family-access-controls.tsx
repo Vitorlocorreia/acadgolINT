@@ -1,0 +1,9 @@
+'use client'
+import {useState,useTransition} from 'react'
+import {renewFamilyAccessAction} from './actions'
+import {Dialog} from '@/components/dialog'
+import {useRouter} from 'next/navigation'
+export function FamilyAccessControls({studentId,enabled,expiresAt}:{studentId:string;enabled:boolean;expiresAt:string}){
+ const [open,setOpen]=useState(false),[pending,start]=useTransition(),[feedback,setFeedback]=useState('');const router=useRouter()
+ return <div className="card-light p-5 space-y-3"><div className="flex justify-between flex-wrap gap-3"><div><h2 className="section-title">Acesso da família</h2><p className="text-sm text-[var(--text-secondary)]">{enabled?`Link válido até ${new Date(expiresAt).toLocaleDateString('pt-BR')}`:'Acesso suspenso'}. O link dá acesso aos dados deste atleta; compartilhe apenas com o responsável.</p></div><button className="button" onClick={()=>setOpen(true)}>Gerenciar link</button></div>{feedback&&<p role="status" className="notice">{feedback}</p>}<Dialog open={open} onClose={()=>!pending&&setOpen(false)} title="Gerenciar acesso da família" description="Renovar gera um novo link válido por 90 dias e invalida o anterior. Envie o novo link apenas ao responsável."><div className="flex flex-wrap gap-3">{enabled&&<button disabled={pending} className="button" onClick={()=>start(async()=>{try{const result=await renewFamilyAccessAction(studentId,false);setFeedback(result.error||'Acesso da família suspenso.');setOpen(false);router.refresh()}catch{setFeedback('Não foi possível alterar o acesso.')}})}>Suspender acesso</button>}<button disabled={pending} className="button button-primary" onClick={()=>start(async()=>{try{const result=await renewFamilyAccessAction(studentId,true);setFeedback(result.error||'Novo link disponível em Abrir portal e no envio ao responsável.');setOpen(false);router.refresh()}catch{setFeedback('Não foi possível renovar o acesso.')}})}>Gerar novo link</button></div></Dialog></div>
+}

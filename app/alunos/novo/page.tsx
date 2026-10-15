@@ -1,4 +1,10 @@
-import Link from 'next/link'
+import {EnrollmentBillingFields} from './enrollment-billing-fields'
+import {schoolClock,formatMonth} from '@/lib/format'
+import { requirePage } from '@/lib/auth/session'
+import { PageHeader } from '@/components/page-header'
+import { SubmitButton } from '@/components/submit-button'
+export const dynamic = 'force-dynamic'
+import Link from "next/link";
 import {
   Users,
   User,
@@ -6,66 +12,63 @@ import {
   CalendarDays,
   ChevronLeft,
   CheckCircle2,
-} from 'lucide-react'
-import { getFormDataForEnrollment, createStudentEnrollmentAction } from '../actions'
-import { SignaturePad } from '@/components/signature-pad'
-import { GuardiansFormSection } from './guardians-form-section'
-import { StudentPhotoUpload } from '../student-photo-upload'
+} from "lucide-react";
+import {
+  getTrialEnrollmentData,
+  getFormDataForEnrollment,
+  createStudentEnrollmentAction,
+} from "../actions";
+import { GuardiansFormSection } from "./guardians-form-section";
+import { StudentPhotoUpload } from "../student-photo-upload";
 
-export default async function NovoAlunoPage() {
-  const { units, categories, plans, classes, coaches } = await getFormDataForEnrollment()
+export default async function NovoAlunoPage({searchParams}:{searchParams:Promise<{trialId?:string}>}) {
+  const {trialId}=await searchParams;
+  await requirePage('students.write');
+  const { units, categories, plans, classes, coaches } =
+    await getFormDataForEnrollment();
 
+  const trial=trialId?await getTrialEnrollmentData(trialId):null;
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6">
+    <div className="page-container !max-w-4xl space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/alunos"
-            className="p-2 rounded-[4px] bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-2xs"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="font-bebas text-3xl text-slate-900 tracking-wider leading-none">
-              Nova Matrícula de Atleta
-            </h1>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Preencha os dados do aluno, responsável, ficha de saúde e turma para matricular.
-            </p>
-          </div>
-        </div>
-      </div>
+      <><Link href="/alunos" className="text-link"><ChevronLeft size={16} />Voltar para atletas</Link><PageHeader eyebrow="Nossa base cresce aqui" title="Nova matrícula" description="Preencha os dados do atleta, os contatos da família e a turma. Os campos com * são obrigatórios." /><nav aria-label="Etapas da matrícula" className="form-navigation"><a href="#athlete-data">1. Atleta</a><a href="#guardian-data">2. Responsáveis</a><a href="#medical-data">3. Saúde</a><a href="#enrollment-data">4. Turma e plano</a><a href="#agreement-data">5. Termo de adesão</a></nav></>
 
       {/* Formulário Completo de Matrícula */}
-      <form action={createStudentEnrollmentAction} className="space-y-6">
+      <form action={createStudentEnrollmentAction} className="space-y-6"><input type="hidden" name="request_id" value={crypto.randomUUID()}/>{trial&&<><input type="hidden" name="trial_id" value={trial.id}/><p className="notice">Conclua a matrícula de {trial.student_name}. Confirme a data de nascimento e os responsáveis para preservar a ficha existente.</p></>}
         {/* 1. DADOS DO ATLETA */}
-        <div className="card-light p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/20 flex items-center justify-center text-[#1A6B2E]">
+        <div id="athlete-data" className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--border-color)] pb-3">
+            <div className="w-8 h-8 rounded-lg bg-[#c81930]/10 border border-[#c81930]/20 flex items-center justify-center text-[#c81930]">
               <User className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
+              <h2 className="section-title text-xl text-[var(--text-primary)] tracking-tight leading-tight">
                 1. Informações do Atleta
               </h2>
-              <p className="text-[11px] text-slate-500">Dados pessoais e de futebol do aluno</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                Dados pessoais e de futebol do aluno
+              </p>
             </div>
           </div>
 
           {/* Foto do Atleta para o Card FIFA */}
-          <div className="p-4 bg-slate-50 border border-slate-200 rounded-[6px]">
-            <StudentPhotoUpload />
+          <div className="p-4 bg-[var(--bg-card-hover)] border border-[var(--border-color)] rounded-lg">
+            <StudentPhotoUpload required />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-name"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Nome Completo do Aluno <span className="text-red-500">*</span>
               </label>
               <input
+                id="enrollment-name"
                 type="text"
                 name="name"
+                defaultValue={trial?.student_name||''}
                 required
                 placeholder="Ex: Lucas Gabriel da Silva"
                 className="input-escolinha"
@@ -73,10 +76,14 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-birth_date"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Data de Nascimento <span className="text-red-500">*</span>
               </label>
               <input
+                id="enrollment-birth_date"
                 type="date"
                 name="birth_date"
                 required
@@ -85,10 +92,14 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-cpf"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 CPF do Aluno (se tiver)
               </label>
               <input
+                id="enrollment-cpf"
                 type="text"
                 name="cpf"
                 placeholder="000.000.000-00"
@@ -97,10 +108,17 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-preferred_position"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Posição de Preferência <span className="text-red-500">*</span>
               </label>
-              <select name="preferred_position" className="input-escolinha cursor-pointer">
+              <select
+                id="enrollment-preferred_position"
+                name="preferred_position"
+                className="input-escolinha cursor-pointer"
+              >
                 <option value="Meia">Meia / Meio-Campo</option>
                 <option value="Atacante">Atacante / Ponta</option>
                 <option value="Goleiro">Goleiro</option>
@@ -111,10 +129,17 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-dominant_foot"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Pé Dominante <span className="text-red-500">*</span>
               </label>
-              <select name="dominant_foot" className="input-escolinha cursor-pointer">
+              <select
+                id="enrollment-dominant_foot"
+                name="dominant_foot"
+                className="input-escolinha cursor-pointer"
+              >
                 <option value="Destro">Destro (Pé Direito)</option>
                 <option value="Canhoto">Canhoto (Pé Esquerdo)</option>
                 <option value="Ambidestro">Ambidestro</option>
@@ -122,10 +147,18 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Tamanho do Uniforme (Kit) <span className="text-red-500">*</span>
+              <label
+                htmlFor="enrollment-uniform_size"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
+                Tamanho do Uniforme (Kit){" "}
+                <span className="text-red-500">*</span>
               </label>
-              <select name="uniform_size" className="input-escolinha cursor-pointer">
+              <select
+                id="enrollment-uniform_size"
+                name="uniform_size"
+                className="input-escolinha cursor-pointer"
+              >
                 <option value="4">Tam 04 (Infantil)</option>
                 <option value="6">Tam 06 (Infantil)</option>
                 <option value="8">Tam 08 (Infantil)</option>
@@ -142,28 +175,39 @@ export default async function NovoAlunoPage() {
         </div>
 
         {/* 2. DADOS DOS RESPONSÁVEIS */}
-        <GuardiansFormSection />
+        <div id="guardian-data"><GuardiansFormSection /></div>
 
         {/* 3. FICHA MÉDICA & AUTORIZAÇÕES */}
-        <div className="card-light p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+        <div id="medical-data" className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--border-color)] pb-3">
+            <div className="w-8 h-8 rounded-lg bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
               <HeartPulse className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
+              <h2 className="section-title text-xl text-[var(--text-primary)] tracking-tight leading-tight">
                 3. Ficha Médica & Saúde
               </h2>
-              <p className="text-[11px] text-slate-500">Segurança do atleta em campo e termos</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                Segurança do atleta em campo e termos
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-blood_type"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Tipo Sanguíneo
               </label>
-              <select name="blood_type" className="input-escolinha cursor-pointer">
+              <select
+                id="enrollment-blood_type"
+                name="blood_type"
+                defaultValue=""
+                className="input-escolinha cursor-pointer"
+              >
+                <option value="">Não informado</option>
                 <option value="O+">O Positivo (O+)</option>
                 <option value="O-">O Negativo (O-)</option>
                 <option value="A+">A Positivo (A+)</option>
@@ -172,15 +216,18 @@ export default async function NovoAlunoPage() {
                 <option value="B-">B Negativo (B-)</option>
                 <option value="AB+">AB Positivo (AB+)</option>
                 <option value="AB-">AB Negativo (AB-)</option>
-                <option value="Não sei">Não informado</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-health_insurance"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Plano de Saúde (se tiver)
               </label>
               <input
+                id="enrollment-health_insurance"
                 type="text"
                 name="health_insurance"
                 placeholder="Ex: Unimed, Hapvida, Bradesco..."
@@ -189,10 +236,14 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-allergies"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Alergias ou Restrições Alimentares / Medicamentosas
               </label>
               <input
+                id="enrollment-allergies"
                 type="text"
                 name="allergies"
                 placeholder="Ex: Alergia a picada de insetos, dipirona, lactose... (ou Nenhuma)"
@@ -201,10 +252,14 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-emergency_contact_name"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Contato de Emergência Adicional
               </label>
               <input
+                id="enrollment-emergency_contact_name"
                 type="text"
                 name="emergency_contact_name"
                 placeholder="Ex: Tia Maria ou Avô Roberto"
@@ -213,10 +268,14 @@ export default async function NovoAlunoPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label
+                htmlFor="enrollment-emergency_contact_phone"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
                 Telefone de Emergência
               </label>
               <input
+                id="enrollment-emergency_contact_phone"
                 type="tel"
                 name="emergency_contact_phone"
                 placeholder="(81) 98888-7777"
@@ -230,131 +289,110 @@ export default async function NovoAlunoPage() {
                   type="checkbox"
                   name="image_use_authorized"
                   value="true"
-                  defaultChecked
-                  className="w-4 h-4 rounded text-[#1A6B2E] focus:ring-[#1A6B2E] border-slate-300"
+                  className="w-4 h-4 rounded text-[#c81930] focus:ring-[#c81930] border-[var(--border-color)]"
                 />
-                <span className="text-xs text-slate-700 font-medium">
-                  Autorizo o uso de imagem do atleta para fotos de treinos e jogos nas redes sociais oficiais da Academia do Gol.
+                <span className="text-xs text-[var(--text-secondary)] font-medium">
+                  Autorizo o uso de imagem do atleta para fotos de treinos e
+                  jogos nas redes sociais oficiais da Escolinha do Sport.
                 </span>
               </label>
             </div>
           </div>
         </div>
 
+        <div className="card-light p-5"><label className="flex items-start gap-3"><input type="checkbox" name="has_medical_clearance" value="true"/><span className="text-sm">Atestado médico apresentado e conferido pela secretaria. Marque apenas após verificar o documento.</span></label></div>
         {/* 4. TURMA & PLANO DE MENSALIDADE */}
-        <div className="card-light p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
+        <div id="enrollment-data" className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--border-color)] pb-3">
+            <div className="w-8 h-8 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
               <CalendarDays className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
+              <h2 className="section-title text-xl text-[var(--text-primary)] tracking-tight leading-tight">
                 4. Turma de Treino & Plano de Mensalidade
               </h2>
-              <p className="text-[11px] text-slate-500">Escolha a escala de treinos e plano contratado</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                Escolha a escala de treinos e plano contratado
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Selecione a Turma de Treino <span className="text-red-500">*</span>
+              <label
+                htmlFor="enrollment-class_id"
+                className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1"
+              >
+                Selecione a Turma de Treino{" "}
+                <span className="text-red-500">*</span>
               </label>
-              <select name="class_id" required className="input-escolinha cursor-pointer">
+              <select
+                id="enrollment-class_id"
+                defaultValue={trial?.class_id||undefined}
+                name="class_id"
+                required
+                className="input-escolinha cursor-pointer"
+              >
                 {classes.length === 0 ? (
                   <option value="">Nenhuma turma cadastrada</option>
                 ) : (
                   classes.map((cls: any) => (
                     <option key={cls.id} value={cls.id}>
-                      {cls.name} — {cls.unit?.name} ({cls.start_time?.slice(0, 5)} - {cls.end_time?.slice(0, 5)})
+                      {cls.name} (
+                      {cls.start_time?.slice(0, 5)} -{" "}
+                      {cls.end_time?.slice(0, 5)})
                     </option>
                   ))
                 )}
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Plano de Matrícula <span className="text-red-500">*</span>
-              </label>
-              <select name="plan_id" required className="input-escolinha cursor-pointer">
-                {plans.map((p: any) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} — R$ {Number(p.price).toFixed(2)}/mês
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Dia de Vencimento da Mensalidade <span className="text-red-500">*</span>
-              </label>
-              <select name="due_day" className="input-escolinha cursor-pointer font-mono">
-                <option value="5">Todo dia 05</option>
-                <option value="10">Todo dia 10</option>
-                <option value="15">Todo dia 15</option>
-                <option value="20">Todo dia 20</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
-                Valor da Mensalidade Acordado (R$) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="monthly_fee"
-                step="0.01"
-                defaultValue="180.00"
-                required
-                className="input-escolinha font-mono"
-              />
-            </div>
+            <EnrollmentBillingFields plans={plans} firstMonthlyLabel={formatMonth(new Date(Date.UTC(Number(schoolClock().date.slice(0,4)),Number(schoolClock().date.slice(5,7)),1)).toISOString().slice(0,7))}/>
           </div>
         </div>
 
-        {/* 5. CONTRATO & ASSINATURA DIGITAL */}
-        <div className="card-light p-6 space-y-5">
-          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-3">
-            <div className="w-8 h-8 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/20 flex items-center justify-center text-[#1A6B2E]">
+        {/* 5. TERMO DE ADESÃO */}
+        <div id="agreement-data" className="card-light p-6 space-y-5">
+          <div className="flex items-center gap-2.5 border-b border-[var(--border-color)] pb-3">
+            <div className="w-8 h-8 rounded-lg bg-[#c81930]/10 border border-[#c81930]/20 flex items-center justify-center text-[#c81930]">
               <CheckCircle2 className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
-                5. Termo de Adesão & Assinatura Digital
+              <h2 className="section-title text-xl text-[var(--text-primary)] tracking-tight leading-tight">
+                5. Termo de adesão
               </h2>
-              <p className="text-[11px] text-slate-500">O responsável pode assinar com o dedo no celular ou tablet</p>
+              <p className="text-xs text-[var(--text-muted)]">
+                Confira as informações e orientações da matrícula.
+              </p>
             </div>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded border border-slate-200 text-xs text-slate-600 space-y-1">
-            <p className="font-bold text-slate-800">Declaração de Matrícula na Academia do Gol:</p>
+          <div className="p-3 bg-[var(--bg-card-hover)] rounded border border-[var(--border-color)] text-xs text-[var(--text-secondary)] space-y-1">
+            <p className="font-bold text-[var(--text-primary)]">
+              Declaração de Matrícula na Escolinha do Sport:
+            </p>
             <p>
-              Declaro que as informações prestadas são verdadeiras e estou ciente das normas da escolinha, horários de treino e plano de mensalidades contratado. Autorizo o atendimento de primeiros socorros em caso de emergência médica durante as atividades.
+              Declaro que as informações prestadas são verdadeiras e estou
+              ciente das normas da escolinha, horários de treino e plano de
+              mensalidades contratado. Autorizo o atendimento de primeiros
+              socorros em caso de emergência médica durante as atividades.
             </p>
           </div>
 
-          <SignaturePad name="signature_url" />
+
         </div>
 
         {/* Botões de Ação */}
         <div className="flex items-center justify-end gap-3 pt-4">
           <Link
             href="/alunos"
-            className="px-6 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-[4px] text-xs font-bold uppercase tracking-wider transition-all"
+            className="button px-6 py-3 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] text-[var(--text-secondary)] border border-[var(--border-color)] rounded-lg text-xs font-bold tracking-normal transition-all"
           >
             Cancelar
           </Link>
-          <button
-            type="submit"
-            className="px-8 py-3 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider shadow-xs transition-all cursor-pointer flex items-center gap-2"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            Concluir Matrícula & Assinar
-          </button>
+          <SubmitButton>Concluir matrícula</SubmitButton>
         </div>
       </form>
     </div>
-  )
+  );
 }

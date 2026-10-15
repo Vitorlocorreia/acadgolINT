@@ -1,3 +1,9 @@
+import { requirePage } from '@/lib/auth/session'
+export const dynamic = 'force-dynamic'
+import { CreatePanel } from '@/components/create-panel'
+import { SubmitButton } from '@/components/submit-button'
+import { PageHeader } from '@/components/page-header'
+import { schoolClock } from '@/lib/format'
 import { Trophy, PlusCircle, DollarSign, Shield } from 'lucide-react'
 import { getMatchesList, getFormDataForMatches, createMatchAction } from './actions'
 import { JogosClient } from './jogos-client'
@@ -8,30 +14,16 @@ export const metadata = {
 }
 
 export default async function JogosPage() {
+  await requirePage('games.read');
   const matches = await getMatchesList()
   const { units, categories, coaches, students } = await getFormDataForMatches()
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="page-container space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#D61F27] flex items-center gap-1">
-              ★ ★ ★ DNA Rubro-Negro • Sport Club do Recife
-            </span>
-          </div>
-          <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2 mt-1">
-            <Trophy className="w-8 h-8 text-[#D61F27]" />
-            Jogos, Campeonatos & Convocações ({matches.length})
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Agendamento de amistosos e campeonatos, taxa de inscrição para coordenação, disparo automático de Cards FIFA no WhatsApp e registro de placar.
-          </p>
-        </div>
-      </div>
+      <PageHeader eyebrow="Nosso próximo desafio" title="Jogos e convocações" description="Prepare as partidas, organize os convocados e registre os resultados." />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="workspace-layout">
         {/* Lista de Jogos */}
         <div className="lg:col-span-2 space-y-4">
           <JogosClient
@@ -43,21 +35,21 @@ export default async function JogosPage() {
         </div>
 
         {/* Formulário: Agendar Novo Jogo & Convocar Atletas */}
-        <div className="card-light p-6 space-y-4 border-t-4 border-t-[#D61F27]">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-[#D61F27]" />
+        <CreatePanel key={matches.length} title="Agendar partida">
+          <div className="border-b border-[var(--border-color)] pb-3">
+            <h3 className="section-title  text-[var(--text-primary)] tracking-tight leading-tight flex items-center gap-2">
+              <PlusCircle className="w-5 h-5 text-[#c81930]" />
               Agendar Partida & Convocação
             </h3>
-            <p className="text-xs text-slate-500 mt-1">Configure o adversário, data, taxa de inscrição e convoque os atletas</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1">Configure o adversário, data, taxa de inscrição e convoque os atletas</p>
           </div>
 
           <form action={createMatchAction} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label htmlFor="field-appjogospagetsx-101" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                 Título do Jogo / Torneio <span className="text-red-500">*</span>
               </label>
-              <input
+              <input id="field-appjogospagetsx-101"
                 type="text"
                 name="title"
                 required
@@ -67,10 +59,10 @@ export default async function JogosPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label htmlFor="field-appjogospagetsx-102" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                 Time Adversário <span className="text-red-500">*</span>
               </label>
-              <input
+              <input id="field-appjogospagetsx-102"
                 type="text"
                 name="opponent"
                 required
@@ -81,10 +73,10 @@ export default async function JogosPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="jogos-field-1" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Tipo de Jogo
                 </label>
-                <select name="match_type" className="input-escolinha cursor-pointer">
+                <select id="jogos-field-1" name="match_type" className="input-escolinha cursor-pointer">
                   <option value="friendly">⚽ Amistoso Rubro-Negro</option>
                   <option value="championship">🏆 Campeonato Oficial</option>
                   <option value="internal_cup">🥇 Torneio Interno</option>
@@ -92,10 +84,10 @@ export default async function JogosPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="jogos-field-2" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Categoria
                 </label>
-                <select name="category_id" className="input-escolinha cursor-pointer">
+                <select id="jogos-field-2" name="category_id" className="input-escolinha cursor-pointer">
                   {categories.map((c: any) => (
                     <option key={c.id} value={c.id}>
                       {c.name}
@@ -106,13 +98,13 @@ export default async function JogosPage() {
             </div>
 
             {/* SEÇÃO: VALOR DA TAXA DE INSCRIÇÃO */}
-            <div className="p-3.5 bg-gradient-to-r from-[#0A0A0C] to-[#1C0406] rounded-[8px] border border-amber-400/40 text-white space-y-1.5 shadow-xs">
+            <div className="p-3.5 bg-gradient-to-r from-[#0A0A0C] to-[#1C0406] rounded-lg border border-amber-400/40 text-white space-y-1.5 shadow-xs">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#FFE300] flex items-center gap-1.5">
+                <label className="block text-xs font-bold  tracking-normal text-[#FFE300] flex items-center gap-1.5">
                   <DollarSign className="w-4 h-4 text-[#FFE300]" />
                   <span>Taxa de Inscrição (R$)</span>
                 </label>
-                <span className="px-1.5 py-0.2 rounded bg-amber-400/20 text-[#FFE300] text-[9px] font-mono font-bold uppercase">
+                <span className="px-1.5 py-0.2 rounded bg-amber-400/20 text-[#FFE300] text-[9px] font-mono font-bold ">
                   Pagar na Coordenação
                 </span>
               </div>
@@ -125,36 +117,36 @@ export default async function JogosPage() {
                   type="number"
                   step="0.01"
                   min="0"
-                  name="registration_fee"
+                  name="registration_fee" aria-label="Taxa de inscrição em reais"
                   defaultValue="0.00"
                   placeholder="0,00"
                   className="input-escolinha pl-9 font-mono font-bold text-white bg-black/50 border-amber-400/40 focus:border-amber-400 text-sm"
                 />
               </div>
-              <p className="text-[10px] text-slate-300 leading-tight">
+              <p className="text-xs text-[var(--text-muted)] leading-tight">
                 * Este valor será informado na convocação do WhatsApp para os pais efetuarem o pagamento diretamente na <strong>coordenação</strong> da escolinha. (Deixe 0 se gratuito).
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="field-appjogospagetsx-103" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Data do Jogo <span className="text-red-500">*</span>
                 </label>
-                <input
+                <input id="field-appjogospagetsx-103"
                   type="date"
                   name="match_date"
                   required
-                  defaultValue={new Date().toISOString().slice(0, 10)}
+                  defaultValue={schoolClock().date}
                   className="input-escolinha font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label htmlFor="field-appjogospagetsx-104" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Horário
                 </label>
-                <input
+                <input id="field-appjogospagetsx-104"
                   type="time"
                   name="match_time"
                   defaultValue="09:00"
@@ -164,10 +156,10 @@ export default async function JogosPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+              <label htmlFor="field-appjogospagetsx-105" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                 Local / Campo <span className="text-red-500">*</span>
               </label>
-              <input
+              <input id="field-appjogospagetsx-105"
                 type="text"
                 name="location"
                 required
@@ -176,43 +168,41 @@ export default async function JogosPage() {
               />
             </div>
 
+            <div><label htmlFor="match-instructions" className="field-label">Orientações da convocação</label><textarea id="match-instructions" name="user_notes" maxLength={500} rows={3} className="input-escolinha" placeholder="Ex.: apresentação às 08h30, uniforme completo, caneleira e garrafa de água."/><p className="text-xs text-[var(--text-muted)] mt-1">Aparecem na imagem e na mensagem. A mensagem inclui o texto completo.</p></div>
             {/* Seleção de Atletas para Convocação */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                <label className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)]">
                   Convoque os Atletas para o Jogo:
                 </label>
-                <span className="text-[10px] text-[#D61F27] font-bold">
+                <span className="text-xs text-[#c81930] font-bold">
                   {students.length} atletas disponíveis
                 </span>
               </div>
-              <div className="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-slate-50 border border-slate-200 rounded">
+              <div className="max-h-48 overflow-y-auto space-y-1.5 p-2 bg-[var(--bg-card-hover)] border border-[var(--border-color)] rounded">
                 {students.map((st: any) => (
                   <label
                     key={st.id}
-                    className="flex items-center gap-2 p-1.5 bg-white rounded border border-slate-200 text-xs cursor-pointer hover:border-[#D61F27]/50 transition-colors"
+                    className="flex items-center gap-2 p-1.5 bg-[var(--bg-card)] rounded border border-[var(--border-color)] text-xs cursor-pointer hover:border-[#c81930]/50 transition-colors"
                   >
                     <input
                       type="checkbox"
                       name="selected_students"
                       value={st.id}
-                      className="rounded accent-[#D61F27] w-4 h-4"
+                      className="rounded accent-[#c81930] w-4 h-4"
                     />
-                    <span className="font-bold text-slate-800">{st.name}</span>
-                    <span className="text-[10px] text-[#D61F27] font-semibold">({st.preferred_position})</span>
+                    <span className="font-bold text-[var(--text-primary)]">{st.name}</span>
+                    <span className="text-xs text-[#c81930] font-semibold">({st.preferred_position})</span>
                   </label>
                 ))}
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="w-full py-3 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white font-bold text-xs uppercase tracking-wider rounded-[6px] shadow-sm transition-all cursor-pointer border border-amber-400/40"
-            >
-              Agendar & Disparar Convocação
-            </button>
+            <SubmitButton>
+              Salvar partida e convocados
+            </SubmitButton>
           </form>
-        </div>
+        </CreatePanel>
       </div>
     </div>
   )

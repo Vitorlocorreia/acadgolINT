@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation'
-
-export default function RootPage() {
-  redirect('/dashboard')
-}
+import { requireStaff } from '@/lib/auth/session'
+import { homeForRole } from '@/lib/auth/permissions'
+export default async function RootPage() { const {staff}=await requireStaff(); redirect(homeForRole(staff.role)) }

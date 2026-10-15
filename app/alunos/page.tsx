@@ -1,293 +1,321 @@
-import Link from 'next/link'
+import { requirePage } from '@/lib/auth/session'
+import Link from "next/link";
 import {
-  Users,
-  PlusCircle,
+  ArrowRight,
+  MapPin,
+  MessageCircle,
+  Plus,
   Search,
-  ChevronRight,
-  Phone,
-  Send,
-  AlertTriangle,
-} from 'lucide-react'
-import { getStudentsList } from './actions'
-import { StudentStatusToggle } from './student-status-toggle'
+  Users,
+} from "lucide-react";
+import { calculateAge, schoolClock } from "@/lib/format";
+import { getStudentsList } from "./actions";
 
-interface Props {
-  searchParams: Promise<{
-    search?: string
-    status?: string
-  }>
+interface Student {
+  id: string;
+  name: string;
+  birth_date: string;
+  status: string;
+  photo_url?: string | null;
+  preferred_position?: string;
+  guardian:
+    | { name: string; phone: string }[]
+    | { name: string; phone: string }
+    | null;
+  enrollment: {
+    status: string;
+    class: { name: string; unit: { name: string } | null } | null;
+  }[];
+  invoices: { status: string; due_date: string }[];
 }
 
-function calculateAge(birthDateStr: string) {
-  if (!birthDateStr) return 0
-  const birth = new Date(birthDateStr)
-  const now = new Date()
-  let age = now.getFullYear() - birth.getFullYear()
-  const m = now.getMonth() - birth.getMonth()
-  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
-    age--
-  }
-  return age
-}
-
-export default async function AlunosPage({ searchParams }: Props) {
-  const params = await searchParams
-  const students = await getStudentsList({
+export default async function AlunosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string; status?: string }>;
+}) {
+  await requirePage('students.read');
+  const params = await searchParams;
+  const students = (await getStudentsList({
     search: params.search,
     status: params.status,
-  })
-
+  })) as Student[];
+  const today = schoolClock().date;
+  const filterLink = (status: string) => {
+    const query = new URLSearchParams();
+    if (params.search) query.set("search", params.search);
+    if (status !== "all") query.set("status", status);
+    return `/alunos${query.size ? `?${query}` : ""}`;
+  };
+  const detail = (student: Student) => {
+    const guardian = Array.isArray(student.guardian)
+      ? student.guardian[0]
+      : student.guardian;
+    const enrollment =
+      student.enrollment?.find((item) =>
+        ["active", "trial"].includes(item.status),
+      ) || student.enrollment?.[0];
+    const overdue =
+      student.invoices?.filter(
+        (invoice) =>
+          invoice.status === "overdue" ||
+          (invoice.status === "pending" && invoice.due_date < today),
+      ).length || 0;
+    const phone = guardian?.phone?.replace(/\D/g, "");
+    return {
+      guardian,
+      enrollment,
+      overdue,
+      contact: phone
+        ? `https://wa.me/${phone.length <= 11 ? "55" : ""}${phone}`
+        : null,
+    };
+  };
+  const statusBadge = (student: Student) => (
+    <span
+      className={`badge ${student.status === "active" ? "badge-success" : student.status === "paused" || student.status === "trial" ? "badge-warning" : ""}`}
+    >
+      {student.status === "active"
+        ? "Ativo"
+        : student.status === "paused"
+          ? "Trancado"
+          : student.status === "trial"
+            ? "Experimental"
+            : "Inativo"}
+    </span>
+  );
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="page-container space-y-6">
+      <div className="page-heading">
         <div>
-          <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-            <Users className="w-8 h-8 text-[#1A6B2E]" />
-            Alunos & Atletas ({students.length})
+          <p className="eyebrow mb-2">Nossa base</p>
+          <h1 className="page-title">
+            Atletas{" "}
+            <span className="text-[var(--text-muted)]">
+              ({students.length})
+            </span>
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Cadastro completo de atletas, responsáveis, fichas médicas e controle de matrículas.
+          <p className="page-subtitle">
+            Cada atleta, sua turma e quem acompanha sua jornada.
           </p>
         </div>
-
-        <Link
-          href="/alunos/novo"
-          className="px-4 py-2.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white font-bold text-xs uppercase tracking-wider rounded-[4px] flex items-center gap-2 shadow-xs transition-all shrink-0 cursor-pointer"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Nova Matrícula
+        <Link href="/alunos/novo" className="button button-primary">
+          <Plus size={17} /> Nova matrícula
         </Link>
       </div>
-
-      {/* Barra de Busca e Filtros */}
-      <div className="card-light p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <form method="GET" className="flex-1 flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-[4px] px-3 py-2">
-          <Search className="w-4 h-4 text-slate-400 shrink-0" />
-          <input
-            type="text"
-            name="search"
-            defaultValue={params.search || ''}
-            placeholder="Buscar por nome do aluno, responsável ou WhatsApp..."
-            className="bg-transparent text-slate-800 text-xs w-full outline-none placeholder:text-slate-400"
+      <div className="surface flex flex-wrap items-center gap-4 p-4">
+        <form className="relative min-w-[180px] flex-1" method="get">
+          <Search
+            size={18}
+            className="pointer-events-none absolute left-3 top-3.5 text-[var(--text-muted)]"
           />
+          <label htmlFor="student-search" className="sr-only">
+            Buscar atleta por nome, responsável ou telefone
+          </label>
+          <input
+            id="student-search"
+            type="search"
+            name="search"
+            defaultValue={params.search}
+            placeholder="Buscar atleta ou responsável…"
+            className="field !pl-10"
+          />
+          {params.status && (
+            <input type="hidden" name="status" value={params.status} />
+          )}
         </form>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <Link
-            href="/alunos"
-            className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all ${
-              !params.status || params.status === 'all'
-                ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            Todos
-          </Link>
-          <Link
-            href="/alunos?status=active"
-            className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all ${
-              params.status === 'active'
-                ? 'bg-[#1A6B2E] text-white border-[#1A6B2E]'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            Ativos
-          </Link>
-          <Link
-            href="/alunos?status=paused"
-            className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all ${
-              params.status === 'paused'
-                ? 'bg-amber-600 text-white border-amber-600'
-                : 'bg-white text-amber-700 border-amber-200 hover:bg-amber-50'
-            }`}
-          >
-            Trancados
-          </Link>
-          <Link
-            href="/alunos?status=overdue"
-            className={`px-3 py-1.5 rounded-[4px] text-xs font-bold uppercase tracking-wider border transition-all ${
-              params.status === 'overdue'
-                ? 'bg-red-600 text-white border-red-600'
-                : 'bg-white text-red-600 border-red-200 hover:bg-red-50'
-            }`}
-          >
-            🚨 Inadimplentes
-          </Link>
-        </div>
-      </div>
-
-      {/* Lista de Alunos */}
-      {students.length === 0 ? (
-        <div className="card-light py-16 text-center space-y-3">
-          <div className="w-16 h-16 rounded-full bg-[#1A6B2E]/10 border border-[#1A6B2E]/20 flex items-center justify-center mx-auto text-[#1A6B2E]">
-            <Users className="w-8 h-8" />
-          </div>
-          <p className="text-base font-bold text-slate-800">Nenhum aluno encontrado</p>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Comece cadastrando o primeiro aluno da escolinha de futebol com a ficha completa.
-          </p>
-          <div className="pt-2">
+        <nav className="flex flex-wrap gap-1.5" aria-label="Filtrar atletas">
+          {[
+            ["all", "Todos"],
+            ["active", "Ativos"],
+            ["paused", "Trancados"],
+            ["overdue", "Com pendências"],
+          ].map(([value, label]) => (
             <Link
-              href="/alunos/novo"
-              className="px-4 py-2 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white text-xs font-bold uppercase tracking-wider rounded-[4px] inline-flex items-center gap-1.5 shadow-xs"
+              key={value}
+              href={filterLink(value)}
+              aria-current={
+                (params.status || "all") === value ? "page" : undefined
+              }
+              className={`button !min-h-10 !px-3 !text-xs ${(params.status || "all") === value ? "button-primary" : "button-quiet"}`}
             >
-              <PlusCircle className="w-4 h-4" /> Cadastrar Primeiro Atleta
+              {label}
             </Link>
-          </div>
+          ))}
+        </nav>
+      </div>
+      {!students.length ? (
+        <div className="surface empty-state">
+          <Users size={32} />
+          <strong>
+            {params.search || params.status
+              ? "Nenhum atleta neste filtro"
+              : "A próxima jornada começa aqui"}
+          </strong>
+          <p>
+            {params.search || params.status
+              ? "Confira o nome pesquisado ou remova os filtros."
+              : "Cadastre um atleta para organizar a turma e acompanhar os treinos."}
+          </p>
+          <Link
+            className="button"
+            href={params.search || params.status ? "/alunos" : "/alunos/novo"}
+          >
+            {params.search || params.status
+              ? "Limpar filtros"
+              : "Nova matrícula"}
+          </Link>
         </div>
       ) : (
-        <div className="card-light overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider font-bold">
-                <tr>
-                  <th className="px-5 py-3.5">Atleta</th>
-                  <th className="px-5 py-3.5">Idade / Posição</th>
-                  <th className="px-5 py-3.5">Turma / Categoria</th>
-                  <th className="px-5 py-3.5">Responsável / Contato</th>
-                  <th className="px-5 py-3.5">Uniforme</th>
-                  <th className="px-5 py-3.5 text-center">Status</th>
-                  <th className="px-5 py-3.5 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {students.map((st: any) => {
-                  const age = calculateAge(st.birth_date)
-                  const enrollment = Array.isArray(st.enrollment) ? st.enrollment[0] : st.enrollment
-                  const guardian = Array.isArray(st.guardian) ? st.guardian[0] : st.guardian
-                  const guardianPhone = guardian?.phone ? guardian.phone.replace(/\D/g, '') : ''
-                  const todayIso = new Date().toISOString().slice(0, 10)
-                  const overdueInvoices = (st.invoices ?? []).filter(
-                    (i: any) => i.status === 'overdue' || (i.status === 'pending' && i.due_date < todayIso)
-                  )
-                  const isOverdue = overdueInvoices.length > 0
-                  const overdueTotal = overdueInvoices.reduce((acc: number, cur: any) => acc + Number(cur.amount), 0)
-
-                  return (
-                    <tr key={st.id} className="hover:bg-slate-50/80 dark:hover:bg-zinc-800/50 transition-colors">
-                      {/* Atleta */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-[4px] bg-[#1A6B2E]/10 border border-[#1A6B2E]/30 flex items-center justify-center font-bold text-[#1A6B2E] dark:text-emerald-400 text-sm shrink-0">
-                            {st.name.charAt(0)}
-                          </div>
-                          <div>
-                            <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">{st.name}</div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
-                              Nasc: {st.birth_date?.split('-').reverse().join('/')}
+        <>
+          <div className="grid gap-3 md:hidden">
+            {students.map((student) => {
+              const { enrollment, overdue, contact } = detail(student);
+              return (
+                <article key={student.id} className="surface p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="avatar">
+                      {student.photo_url ? (
+                        <img src={student.photo_url} alt="" />
+                      ) : (
+                        student.name.charAt(0)
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-sm font-bold">{student.name}</h2>
+                      <p className="mt-1 text-xs text-[var(--text-muted)]">
+                        {calculateAge(student.birth_date, today) ?? "—"} anos ·{" "}
+                        {student.preferred_position || "Atleta"}
+                      </p>
+                    </div>
+                    {statusBadge(student)}
+                  </div>
+                  <p className="mt-4 text-sm font-semibold">
+                    {enrollment?.class?.name || "Sem turma vinculada"}
+                  </p>
+                  {enrollment?.class?.unit && (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-[var(--text-muted)]">
+                      <MapPin size={13} />
+                      {enrollment.class.unit.name}
+                    </p>
+                  )}
+                  {overdue > 0 && (
+                    <p className="mt-3 text-xs font-semibold text-[var(--warning)]">
+                      {overdue} mensalidade(s) em atraso
+                    </p>
+                  )}
+                  <div className="mt-4 flex gap-2 border-t border-[var(--border-color)] pt-4">
+                    <Link
+                      className="button flex-1"
+                      href={`/alunos/${student.id}`}
+                    >
+                      Ver ficha <ArrowRight size={15} />
+                    </Link>
+                    {contact && (
+                      <a
+                        className="icon-button"
+                        href={contact}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Conversar com responsável de ${student.name}`}
+                      >
+                        <MessageCircle size={18} />
+                      </a>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <div className="surface hidden overflow-hidden md:block">
+            <div className="table-responsive">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th scope="col">Atleta</th>
+                    <th scope="col">Turma</th>
+                    <th scope="col">Responsável</th>
+                    <th scope="col">Situação</th>
+                    <th scope="col">
+                      <span className="sr-only">Ações</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((student) => {
+                    const { guardian, enrollment, overdue, contact } =
+                      detail(student);
+                    return (
+                      <tr key={student.id}>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <div className="avatar">
+                              {student.photo_url ? (
+                                <img src={student.photo_url} alt="" />
+                              ) : (
+                                student.name.charAt(0)
+                              )}
+                            </div>
+                            <div>
+                              <Link
+                                href={`/alunos/${student.id}`}
+                                className="font-semibold hover:underline"
+                              >
+                                {student.name}
+                              </Link>
+                              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                                {calculateAge(student.birth_date, today) ?? "—"}{" "}
+                                anos · {student.preferred_position || "Atleta"}
+                              </p>
                             </div>
                           </div>
-                        </div>
-                      </td>
-
-                      {/* Idade / Posição */}
-                      <td className="px-5 py-4">
-                        <div className="font-bold text-slate-800 dark:text-slate-200">{age} anos</div>
-                        <div className="text-[10px] text-[#1A6B2E] dark:text-emerald-400 font-semibold">
-                          {st.preferred_position} • {st.dominant_foot}
-                        </div>
-                      </td>
-
-                      {/* Turma / Categoria */}
-                      <td className="px-5 py-4">
-                        {enrollment?.class ? (
-                          <div className="space-y-0.5">
-                            <span className="font-bold text-slate-800 dark:text-slate-200 block">{enrollment.class.name}</span>
-                            <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
-                              📍 {enrollment.class.unit?.name || 'Unidade'}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-400 italic">Sem turma vinculada</span>
-                        )}
-                      </td>
-
-                      {/* Responsável */}
-                      <td className="px-5 py-4">
-                        {guardian ? (
-                          <div>
-                            <span className="font-bold text-slate-800 dark:text-slate-200 block">{guardian.name}</span>
-                            {guardian.phone ? (
-                              <a
-                                href={`https://wa.me/55${guardianPhone}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-[11px] text-[#1A6B2E] dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 font-mono"
-                              >
-                                <Phone className="w-3 h-3" /> {guardian.phone}
-                              </a>
-                            ) : (
-                              <span className="text-[11px] text-slate-400 italic">Sem telefone</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
-
-                      {/* Uniforme */}
-                      <td className="px-5 py-4">
-                        <span className="px-2 py-0.5 bg-slate-100 border border-slate-200 rounded font-mono text-[11px] text-slate-700 font-bold">
-                          Tam {st.uniform_size || '10'}
-                        </span>
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-5 py-4 text-center">
-                        <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                          st.status === 'active'
-                            ? 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20'
-                            : st.status === 'paused'
-                            ? 'bg-amber-100 text-amber-800 border-amber-300'
-                            : 'bg-slate-100 text-slate-500 border-slate-200'
-                        }`}>
-                          {st.status === 'active' ? 'Ativo' : st.status === 'paused' ? 'Trancado' : 'Inativo'}
-                        </span>
-                        {isOverdue && (
-                          <span className="block mt-1 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-red-100 text-red-700 border border-red-200">
-                            🚨 {overdueInvoices.length} mensalidade(s)
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Ação */}
-                      <td className="px-5 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {/* Trancar / Reativar Matrícula */}
-                          <StudentStatusToggle studentId={st.id} currentStatus={st.status} compact={true} />
-
-                          {/* Cobrança WhatsApp se inadimplente */}
-                          {isOverdue && guardianPhone && (
+                        </td>
+                        <td>
+                          <p className="font-semibold">
+                            {enrollment?.class?.name || "Sem turma vinculada"}
+                          </p>
+                          <p className="mt-1 text-xs text-[var(--text-muted)]">
+                            {enrollment?.class?.unit?.name}
+                          </p>
+                        </td>
+                        <td>
+                          <p>{guardian?.name || "Não informado"}</p>
+                          {contact && (
                             <a
-                              href={`https://wa.me/55${guardianPhone}?text=${encodeURIComponent(
-                                `Olá ${guardian?.name}! Aqui é da Academia do Gol. Notamos uma pendência de R$ ${overdueTotal.toFixed(2)} referente à mensalidade do atleta ${st.name}. Poderia nos enviar o comprovante ou nos avisar para gerarmos uma nova chave PIX? Obrigado!`
-                              )}`}
+                              href={contact}
                               target="_blank"
                               rel="noreferrer"
-                              title="Enviar cobrança cordial no WhatsApp"
-                              className="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
+                              className="text-link mt-1 !text-xs"
                             >
-                              <Send className="w-3 h-3" /> Cobrar
+                              <MessageCircle size={13} /> {guardian?.phone}
                             </a>
                           )}
-
+                        </td>
+                        <td>
+                          {statusBadge(student)}
+                          {overdue > 0 && (
+                            <p className="mt-2 text-xs text-[var(--warning)]">
+                              {overdue} mensalidade(s) em atraso
+                            </p>
+                          )}
+                        </td>
+                        <td className="text-right">
                           <Link
-                            href={`/alunos/${st.id}`}
-                            className="px-2.5 py-1 bg-slate-100 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] text-slate-700 border border-slate-200 rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all"
+                            href={`/alunos/${student.id}`}
+                            className="button whitespace-nowrap"
                           >
-                            Ficha <ChevronRight className="w-3.5 h-3.5" />
+                            Ver ficha <ArrowRight size={14} />
                           </Link>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
-  )
+  );
 }

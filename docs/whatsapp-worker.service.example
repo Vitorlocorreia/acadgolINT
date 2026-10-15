@@ -1,0 +1,22 @@
+[Unit]
+Description=Sport - avisos automaticos pelo WhatsApp
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=sport
+Group=sport
+WorkingDirectory=/opt/sport
+ExecStart=/usr/bin/node --env-file=/etc/sport-whatsapp.env /opt/sport/scripts/whatsapp-worker.mjs
+Restart=always
+RestartSec=15
+TimeoutStopSec=60
+Environment=NODE_ENV=production
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

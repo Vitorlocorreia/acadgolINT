@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export async function getUniformInventory() {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient('inventory.read')
 
   const { data, error } = await supabase
     .from('uniform_inventory')
@@ -13,33 +13,22 @@ export async function getUniformInventory() {
 
   if (error) {
     console.error('Erro ao buscar estoque de uniformes:', error)
-    return []
+    throw new Error('Não foi possível carregar o estoque. Tente novamente.')
   }
 
   return data ?? []
 }
 
 export async function updateUniformStockAction(id: string, newQuantity: number) {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient('inventory.write')
 
-  const { error } = await supabase
-    .from('uniform_inventory')
-    .update({
-      quantity: Math.max(0, newQuantity),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-
-  if (error) {
-    return { success: false, error: error.message }
-  }
-
-  revalidatePath('/uniformes')
-  return { success: true }
+  const {data,error}=await supabase.rpc('adjust_uniform_stock',{p_item:id,p_delta:newQuantity});
+ if(error)return {success:false,error:error.message};revalidatePath('/uniformes');return {success:true,quantity:data.quantity};
 }
 
+
 export async function addUniformItemAction(formData: FormData): Promise<void> {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient('inventory.write')
 
   const newItem = {
     item_name: String(formData.get('item_name')),

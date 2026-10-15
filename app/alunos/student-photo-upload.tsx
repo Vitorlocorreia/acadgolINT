@@ -11,6 +11,7 @@ interface Props {
   studentName?: string
   preferredPosition?: string
   className?: string
+  required?: boolean
 }
 
 export function StudentPhotoUpload({
@@ -19,6 +20,7 @@ export function StudentPhotoUpload({
   studentName = 'Atleta',
   preferredPosition,
   className = '',
+  required = false,
 }: Props) {
   const [photoUrl, setPhotoUrl] = useState<string | null>(initialPhotoUrl)
   const [isCompressing, setIsCompressing] = useState(false)
@@ -28,6 +30,8 @@ export function StudentPhotoUpload({
 
   // Comprime e redimensiona imagem para 480x480 no navegador
   const processImageFile = (file: File) => {
+    if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>10*1024*1024){setFeedback({type:'error',message:'Selecione uma foto JPG, PNG ou WebP de até 10 MB.'});fileInputRef.current?.setCustomValidity('Selecione uma foto válida do atleta.');return}
+    fileInputRef.current?.setCustomValidity('Aguarde o processamento da foto antes de concluir a matrícula.')
     setIsCompressing(true)
     setFeedback(null)
 
@@ -61,6 +65,7 @@ export function StudentPhotoUpload({
           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85)
           setPhotoUrl(compressedDataUrl)
           setIsCompressing(false)
+          fileInputRef.current?.setCustomValidity('')
 
           // Se estiver na tela de perfil do aluno (tem studentId), salva automaticamente
           if (studentId) {
@@ -75,14 +80,17 @@ export function StudentPhotoUpload({
           }
         } else {
           setIsCompressing(false)
+          fileInputRef.current?.setCustomValidity('Não foi possível preparar a foto. Escolha outro arquivo.')
         }
       }
       img.onerror = () => {
         setIsCompressing(false)
+        fileInputRef.current?.setCustomValidity('Não foi possível abrir a foto. Escolha outro arquivo.')
         setFeedback({ type: 'error', message: 'Falha ao carregar a imagem.' })
       }
       img.src = e.target?.result as string
     }
+    reader.onerror=()=>{setIsCompressing(false);setFeedback({type:'error',message:'Não foi possível ler a foto. Tente outro arquivo.'});fileInputRef.current?.setCustomValidity('Selecione outra foto.')}
     reader.readAsDataURL(file)
   }
 
@@ -94,12 +102,16 @@ export function StudentPhotoUpload({
   }
 
   const handleRemovePhoto = () => {
+    const previousPhoto=photoUrl
     setPhotoUrl(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
     if (studentId) {
       startTransition(async () => {
-        await updateStudentPhotoAction(studentId, '')
-        setFeedback({ type: 'success', message: 'Foto removida.' })
+        try {
+          const result=await updateStudentPhotoAction(studentId, '')
+          if(result.success)setFeedback({ type: 'success', message: 'Foto removida.' })
+          else {setPhotoUrl(previousPhoto);setFeedback({type:'error',message:result.error||'Não foi possível remover a foto.'})}
+        }catch{setPhotoUrl(previousPhoto);setFeedback({type:'error',message:'Não foi possível remover a foto. Tente novamente.'})}
       })
     }
   }
@@ -112,15 +124,18 @@ export function StudentPhotoUpload({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         onChange={handleFileChange}
-        className="hidden"
+        required={required&&!photoUrl}
+        aria-label={required?'Foto obrigatória do atleta':'Foto do atleta'}
+        disabled={isPending}
+        className="sr-only"
       />
 
       <div className="flex flex-col sm:flex-row items-center gap-4">
         {/* Preview do Avatar / Card Preview */}
         <div className="relative group">
-          <div className="w-24 h-28 sm:w-28 sm:h-32 rounded-[8px] bg-gradient-to-b from-amber-500/20 via-slate-900 to-black border-2 border-amber-400/60 shadow-md flex items-center justify-center overflow-hidden relative">
+          <div className="w-24 h-24 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] flex items-center justify-center overflow-hidden relative">
             {photoUrl ? (
               <img
                 src={photoUrl}
@@ -128,27 +143,23 @@ export function StudentPhotoUpload({
                 className="w-full h-full object-cover object-top"
               />
             ) : (
-              <div className="flex flex-col items-center justify-center text-center p-2 text-slate-400">
-                <User className="w-10 h-10 text-amber-300/60 mb-1" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-200/80">
+              <div className="flex flex-col items-center justify-center text-center p-2 text-[var(--text-muted)]">
+                <User className="w-9 h-9 mb-1" />
+                <span className="text-xs font-medium">
                   Sem Foto
                 </span>
               </div>
             )}
 
-            {/* Badge Estilo FIFA */}
-            <div className="absolute top-1 left-1 bg-amber-400 text-slate-950 font-extrabold text-[9px] px-1 py-0.2 rounded shadow-xs">
-              FUT
-            </div>
-
             {/* Overlay ao passar mouse */}
-            <div
+            <button type="button" aria-label="Alterar foto do atleta"
+              disabled={isCompressing||isPending}
               onClick={() => fileInputRef.current?.click()}
-              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-xs cursor-pointer p-1 text-center"
+              className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-xs cursor-pointer p-1 text-center"
             >
               <Camera className="w-5 h-5 mb-1 text-amber-300" />
-              <span className="text-[10px] font-bold">Alterar Foto</span>
-            </div>
+              <span className="text-xs font-bold">Alterar Foto</span>
+            </button>
 
             {isCompressing && (
               <div className="absolute inset-0 bg-black/80 flex items-center justify-center text-white">
@@ -158,11 +169,12 @@ export function StudentPhotoUpload({
           </div>
 
           {photoUrl && (
-            <button
+            <button aria-label="Remover Foto"
+              disabled={isCompressing||isPending}
               type="button"
               onClick={handleRemovePhoto}
               title="Remover Foto"
-              className="absolute -top-2 -right-2 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-md cursor-pointer border border-white"
+              className="button absolute -top-2 -right-2 w-6 h-6 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-md cursor-pointer border border-white"
             >
               <X className="w-3 h-3" />
             </button>
@@ -172,12 +184,12 @@ export function StudentPhotoUpload({
         {/* Controles e Explicação */}
         <div className="space-y-2 text-center sm:text-left flex-1">
           <div>
-            <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-800">
+            <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs font-bold tracking-normal text-[var(--text-primary)]">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              Foto Oficial do Atleta (Card FIFA)
+              Foto do atleta {required&&<span className="text-red-600">*</span>}
             </div>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              Esta foto será usada no <strong>Card de Convocação estilo FIFA</strong> e na carteirinha digital do aluno. Escolha uma foto nítida de rosto ou meio-corpo.
+            <p className="text-xs text-[var(--text-muted)] mt-0.5">
+              Esta foto preenche automaticamente a <strong>arte de convocação</strong> e a carteirinha. Use uma foto vertical, nítida, de rosto ou meio-corpo. {required?'Obrigatória para concluir a matrícula.':''}
             </p>
           </div>
 
@@ -186,7 +198,7 @@ export function StudentPhotoUpload({
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isCompressing || isPending}
-              className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-[4px] text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+              className="button px-3 py-1.5 bg-slate-900 hover:bg-black text-white rounded-lg text-xs font-bold  tracking-normal flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
             >
               {isPending ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -197,7 +209,7 @@ export function StudentPhotoUpload({
             </button>
 
             {photoUrl && (
-              <span className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+              <span className="text-xs text-emerald-700 font-bold flex items-center gap-1">
                 <Check className="w-3.5 h-3.5 text-emerald-600" /> Foto pronta para o Card
               </span>
             )}
@@ -205,7 +217,7 @@ export function StudentPhotoUpload({
 
           {feedback && (
             <div
-              className={`text-[11px] font-bold p-1.5 rounded ${
+              className={`text-xs font-bold p-1.5 rounded ${
                 feedback.type === 'success'
                   ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                   : 'bg-red-50 text-red-800 border border-red-200'

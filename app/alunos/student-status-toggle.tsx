@@ -29,11 +29,11 @@ export function StudentStatusToggle({ studentId, currentStatus, compact = false 
 
   if (compact) {
     return (
-      <button
+      <button aria-label={isPaused ? 'Reativar Matrícula' : 'Trancar Matrícula'}
         onClick={handleToggle}
         disabled={isPending}
         title={isPaused ? 'Reativar Matrícula' : 'Trancar Matrícula'}
-        className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1 transition-all cursor-pointer border ${
+        className={`button px-2 py-1 rounded text-xs font-bold  tracking-normal inline-flex items-center gap-1 transition-all cursor-pointer border ${
           isPaused
             ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
             : 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-300'
@@ -58,7 +58,7 @@ export function StudentStatusToggle({ studentId, currentStatus, compact = false 
     <button
       onClick={handleToggle}
       disabled={isPending}
-      className={`px-4 py-2 rounded text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 transition-all cursor-pointer border shadow-xs ${
+      className={`button px-4 py-2 rounded text-xs font-bold  tracking-normal inline-flex items-center gap-2 transition-all cursor-pointer border shadow-xs ${
         isPaused
           ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-700'
           : 'bg-amber-500 hover:bg-amber-600 text-white border-amber-600'

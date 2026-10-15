@@ -3,6 +3,8 @@
 out/
 build/
 dist/
+*.tsbuildinfo
+supabase/.temp/
 
 # Dependencies
 node_modules/
@@ -25,3 +27,7 @@ yarn-error.log*
 *.pem
 Thumbs.db
 acad.pdf
+artifacts/ui-preview/
+.local-backups/
+.local-credentials/
+!.env.example

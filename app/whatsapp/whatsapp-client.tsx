@@ -1,447 +1,125 @@
 'use client'
 
-import React, { useState, useEffect, useTransition } from 'react'
-import {
-  Smartphone,
-  QrCode,
-  CheckCircle2,
-  AlertCircle,
-  RefreshCw,
-  Send,
-  ShieldCheck,
-  Zap,
-  Bell,
-  Utensils,
-  Trophy,
-  DollarSign,
-  Loader2,
-  LogOut,
-  UserCheck,
-  PhoneCall,
-} from 'lucide-react'
-import {
-  checkWhatsAppStatusAction,
-  getWhatsAppQRCodeAction,
-  sendTestWhatsAppAction,
-  disconnectWhatsAppAction,
-} from './actions'
+import { useEffect, useState, useTransition } from 'react'
+import { Smartphone, QrCode, Send, RefreshCw, CheckCircle2, Loader2, LogOut, Bell, Trophy, Wallet } from 'lucide-react'
+import { PageHeader } from '@/components/page-header'
+import { Dialog } from '@/components/dialog'
+import {DeliveryConsole} from './delivery-console'
+import { checkWhatsAppStatusAction, getWhatsAppQRCodeAction, sendTestWhatsAppAction, disconnectWhatsAppAction } from './actions'
 
 export function WhatsAppClient() {
-  const [isPending, startTransition] = useTransition()
-  const [isConnected, setIsConnected] = useState(false)
-  const [qrCodeBase64, setQrCodeBase64] = useState<string | null>(null)
-  const [statusMessage, setStatusMessage] = useState<string>('Aguardando verificação...')
-  const [demoMode, setDemoMode] = useState(false)
-  const [connectedNumber, setConnectedNumber] = useState<string | null>(null)
-  const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null)
+  const [pending, startTransition] = useTransition()
+  const [connection, setConnection] = useState('checking')
+  const [configured, setConfigured] = useState(false)
+  const [connectionError, setConnectionError] = useState('')
+  const [number, setNumber] = useState('')
+  const [qr, setQr] = useState<string | null>(null)
+  const [demo, setDemo] = useState(false)
+  const [phone, setPhone] = useState('')
+  const [message, setMessage] = useState('Olá! Esta é uma mensagem de teste da Escolinha do Sport — Sport Club do Recife.')
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
+  const [disconnectOpen, setDisconnectOpen] = useState(false)
+  const [sendOpen, setSendOpen] = useState(false)
 
-  // Test form
-  const [testPhone, setTestPhone] = useState('81985742015')
-  const [testMessage, setTestMessage] = useState(
-    '⚽ Olá! Esta é uma mensagem de teste da automação oficial da Academia do Gol via WhatsApp!'
-  )
-  const [testFeedback, setTestFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
-
-  // Disparar verificação
-  const handleCheckStatus = () => {
-    startTransition(async () => {
+  async function checkConnection() {
+    try {
       const res = await checkWhatsAppStatusAction()
-      if (res.connected) {
-        setIsConnected(true)
-        if (res.ownerNumber) setConnectedNumber(res.ownerNumber)
-        if (res.profilePictureUrl) setProfilePicUrl(res.profilePictureUrl)
-        setStatusMessage('🟢 Conectado Oficialmente (WhatsApp da Academia do Gol)')
-      } else {
-        setIsConnected(false)
-        setConnectedNumber(null)
-        setProfilePicUrl(null)
-        setStatusMessage('🔴 Desconectado — Escaneie o QR Code abaixo')
-      }
-    })
+      setConnection(res.connected ? 'connected' : res.state)
+      setConfigured(res.configured)
+      setConnectionError(res.error || '')
+      setNumber(res.ownerNumber || '')
+      if (res.connected) setQr(null)
+    } catch { setConnection('offline'); setConnectionError('Não foi possível verificar o serviço de WhatsApp. Tente novamente.') }
   }
-
-  // Desconectar aparelho
-  const handleDisconnect = () => {
-    if (!confirm('Deseja realmente desconectar o número atual do WhatsApp?')) return
-    startTransition(async () => {
-      await disconnectWhatsAppAction()
-      setIsConnected(false)
-      setConnectedNumber(null)
-      setProfilePicUrl(null)
-      handleGenerateQR()
-    })
-  }
-
-  // Gerar QR Code
-  const handleGenerateQR = () => {
-    startTransition(async () => {
-      const res = await getWhatsAppQRCodeAction()
-      if (res.base64) {
-        setQrCodeBase64(res.base64)
-      } else {
-        // Fallback / demonstração
-        setQrCodeBase64(
-          'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=ACADEMIADOGOL_WHATSAPP_DEMO_2026'
-        )
-      }
-    })
-  }
-
-  // Carrega status e QR Code automaticamente ao abrir a tela
   useEffect(() => {
-    handleCheckStatus()
-    handleGenerateQR()
-    const interval = setInterval(handleCheckStatus, 8000)
-    return () => clearInterval(interval)
+    const initial=setTimeout(()=>void checkConnection(),0)
+    const timer = setInterval(() => void checkConnection(), 15000)
+    return () => {clearTimeout(initial);clearInterval(timer)}
   }, [])
 
-  // Enviar teste
-  const handleSendTest = () => {
-    setTestFeedback(null)
+  function generateQR() {
+    setFeedback(null)
+    setQr(null)
     startTransition(async () => {
-      const res = await sendTestWhatsAppAction(testPhone, testMessage)
-      if (res.success) {
-        setTestFeedback({
-          type: 'success',
-          message: `Mensagem enviada com sucesso para +55 ${testPhone}! ID: ${res.messageId || 'OK'}`,
-        })
-      } else {
-        if (demoMode) {
-          setTestFeedback({
-            type: 'success',
-            message: `[Demonstração]: Mensagem transmitida para a fila de envio de +55 ${testPhone} com sucesso!`,
-          })
-        } else {
-          setTestFeedback({
-            type: 'error',
-            message: `Evolution API: ${res.error || 'Servidor offline'}`,
-          })
-        }
-      }
+      try {
+        const res = await getWhatsAppQRCodeAction()
+        if (res.connected) { await checkConnection(); setFeedback({ type: 'success', message: 'O WhatsApp já está conectado. Não é necessário parear novamente.' }) }
+        else if (res.base64) { setQr(res.base64); setConnection('connecting'); setConnectionError('') }
+        else setFeedback({ type: res.retryable ? 'info' : 'error', message: res.error || 'Não foi possível gerar o QR Code. Verifique o serviço e tente novamente.' })
+      } catch { setFeedback({ type: 'error', message: 'O serviço de conexão não respondeu. Tente novamente.' }) }
     })
   }
 
-  return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16">
-      {/* Header com Título e Toggle Demo */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="font-bebas text-3xl sm:text-4xl tracking-wider leading-none flex items-center gap-2.5 text-[var(--text-primary)]">
-            <Smartphone className="w-8 h-8 text-[#1A6B2E] dark:text-emerald-400" />
-            Central de Automação WhatsApp
-          </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Envio 100% automático de avisos de falta, extratos da cantina, convocações e cobrança PIX.
-          </p>
+  function sendTest() {
+    setSendOpen(false)
+    setFeedback(null)
+    if (demo) {
+      setFeedback({ type: 'success', message: 'Simulação concluída. Nenhuma mensagem foi enviada.' })
+      return
+    }
+    startTransition(async () => {
+      try {
+        const res = await sendTestWhatsAppAction(phone, message)
+        setFeedback(res.success ? { type: 'success', message: `Mensagem enviada para ${phone}.` } : { type: 'error', message: res.error || 'Não foi possível enviar. Confira o telefone e a conexão e tente novamente.' })
+      } catch { setFeedback({ type: 'error', message: 'O envio não foi concluído. Tente novamente.' }) }
+    })
+  }
+
+  const connected = connection === 'connected'
+  const labels: Record<string,string> = { checking: 'Verificando…', not_configured: 'Configuração pendente', invalid_config: 'Revisar configuração', unauthorized: 'Chave recusada', not_found: 'Aparelho não pareado', offline: 'Serviço indisponível', busy: 'Serviço ocupado', connecting: 'Aguardando pareamento' }
+  return <div className="page-container space-y-6">
+    <PageHeader eyebrow="Perto de cada família" title="Comunicação" description="Conecte o WhatsApp da escolinha e confira o envio de mensagens." />
+    {feedback && <div role={feedback.type === 'error' ? 'alert' : 'status'} className={`notice ${feedback.type === 'success' ? 'notice-success' : feedback.type === 'info' ? 'notice-warning' : 'notice-error'}`}>{feedback.message}</div>}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <section className="surface overflow-hidden" aria-labelledby="connection-title">
+        <div className="surface-heading flex-wrap">
+          <div className="flex items-center gap-3"><Smartphone size={20} className="text-brand" /><h2 id="connection-title" className="section-title">Conexão do WhatsApp</h2></div>
+          <span role="status" className={`badge ${connected ? 'badge-success' : 'badge-warning'}`}>{connected ? 'Conectado' : labels[connection] || 'Desconectado'}</span>
         </div>
-
-        {/* Toggle Modo Demo / Apresentação */}
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 px-3 py-1.5 rounded-[6px] bg-[var(--bg-card)] border border-[var(--border-color)] text-xs font-bold cursor-pointer shadow-2xs">
-            <input
-              type="checkbox"
-              checked={demoMode}
-              onChange={(e) => setDemoMode(e.target.checked)}
-              className="accent-[#1A6B2E]"
-            />
-            <span className="text-slate-600 dark:text-slate-300">Modo Apresentação (Demo)</span>
-          </label>
+        <div className="p-6 space-y-6">
+          {connectionError && !connected && <p role="status" className="notice notice-warning">{connectionError}</p>}
+          {connected ? <div className="empty-state !p-4">
+            <CheckCircle2 size={40} className="!text-[var(--success)]" />
+            <strong>Pronto para enviar mensagens</strong><p>{number || 'Aparelho conectado à escolinha.'}</p>
+            <button className="button" onClick={() => setDisconnectOpen(true)} disabled={pending}><LogOut size={16} />Desconectar aparelho</button>
+          </div> : <>
+            {qr ? <div className="flex justify-center"><img src={qr} alt="QR Code para conectar o WhatsApp da escolinha" className="w-52 h-52 bg-white p-3 rounded-xl" /></div> : <div className="connection-placeholder"><QrCode size={44} /><span>Gere o QR Code para conectar um aparelho.</span></div>}
+            <div>{['Abra o WhatsApp no celular da escolinha.', 'Acesse Aparelhos conectados e toque em Conectar aparelho.', 'Aponte a câmera para o QR Code desta tela.'].map((step, i) => <div key={step} className="communication-step"><span>{i + 1}</span><p>{step}</p></div>)}</div>
+            <div className="flex flex-wrap gap-2">
+              <button className="button button-primary" onClick={generateQR} disabled={pending || !configured || connection === 'checking'}>{pending ? <Loader2 size={16} className="animate-spin" /> : <QrCode size={16} />}{qr ? 'Atualizar QR Code' : 'Gerar QR Code'}</button>
+              <button className="button" onClick={() => startTransition(checkConnection)} disabled={pending}><RefreshCw size={16} />Verificar conexão</button>
+            </div>
+          </>}
         </div>
-      </div>
-
-      {/* Grid Principal: QR Code (Esquerda) + Testador Imediato (Direita) lado a lado! */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-        {/* Bloco 1: Conexão QR Code (5 cols) */}
-        <div className="lg:col-span-5 flex flex-col">
-          <div className="card-app p-5 space-y-4 shadow-xs flex-1 flex flex-col justify-between">
-            <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-              <div className="flex items-center gap-2">
-                <QrCode className="w-5 h-5 text-[#1A6B2E] dark:text-emerald-400" />
-                <h3 className="font-bebas text-2xl text-[var(--text-primary)] tracking-wider leading-none">
-                  Aparelho Conectado
-                </h3>
-              </div>
-
-              <span
-                className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                  demoMode || isConnected
-                    ? 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20 dark:bg-emerald-950 dark:text-emerald-300'
-                    : 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300'
-                }`}
-              >
-                {demoMode || isConnected ? '● Online & Conectado' : '○ Desconectado'}
-              </span>
-            </div>
-
-            {/* Área do Aparelho: Conectado vs Desconectado */}
-            {isConnected ? (
-              <div className="flex flex-col items-center justify-center p-5 bg-[var(--bg-subtle)] rounded-lg border border-[var(--border-color)] space-y-4">
-                <div className="relative">
-                  {profilePicUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={profilePicUrl}
-                      alt="Foto do WhatsApp Conectado"
-                      className="w-20 h-20 rounded-full border-2 border-[#1A6B2E] shadow-sm object-cover"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-[#C8E6C9] dark:bg-emerald-950 flex items-center justify-center border-2 border-[#1A6B2E]">
-                      <UserCheck className="w-10 h-10 text-[#1A6B2E] dark:text-emerald-400" />
-                    </div>
-                  )}
-                  <span className="absolute bottom-0 right-0 w-5 h-5 bg-emerald-500 border-2 border-white dark:border-zinc-900 rounded-full flex items-center justify-center shadow-xs">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-white" />
-                  </span>
-                </div>
-
-                <div className="text-center space-y-1">
-                  <p className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
-                    Número Ativo no Sistema
-                  </p>
-                  <p className="text-xl font-bebas tracking-widest text-[var(--text-primary)]">
-                    {connectedNumber
-                      ? connectedNumber
-                          .replace(/^55(\d{2})(\d{1})(\d{4})(\d{4})$/, '+55 ($1) $2 $3-$4')
-                          .replace(/^55(\d{2})(\d{4,5})(\d{4})$/, '+55 ($1) $2-$3')
-                      : '+55 (81) 98574-2015'}
-                  </p>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    Pronto para Disparos Automáticos
-                  </div>
-                </div>
-
-                <div className="w-full pt-1 flex flex-col gap-2">
-                  <button
-                    onClick={handleDisconnect}
-                    disabled={isPending}
-                    className="w-full py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/30 dark:hover:bg-red-900/50 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
-                  >
-                    {isPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <LogOut className="w-3.5 h-3.5 text-red-600" />
-                    )}
-                    Desconectar Aparelho
-                  </button>
-
-                  <button
-                    onClick={handleDisconnect}
-                    disabled={isPending}
-                    className="w-full py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] text-[var(--text-primary)] rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 text-[#1A6B2E] dark:text-emerald-400" />
-                    Trocar / Conectar Outro Número
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* QR Code Area Quando Desconectado */
-              <div className="flex flex-col items-center justify-center p-4 bg-[var(--bg-subtle)] rounded-lg border border-[var(--border-color)] space-y-3">
-                <div className="relative w-44 h-44 bg-white p-2.5 rounded-lg border shadow-xs flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={
-                      qrCodeBase64 ||
-                      'https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=ACADEMIADOGOL_WHATSAPP_DEMO_2026'
-                    }
-                    alt="QR Code WhatsApp"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-
-                <div className="text-center space-y-0.5">
-                  <p className="text-xs font-bold text-[var(--text-primary)]">
-                    Como conectar o WhatsApp da Academia:
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                    No celular: <b>Aparelhos conectados ➔ Conectar um aparelho</b>
-                  </p>
-                </div>
-
-                <button
-                  onClick={handleGenerateQR}
-                  disabled={isPending}
-                  className="w-full py-1.5 bg-[var(--bg-card)] hover:bg-[var(--bg-card-hover)] border border-[var(--border-color)] text-[var(--text-primary)] rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer"
-                >
-                  {isPending ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <RefreshCw className="w-3.5 h-3.5 text-[#1A6B2E] dark:text-emerald-400" />
-                  )}
-                  Atualizar QR Code
-                </button>
-              </div>
-            )}
-
-            {/* Info de Segurança */}
-            <div className="p-2.5 bg-slate-50 dark:bg-zinc-800/60 rounded border border-slate-200 dark:border-zinc-700 text-xs space-y-0.5">
-              <div className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-slate-200 text-[11px]">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#1A6B2E] dark:text-emerald-400" />
-                <span>Instância Própria Oracle Cloud (Docker)</span>
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                Sem intermediários. Custo por mensagem: <b>R$ 0,00</b>.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Bloco 2: Testador de Envio Imediato (7 cols) - EM DESTAQUE E 100% VISÍVEL! */}
-        <div className="lg:col-span-7 flex flex-col">
-          <div className="card-app p-5 space-y-4 shadow-xs flex-1 flex flex-col justify-between border-[#1A6B2E]/30">
-            <div>
-              <div className="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
-                <div className="flex items-center gap-2">
-                  <Send className="w-5 h-5 text-[#1A6B2E] dark:text-emerald-400" />
-                  <h3 className="font-bebas text-2xl text-[var(--text-primary)] tracking-wider leading-none">
-                    Testar Envio Imediato
-                  </h3>
-                </div>
-                <span className="text-[11px] font-bold text-[#1A6B2E] dark:text-emerald-400 bg-[#C8E6C9]/40 px-2 py-0.5 rounded">
-                  Demonstração ao Vivo
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Digite um número com DDD para receber a mensagem oficial da Academia do Gol em tempo real.
-              </p>
-            </div>
-
-            {testFeedback && (
-              <div
-                className={`p-3 rounded text-xs font-bold flex items-center gap-2 border animate-in fade-in duration-200 ${
-                  testFeedback.type === 'success'
-                    ? 'bg-[#C8E6C9]/70 border-[#1A6B2E]/40 text-[#0D4A1C]'
-                    : 'bg-red-50 border-red-200 text-red-800'
-                }`}
-              >
-                {testFeedback.type === 'success' ? (
-                  <CheckCircle2 className="w-4 h-4 text-[#1A6B2E] shrink-0" />
-                ) : (
-                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-                )}
-                <span>{testFeedback.message}</span>
-              </div>
-            )}
-
-            <div className="space-y-3.5 my-auto">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Número de Telefone (com DDD)
-                </label>
-                <input
-                  type="text"
-                  value={testPhone}
-                  onChange={(e) => setTestPhone(e.target.value)}
-                  placeholder="Ex: 81985742015"
-                  className="input-app font-mono font-bold text-sm text-[var(--text-primary)]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1">
-                  Mensagem que será enviada
-                </label>
-                <textarea
-                  rows={2}
-                  value={testMessage}
-                  onChange={(e) => setTestMessage(e.target.value)}
-                  className="input-app text-xs leading-relaxed"
-                />
-              </div>
-            </div>
-
-            {/* BOTÃO GRANDE DE DISPARO - 100% DESTACADO E VISÍVEL! */}
-            <div className="pt-2">
-              <button
-                onClick={handleSendTest}
-                disabled={isPending}
-                className="w-full py-3.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] active:scale-98 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white rounded-[6px] font-bold text-xs uppercase tracking-wider shadow-md flex items-center justify-center gap-2.5 transition-all cursor-pointer disabled:opacity-50"
-              >
-                {isPending ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                <span>Disparar Mensagem de Teste no WhatsApp</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bloco 3: Regras de Disparo Automático Ativas (12 cols na parte inferior) */}
-      <div className="card-app p-5 space-y-4 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-[var(--border-color)] pb-3">
-          <div className="flex items-center gap-2">
-            <Zap className="w-5 h-5 text-amber-500" />
-            <h3 className="font-bebas text-2xl text-[var(--text-primary)] tracking-wider leading-none">
-              Gatilhos Automáticos no Piloto Automático
-            </h3>
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium">
-            Mensagens disparadas pelo sistema sem intervenção humana
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Regra 1 */}
-          <div className="p-3.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-xs text-[var(--text-primary)]">
-                <Bell className="w-4 h-4 text-emerald-600" />
-                <span>Aviso de Falta</span>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-snug">
-              Ao dar falta na chamada beira de campo, o pai recebe o aviso de ausência imediatamente.
-            </p>
-          </div>
-
-          {/* Regra 2 */}
-          <div className="p-3.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-xs text-[var(--text-primary)]">
-                <Utensils className="w-4 h-4 text-purple-600" />
-                <span>Extrato da Cantina</span>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-snug">
-              Ao debitar o lanche do aluno, o responsável recebe os itens e o saldo restante no WhatsApp.
-            </p>
-          </div>
-
-          {/* Regra 3 */}
-          <div className="p-3.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-xs text-[var(--text-primary)]">
-                <Trophy className="w-4 h-4 text-amber-600" />
-                <span>Convocações</span>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-snug">
-              Disparo em massa para todos os pais dos atletas escalados com data, local e adversário.
-            </p>
-          </div>
-
-          {/* Regra 4 */}
-          <div className="p-3.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1.5 flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 font-bold text-xs text-[var(--text-primary)]">
-                <DollarSign className="w-4 h-4 text-[#1A6B2E]" />
-                <span>Régua PIX</span>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-snug">
-              Lembrete automático com chave PIX Copia e Cola às 09h para mensalidades a vencer.
-            </p>
-          </div>
-        </div>
-      </div>
+      </section>
+      <section className="surface overflow-hidden" aria-labelledby="test-title">
+        <div className="surface-heading"><div><h2 id="test-title" className="section-title">Testar uma mensagem</h2><p className="page-subtitle !text-sm">Confira o destinatário e o texto antes de enviar.</p></div><Send size={20} className="text-brand shrink-0" /></div>
+        <form className="p-6 space-y-5" onSubmit={event => { event.preventDefault(); setSendOpen(true) }}>
+          <label className="flex items-center gap-3 text-sm cursor-pointer min-h-11"><input type="checkbox" checked={demo} onChange={event => setDemo(event.target.checked)} />Simular envio, sem enviar mensagem</label>
+          {demo && <p className="notice notice-warning">Modo de demonstração. Esta simulação não envia mensagens.</p>}
+          <div><label htmlFor="test-phone" className="field-label">WhatsApp com DDD</label><input id="test-phone" type="tel" autoComplete="tel" required pattern="[+0-9() .-]{10,20}" value={phone} onChange={event => setPhone(event.target.value)} placeholder="(81) 99999-9999" className="field" /></div>
+          <div><label htmlFor="test-message" className="field-label">Mensagem</label><textarea id="test-message" required rows={5} value={message} onChange={event => setMessage(event.target.value)} className="field resize-y" /></div>
+          {!connected && !demo && <p className="text-sm text-[var(--text-muted)]">Conecte um aparelho para habilitar o envio.</p>}
+          <button type="submit" className="button button-primary w-full" disabled={pending || (!connected && !demo)}>{pending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}{demo ? 'Simular mensagem' : 'Revisar envio'}</button>
+        </form>
+      </section>
     </div>
-  )
+    <section className="surface overflow-hidden" aria-labelledby="messages-title">
+      <div className="surface-heading"><div><h2 id="messages-title" className="section-title">Como os avisos são enviados</h2><p className="page-subtitle !text-sm">Os envios pelo sistema dependem da conexão e das preferências dos responsáveis.</p></div></div>
+      <div className="grid md:grid-cols-3 gap-6 p-6">
+        {[{ icon: Bell, title: 'Chamada: envio ao salvar', text: 'Faltas e presenças seguem as opções da revisão. Avisos já aceitos pelo WhatsApp são preservados ao salvar novamente. As tentativas ficam no histórico.' }, { icon: Trophy, title: 'Convocações: ação da equipe', text: 'A equipe anuncia a convocação. Repetir o lote preserva as imagens já enviadas. Falhas precisam de nova tentativa autorizada no histórico. Alterar os dados do jogo permite um novo aviso.' }, { icon: Wallet, title: 'Mensalidades: avisos configuráveis', text: 'Habilite abaixo os lembretes antes do vencimento e no início do mês seguinte. A rotina confere a cobrança e a preferência do responsável antes de enviar.' }].map(item => <div key={item.title}><item.icon size={20} className="text-brand mb-3" /><h3 className="font-semibold mb-2">{item.title}</h3><p className="text-sm text-[var(--text-secondary)]">{item.text}</p></div>)}
+      </div>
+      <div className="px-6 pb-6 text-sm text-[var(--text-secondary)] space-y-2"><p><strong>Aulas experimentais:</strong> habilite a confirmação e o lembrete na véspera. O responsável precisa autorizar os avisos no agendamento. Cancelamentos suspendem os envios pendentes.</p><p><strong>Matrícula e recebimentos:</strong> habilite abaixo as boas-vindas e a confirmação do valor recebido para novos registros.</p></div>
+    </section>
+    <DeliveryConsole/>
+    <Dialog open={sendOpen} onClose={() => setSendOpen(false)} title={demo ? 'Simular mensagem' : 'Enviar mensagem de teste'} description={`Destinatário: ${phone}`}>
+      <p className="notice whitespace-pre-wrap break-words">{message}</p><div className="flex justify-end flex-wrap gap-2"><button className="button" onClick={() => setSendOpen(false)}>Voltar</button><button className="button button-primary" disabled={pending} onClick={sendTest}>{demo ? 'Confirmar simulação' : 'Enviar mensagem'}</button></div>
+    </Dialog>
+    <Dialog open={disconnectOpen} onClose={() => setDisconnectOpen(false)} title="Desconectar aparelho?" description="Os avisos por WhatsApp ficarão indisponíveis até que um aparelho seja conectado novamente.">
+      <div className="flex justify-end flex-wrap gap-2"><button className="button" onClick={() => setDisconnectOpen(false)}>Cancelar</button><button className="button button-primary" disabled={pending} onClick={() => startTransition(async () => {
+        try { const res = await disconnectWhatsAppAction(); if (res.success) { setConnection('disconnected'); setNumber(''); setQr(null); setDisconnectOpen(false) } else setFeedback({ type: 'error', message: res.error || 'Não foi possível desconectar o aparelho.' }) }
+        catch { setFeedback({ type: 'error', message: 'O serviço não respondeu. Tente novamente.' }) }
+      })}>Desconectar</button></div>
+    </Dialog>
+  </div>
 }

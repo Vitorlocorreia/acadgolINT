@@ -1,8 +1,8 @@
-// Retorna data formatada no fuso de Brasília (YYYY-MM-DD)
+// Retorna a data da escolinha no horário de Recife (YYYY-MM-DD).
 export function getBrDateStr(date: Date | string = new Date()): string {
   const d = typeof date === 'string' ? new Date(date) : date
   const parts = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: 'America/Sao_Paulo',
+    timeZone: 'America/Recife',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

@@ -1,347 +1,271 @@
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { usePathname } from 'next/navigation'
+import { useEffect, useSyncExternalStore, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
   CalendarDays,
-  CheckSquare,
-  DollarSign,
+  ClipboardCheck,
+  Wallet,
   Target,
   Trophy,
   Shirt,
-  ShieldCheck,
-  Smartphone,
+  MessagesSquare,
   Menu,
   X,
   PanelLeftClose,
   PanelLeftOpen,
   ChevronRight,
-  Flame,
-} from 'lucide-react'
-import { ThemeToggle } from './theme-toggle'
+  ArrowUpRight,
+  ShieldCheck,
+  UserCircle,
+  LogOut,
+  KeyRound,
+  NotebookPen,
+} from "lucide-react";
+import { ThemeToggle } from "./theme-toggle";
+import { hasPermission, permissionForPath, homeForRole, roleLabels, type StaffRole } from '@/lib/auth/permissions';
+import { logoutAction } from '@/app/login/actions';
 
-const navItems = [
+const groups = [
   {
-    href: '/dashboard',
-    label: 'Visão Geral',
-    icon: LayoutDashboard,
+    label: "Dia a dia",
+    items: [
+      { href: "/dashboard", label: "Visão geral", icon: LayoutDashboard },
+      { href: "/alunos", label: "Atletas", icon: Users },
+      { href: "/turmas", label: "Turmas e horários", icon: CalendarDays },
+      { href: "/chamada", label: "Chamada", icon: ClipboardCheck },
+      { href: "/jogos", label: "Jogos e convocações", icon: Trophy },
+    ],
   },
   {
-    href: '/alunos',
-    label: 'Alunos & Atletas',
-    icon: Users,
+    label: "Gestão",
+    items: [
+      { href: "/financeiro", label: "Financeiro", icon: Wallet },
+      { href: "/planos", label: "Planos de matrícula", icon: NotebookPen },
+      { href: "/experimentais", label: "Aulas experimentais", icon: Target },
+      { href: "/uniformes", label: "Uniformes", icon: Shirt },
+      { href: "/whatsapp", label: "Comunicação", icon: MessagesSquare },
+      { href: "/equipe", label: "Equipe e acessos", icon: ShieldCheck },
+    ],
   },
-  {
-    href: '/turmas',
-    label: 'Turmas & Grade',
-    icon: CalendarDays,
-  },
-  {
-    href: '/chamada',
-    label: 'Chamada na Quadra',
-    icon: CheckSquare,
-    badge: 'Campo',
-    badgeColor: 'bg-red-500/10 text-[#D61F27] border-red-500/30',
-  },
-  {
-    href: '/jogos',
-    label: 'Jogos & Convocações',
-    icon: Trophy,
-    badge: 'FUT',
-    badgeColor: 'bg-[#FFE300] text-black font-extrabold border-amber-400',
-  },
-  {
-    href: '/uniformes',
-    label: 'Estoque de Uniformes',
-    icon: Shirt,
-  },
-  {
-    href: '/financeiro',
-    label: 'Mensalidades & PIX',
-    icon: DollarSign,
-  },
-  {
-    href: '/experimentais',
-    label: 'Aulas Experimentais',
-    icon: Target,
-    badge: 'Leads',
-    badgeColor: 'bg-amber-100 text-amber-900 border-amber-300',
-  },
-  {
-    href: '/whatsapp',
-    label: 'WhatsApp Robô',
-    icon: Smartphone,
-    badge: 'Auto',
-    badgeColor: 'bg-red-500/10 text-[#D61F27] border-red-500/30',
-  },
-]
+];
 
-export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  // Ignora o AppShell no portal público do responsável e na página pública de convocação
-  const isPortal = pathname.startsWith('/portal') || pathname.startsWith('/convocacao')
+export function AppShell({ children, staff }: { children: ReactNode; staff: {full_name: string; email: string; role: StaffRole} | null }) {
+  const pathname = usePathname();
+  const storedCollapsed=useSyncExternalStore((listener)=>{window.addEventListener('storage',listener);return ()=>window.removeEventListener('storage',listener)},()=>{try{return localStorage.getItem('acadgol_sidebar_collapsed')==='true'}catch{return false}},()=>false);
+  const [collapsedOverride,setCollapsed]=useState<boolean|null>(null);
+  const collapsed=collapsedOverride??storedCollapsed;
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const drawer = useRef<HTMLDialogElement>(null);
+  const isPublic =
+    pathname.startsWith("/portal") || pathname.startsWith("/convocacao") || ['/login','/esqueci-senha','/alterar-senha'].includes(pathname);
+  const home = staff ? homeForRole(staff.role) : '/login';
+  const visibleGroups = groups.map(group => ({...group,items: group.items.filter(item => staff && hasPermission(staff.role,permissionForPath(item.href)!))})).filter(group=>group.items.length);
+  const current = groups
+    .flatMap((group) => group.items)
+    .find((item) => pathname.startsWith(item.href));
 
   useEffect(() => {
-    const saved = localStorage.getItem('acadgol_sidebar_collapsed')
-    if (saved !== null) {
-      setIsCollapsed(saved === 'true')
-    }
-    setMounted(true)
-  }, [])
+    if (mobileOpen && !drawer.current?.open) drawer.current?.showModal();
+    if (!mobileOpen && drawer.current?.open) drawer.current.close();
+  }, [mobileOpen]);
 
   const toggleSidebar = () => {
-    const next = !isCollapsed
-    setIsCollapsed(next)
-    localStorage.setItem('acadgol_sidebar_collapsed', String(next))
-  }
-
-  if (isPortal) {
-    return <>{children}</>
-  }
-
-  const currentItem = navItems.find((item) =>
-    item.href === '/dashboard'
-      ? pathname === '/' || pathname === '/dashboard'
-      : pathname.startsWith(item.href)
-  )
-
-  return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-[var(--bg-main)] text-[var(--text-primary)] transition-colors duration-200">
-      {/* Mobile Top Header */}
-      <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-[var(--bg-card)] border-b border-[var(--border-color)] sticky top-0 z-50 shadow-2xs">
-        <div className="flex items-center gap-2.5">
-          <div className="relative w-8 h-8 shrink-0">
-            <Image
-              src="/logo.png"
-              alt="Academia do Gol"
-              fill
-              className="object-contain"
-              priority
-            />
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem("acadgol_sidebar_collapsed", String(next));
+    } catch {
+      /* Continue without persistence. */
+    }
+  };
+  const navigation = (compact: boolean) => (
+    <>
+      <Link
+        href={home}
+        className="sidebar-brand"
+        aria-label="Sport Club do Recife — início"
+        onClick={() => setMobileOpen(false)}
+      >
+        <Image
+          src="/sport-recife.svg"
+          alt=""
+          width={38}
+          height={48}
+          priority
+          className="shrink-0"
+        />
+        {!compact && (
+          <div>
+            <div className="font-bebas text-[27px] leading-none tracking-wide">
+              SPORT
+            </div>
+            <div className="mt-1 text-xs text-[#aab4c6]">
+              Gestão da escolinha
+            </div>
           </div>
-          <div className="w-[1px] h-6 bg-slate-300 dark:bg-slate-700"></div>
-          <div className="relative w-6 h-8 shrink-0 drop-shadow-xs">
+        )}
+      </Link>
+      <nav
+        aria-label="Navegação principal"
+        className="flex-1 overflow-y-auto px-3 pb-6"
+      >
+        {visibleGroups.map((group) => (
+          <div key={group.label}>
+            {!compact && <p className="nav-group-title">{group.label}</p>}
+            {group.items.map(({ href, label, icon: Icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="nav-item"
+                aria-current={pathname.startsWith(href) ? "page" : undefined}
+                aria-label={compact ? label : undefined}
+                title={compact ? label : undefined}
+                onClick={() => setMobileOpen(false)}
+              >
+                <Icon size={19} strokeWidth={1.7} aria-hidden="true" />
+                {!compact && <span>{label}</span>}
+              </Link>
+            ))}
+          </div>
+        ))}
+      </nav>
+      <div className="mx-5 border-t border-white/10 py-5">
+        {compact ? (
+          <Image src="/sport-recife.svg" alt="Escudo do Sport Club do Recife" width={30} height={40} />
+        ) : (
+          <div className="flex items-center gap-3">
             <Image
               src="/sport-recife.svg"
-              alt="Sport Club do Recife"
-              fill
-              className="object-contain"
-              priority
+              alt=""
+              width={30}
+              height={40}
+              className="shrink-0"
             />
-          </div>
-          <div>
-            <div className="flex items-center gap-1">
-              <h1 className="font-bebas text-lg leading-none tracking-wider text-[#D61F27]">
-                Academia do Gol
-              </h1>
-              <span className="text-[9px] text-[#F5A623]">★ ★ ★</span>
+            <div>
+              <p className="text-xs font-semibold text-[#dce1ea]">
+                Escolinha do Sport
+              </p>
+              <p className="mt-0.5 text-[11px] text-[#96a2b7]">
+                Formando novos leões.
+              </p>
             </div>
-            <p className="text-[9px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400">
-              DNA Rubro-Negro • Leão da Ilha
-            </p>
           </div>
-        </div>
+        )}
+      </div>
+    </>
+  );
 
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="p-2 rounded-[6px] bg-[var(--bg-subtle)] border border-[var(--border-color)] text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-colors"
-          >
-            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-        </div>
-      </header>
+  if (isPublic) return <>{children}</>;
 
-      {/* Sidebar Desktop */}
+  return (
+    <div className="min-h-screen lg:flex">
+      <a href="#conteudo" className="skip-link">
+        Ir para o conteúdo
+      </a>
       <aside
-        className={`fixed inset-y-0 left-0 z-40 bg-[var(--bg-card)] border-r border-[var(--border-color)] flex flex-col transition-all duration-300 ease-in-out lg:static shadow-2xs ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        } ${isCollapsed ? 'lg:w-[76px]' : 'lg:w-[260px]'}`}
+        className={`sidebar app-chrome hidden lg:flex ${collapsed ? "sidebar-collapsed" : ""}`}
       >
-        {/* Header da Sidebar com Escudos Combinados */}
-        <div className="p-3.5 border-b border-[var(--border-color)] flex items-center justify-between min-h-[72px]">
-          <Link href="/dashboard" className="flex items-center gap-2.5 overflow-hidden">
-            <div className="flex items-center gap-1.5 shrink-0">
-              <div className="relative w-9 h-9 shrink-0 drop-shadow-xs">
-                <Image
-                  src="/logo.png"
-                  alt="Logo Academia do Gol"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-              <div className="w-[1px] h-7 bg-slate-200 dark:bg-slate-700"></div>
-              <div className="relative w-7 h-9 shrink-0 drop-shadow-xs">
-                <Image
-                  src="/sport-recife.svg"
-                  alt="Sport Club do Recife"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </div>
-
-            {!isCollapsed && (
-              <div className="truncate">
-                <div className="flex items-center gap-1.5">
-                  <h2 className="font-bebas text-lg leading-none tracking-wider text-[#D61F27] truncate">
-                    ACADEMIA DO GOL
-                  </h2>
-                </div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <span className="text-[10px] text-[#F5A623]">★ ★ ★</span>
-                  <span className="text-[9px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 truncate">
-                    Leão da Ilha
-                  </span>
-                </div>
-              </div>
-            )}
-          </Link>
-
-          {/* Botão de Fechar / Abrir Sidebar no Desktop */}
-          <button
-            onClick={toggleSidebar}
-            type="button"
-            className="hidden lg:flex p-1.5 rounded-[6px] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-[var(--bg-subtle)] transition-all cursor-pointer"
-            title={isCollapsed ? 'Expandir Menu' : 'Recolher Menu'}
-          >
-            {isCollapsed ? (
-              <PanelLeftOpen className="w-4 h-4 text-[#D61F27]" />
-            ) : (
-              <PanelLeftClose className="w-4 h-4" />
-            )}
-          </button>
-        </div>
-
-        {/* Faixa Rubro-Negra Decorativa */}
-        <div className="h-1 w-full bg-gradient-to-r from-[#D61F27] via-[#8B0D12] to-[#FFE300]"></div>
-
-        {/* Itens de Navegação */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {!isCollapsed && (
-            <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center justify-between">
-              <span>Menu Principal</span>
-              <span className="text-[9px] text-[#D61F27] font-bold">DNA Rubro-Negro</span>
-            </div>
-          )}
-
-          {navItems.map((item) => {
-            const isActive =
-              item.href === '/dashboard'
-                ? pathname === '/' || pathname === '/dashboard'
-                : pathname.startsWith(item.href)
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                title={isCollapsed ? item.label : undefined}
-                className={`flex items-center ${
-                  isCollapsed ? 'justify-center px-2' : 'justify-between px-3'
-                } py-2.5 rounded-[6px] text-xs font-bold uppercase tracking-wider transition-all duration-150 relative group ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#D61F27] to-[#8B0D12] text-white shadow-sm border-l-4 border-[#FFE300]'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-red-500/10 hover:text-[#D61F27] dark:hover:text-[#D61F27]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <item.icon
-                    className={`w-4 h-4 shrink-0 transition-transform group-hover:scale-110 ${
-                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-[#D61F27]'
-                    }`}
-                  />
-                  {!isCollapsed && <span className="truncate">{item.label}</span>}
-                </div>
-
-                {!isCollapsed && item.badge && (
-                  <span
-                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border shrink-0 ${
-                      isActive ? 'bg-white/20 text-white border-white/30' : item.badgeColor
-                    }`}
-                  >
-                    {item.badge}
-                  </span>
-                )}
-              </Link>
-            )
-          })}
-        </nav>
-
-        {/* Rodapé da Sidebar */}
-        <div className="p-3 border-t border-[var(--border-color)]">
-          {!isCollapsed && (
-            <div className="p-2.5 rounded-[6px] bg-[var(--bg-subtle)] border border-[var(--border-color)] space-y-1 shadow-2xs">
-              <div className="flex items-center justify-between text-[11px] font-bold text-[var(--text-primary)] uppercase tracking-wider">
-                <span className="flex items-center gap-1.5">
-                  <Flame className="w-3.5 h-3.5 text-[#D61F27]" />
-                  <span>Pelo Sport Tudo!</span>
-                </span>
-                <span className="text-[10px] text-[#F5A623]">★ ★ ★</span>
-              </div>
-              <p className="text-[9px] text-slate-400 font-mono">Sport Recife • 1987 | 2008</p>
-            </div>
-          )}
-        </div>
+        {navigation(collapsed)}
       </aside>
-
-      {/* Backdrop Mobile */}
-      {mobileOpen && (
-        <div
-          onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-30 lg:hidden"
-        />
-      )}
-
-      {/* Conteúdo Principal com Top Navigation Bar no Desktop */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Desktop Top Bar */}
-        <div className="hidden lg:flex items-center justify-between px-6 py-3.5 bg-[var(--bg-card)] border-b border-[var(--border-color)] sticky top-0 z-30 shadow-2xs">
-          <div className="flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <header className="app-topbar app-chrome">
+          <div className="flex min-w-0 items-center gap-3">
             <button
-              onClick={toggleSidebar}
-              className="p-1.5 rounded-[6px] text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-[var(--bg-subtle)] transition-all cursor-pointer"
-              title={isCollapsed ? 'Expandir Menu Lateral' : 'Recolher Menu Lateral'}
+              type="button"
+              className="icon-button lg:hidden"
+              aria-label="Abrir navegação"
+              aria-haspopup="dialog"
+              aria-expanded={mobileOpen}
+              onClick={() => setMobileOpen(true)}
             >
-              {isCollapsed ? <PanelLeftOpen className="w-5 h-5 text-[#D61F27]" /> : <PanelLeftClose className="w-5 h-5" />}
+              <Menu size={20} />
             </button>
-
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 dark:text-slate-500">
-              <span className="text-[#D61F27] font-bold">Academia do Gol</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-              <span className="text-[var(--text-primary)] font-bold">
-                {currentItem?.label || 'Painel de Controle'}
+            <button
+              type="button"
+              className="icon-button hidden lg:inline-flex"
+              aria-label={
+                collapsed ? "Expandir navegação" : "Recolher navegação"
+              }
+              onClick={toggleSidebar}
+            >
+              {collapsed ? (
+                <PanelLeftOpen size={18} />
+              ) : (
+                <PanelLeftClose size={18} />
+              )}
+            </button>
+            <Image
+              src="/sport-recife.svg"
+              alt="Sport"
+              width={26}
+              height={33}
+              className="shrink-0 lg:hidden"
+            />
+            <div className="flex min-w-0 items-center gap-2 text-xs text-[var(--text-secondary)]">
+              <span className="hidden sm:inline">Gestão da escolinha</span>
+              <ChevronRight
+                size={14}
+                className="hidden sm:block"
+                aria-hidden="true"
+              />
+              <span className="truncate text-sm font-semibold text-[var(--text-primary)]">
+                {current?.label || "Ficha do atleta"}
               </span>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1 rounded-[4px] bg-red-500/10 dark:bg-red-950/40 border border-red-500/30 text-[#D61F27] dark:text-red-400 text-xs font-bold font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#D61F27] animate-pulse"></span>
-              <span>Leão da Ilha • Temporada 2026</span>
-              <span className="text-[#F5A623]">★ ★ ★</span>
-            </div>
-
+            <span className="hidden text-xs text-[var(--text-secondary)] sm:block">
+              Sport Club do Recife
+            </span>
             <ThemeToggle />
+            {staff && <details className="user-menu"><summary className="button !px-2 sm:!px-3"><UserCircle size={18}/><span className="hidden sm:inline">{staff.full_name.split(' ')[0]}</span><span className="sr-only">Minha conta</span></summary><div className="user-menu-panel"><strong className="block text-sm">{staff.full_name}</strong><span className="block text-xs text-[var(--text-muted)] mt-1 mb-4">{roleLabels[staff.role]}</span><Link href="/alterar-senha" className="button button-quiet w-full !justify-start"><KeyRound size={16}/>Alterar senha</Link><form action={logoutAction}><button className="button button-quiet w-full !justify-start"><LogOut size={16}/>Sair da conta</button></form></div></details>}
           </div>
-        </div>
-
-        {/* Main Content View */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        </header>
+        <main
+          id="conteudo"
+          tabIndex={-1}
+          className="app-main min-w-0 outline-none"
+        >
           {children}
         </main>
+        <footer className="app-chrome mx-4 flex items-center justify-between gap-4 border-t border-[var(--border-color)] py-5 text-xs text-[var(--text-muted)] sm:mx-8">
+          <span>
+            Sport Club do Recife{" "}
+            <span className="hidden sm:inline">· Escolinha do Sport</span>
+          </span>
+          <Link
+            href={staff && hasPermission(staff.role,'attendance.read') ? '/chamada' : home}
+            className="flex items-center gap-1 hover:text-[var(--brand)]"
+          >
+            {staff && hasPermission(staff.role,'attendance.read') ? 'Ir para a chamada' : 'Minha área'} <ArrowUpRight size={14} />
+          </Link>
+        </footer>
       </div>
+      <dialog
+        ref={drawer}
+        className="mobile-drawer app-chrome"
+        aria-label="Navegação da escolinha"
+        onCancel={() => setMobileOpen(false)}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) setMobileOpen(false);
+        }}
+      >
+        <div className="sidebar">
+          <button
+            className="absolute right-3 top-3 flex h-11 w-11 items-center justify-center rounded-lg text-[#c0cada] hover:bg-white/10"
+            aria-label="Fechar navegação"
+            onClick={() => setMobileOpen(false)}
+          >
+            <X size={20} />
+          </button>
+          {navigation(false)}
+        </div>
+      </dialog>
     </div>
-  )
+  );
 }

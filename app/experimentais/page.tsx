@@ -1,49 +1,48 @@
+import { requirePage } from '@/lib/auth/session'
+export const dynamic = 'force-dynamic'
+import { CreatePanel } from '@/components/create-panel'
+import { SubmitButton } from '@/components/submit-button'
+import { PageHeader } from '@/components/page-header'
+import { schoolClock } from '@/lib/format'
 import { Target, PlusCircle } from 'lucide-react'
 import { getTrialClasses, getUnitsAndCategoriesForTrials, createTrialClassAction } from './actions'
 import { TrialClient } from './trial-client'
 
 export default async function ExperimentaisPage() {
+  await requirePage('trials.read');
   const trials = await getTrialClasses()
   const { units, categories, classes } = await getUnitsAndCategoriesForTrials()
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="page-container space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="font-bebas text-3xl sm:text-4xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-          <Target className="w-8 h-8 text-[#D61F27]" />
-          Aulas Experimentais & Captação ({trials.length})
-        </h1>
-        <p className="text-xs text-slate-500 mt-1">
-          Funil de novos atletas: agendamento de aula teste vinculado à turma, presença na chamada e conversão em matrícula.
-        </p>
-      </div>
+      <PageHeader eyebrow="Novos talentos" title="Aulas experimentais" description="Acompanhe cada família, da primeira aula à matrícula." />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="workspace-layout">
         {/* Lista e Funil */}
         <div className="lg:col-span-2 space-y-4">
           <TrialClient trials={trials} />
         </div>
 
         {/* Formulário: Agendar Nova Aula Teste */}
-        <div className="card-light p-6 space-y-4 border-t-4 border-t-[#D61F27]">
-          <div className="border-b border-slate-100 pb-3">
-            <h3 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-[#D61F27]" />
+        <CreatePanel key={trials.length} title="Agendar aula">
+          <div className="border-b border-[var(--border-color)] pb-3">
+            <h3 className="section-title  text-[var(--text-primary)] tracking-tight leading-tight flex items-center gap-2">
+              <PlusCircle className="w-5 h-5 text-[#c81930]" />
               Agendar Aula Experimental
             </h3>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-[var(--text-muted)] mt-1">
               Cadastre o lead e vincule diretamente à turma da aula teste
             </p>
           </div>
 
-          <form action={createTrialClassAction} className="space-y-4">
+          <form action={createTrialClassAction} className="space-y-4"><input type="hidden" name="request_id" value={crypto.randomUUID()}/>
             {/* Turma da Aula Teste */}
-            <div className="p-3 bg-red-50/50 rounded-[8px] border border-[#D61F27]/30 space-y-1">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-900">
+            <div className="p-3 bg-red-50/50 rounded-lg border border-[#c81930]/30 space-y-1">
+              <label htmlFor="experimentais-field-1" className="block text-xs font-bold  tracking-normal text-[var(--text-primary)]">
                 Turma da Aula Experimental <span className="text-red-600">*</span>
               </label>
-              <select name="class_id" required className="input-escolinha cursor-pointer bg-white">
+              <select id="experimentais-field-1" name="class_id" required className="input-escolinha cursor-pointer bg-[var(--bg-card)]">
                 <option value="">Selecione a turma...</option>
                 {classes.map((cls: any) => (
                   <option key={cls.id} value={cls.id}>
@@ -51,16 +50,16 @@ export default async function ExperimentaisPage() {
                   </option>
                 ))}
               </select>
-              <p className="text-[10px] text-slate-500">
+              <p className="text-xs text-[var(--text-muted)]">
                 O aluno aparecerá automaticamente na lista de presença desta turma com o badge <strong>EXPERIMENTAL</strong>.
               </p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label htmlFor="field-appexperimentaispagetsx-101" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                 Nome da Criança / Aluno <span className="text-red-500">*</span>
               </label>
-              <input
+              <input id="field-appexperimentaispagetsx-101"
                 type="text"
                 name="student_name"
                 required
@@ -70,10 +69,10 @@ export default async function ExperimentaisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label htmlFor="field-appexperimentaispagetsx-102" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                 Idade do Aluno
               </label>
-              <input
+              <input id="field-appexperimentaispagetsx-102"
                 type="number"
                 name="student_age"
                 placeholder="Ex: 8"
@@ -84,10 +83,10 @@ export default async function ExperimentaisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label htmlFor="field-appexperimentaispagetsx-103" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                 Nome do Responsável <span className="text-red-500">*</span>
               </label>
-              <input
+              <input id="field-appexperimentaispagetsx-103"
                 type="text"
                 name="guardian_name"
                 required
@@ -97,10 +96,10 @@ export default async function ExperimentaisPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+              <label htmlFor="field-appexperimentaispagetsx-104" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                 WhatsApp do Responsável <span className="text-red-500">*</span>
               </label>
-              <input
+              <input id="field-appexperimentaispagetsx-104"
                 type="tel"
                 name="guardian_phone"
                 required
@@ -111,10 +110,10 @@ export default async function ExperimentaisPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                <label htmlFor="experimentais-field-2" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Unidade
                 </label>
-                <select name="unit_id" className="input-escolinha cursor-pointer">
+                <select id="experimentais-field-2" name="unit_id" className="input-escolinha cursor-pointer">
                   <option value="">Padrão da Turma</option>
                   {units.map((u: any) => (
                     <option key={u.id} value={u.id}>
@@ -125,10 +124,10 @@ export default async function ExperimentaisPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                <label htmlFor="experimentais-field-3" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Categoria
                 </label>
-                <select name="category_id" className="input-escolinha cursor-pointer">
+                <select id="experimentais-field-3" name="category_id" className="input-escolinha cursor-pointer">
                   <option value="">Padrão da Turma</option>
                   {categories.map((c: any) => (
                     <option key={c.id} value={c.id}>
@@ -141,23 +140,23 @@ export default async function ExperimentaisPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                <label htmlFor="field-appexperimentaispagetsx-105" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Data Agendada <span className="text-red-500">*</span>
                 </label>
-                <input
+                <input id="field-appexperimentaispagetsx-105"
                   type="date"
                   name="scheduled_date"
                   required
-                  defaultValue={new Date().toISOString().slice(0, 10)}
+                  defaultValue={schoolClock().date}
                   className="input-escolinha font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1">
+                <label htmlFor="field-appexperimentaispagetsx-106" className="block text-xs font-bold  tracking-normal text-[var(--text-secondary)] mb-1">
                   Horário
                 </label>
-                <input
+                <input id="field-appexperimentaispagetsx-106"
                   type="time"
                   name="scheduled_time"
                   defaultValue="08:30"
@@ -166,14 +165,15 @@ export default async function ExperimentaisPage() {
               </div>
             </div>
 
-            <button
-              type="submit"
-              className="w-full py-3 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#E5232B] hover:to-[#A31016] text-white font-bold text-xs uppercase tracking-wider rounded-[6px] shadow-sm transition-all cursor-pointer border border-amber-400/30"
-            >
+            <label className="flex items-start gap-3 text-sm text-[var(--text-secondary)]">
+              <input type="checkbox" name="notifications_enabled" value="true" className="mt-1"/>
+              <span>O responsável autorizou receber avisos desta aula e da escolinha pelo WhatsApp.</span>
+            </label>
+            <SubmitButton>
               Agendar Aula Experimental
-            </button>
+            </SubmitButton>
           </form>
-        </div>
+        </CreatePanel>
       </div>
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import {
   Shirt,
   Plus,
@@ -21,14 +22,20 @@ function fmt(val: number) {
 
 export function UniformesClient({ inventory }: Props) {
   const [isPending, startTransition] = useTransition()
-  const [items, setItems] = useState<any[]>(inventory)
+  const items=inventory
+  const router=useRouter()
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
   const handleStockChange = (id: string, currentQty: number, delta: number) => {
-    const next = Math.max(0, currentQty + delta)
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity: next } : item)))
-
+    setFeedback(null)
     startTransition(async () => {
-      await updateUniformStockAction(id, next)
+      try {
+        const result = await updateUniformStockAction(id, delta)
+        if (result.success) {
+          router.refresh()
+          setFeedback({ type: 'success', message: 'Estoque atualizado.' })
+        } else setFeedback({ type: 'error', message: 'Não foi possível atualizar o estoque. Tente novamente.' })
+      } catch { setFeedback({ type: 'error', message: 'A atualização não foi concluída. Tente novamente.' }) }
     })
   }
 
@@ -37,48 +44,49 @@ export function UniformesClient({ inventory }: Props) {
 
   return (
     <div className="space-y-6">
+      {feedback && <div role={feedback.type === 'error' ? 'alert' : 'status'} className={`notice ${feedback.type === 'success' ? 'notice-success' : 'notice-error'}`}>{feedback.message}</div>}
       {/* KPI Cards de Estoque */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="card-light p-5 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Total em Estoque</span>
-          <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
-            {totalPieces} <span className="text-sm font-sans text-slate-400 font-bold">peças/kits</span>
+          <span className="text-xs font-bold tracking-normal text-[var(--text-muted)]">Total em Estoque</span>
+          <div className="stat-number  text-[var(--text-primary)] leading-tight tracking-tight">
+            {totalPieces} <span className="text-sm font-sans text-[var(--text-muted)] font-bold">peças/kits</span>
           </div>
-          <p className="text-[11px] text-[#1A6B2E] font-semibold">Disponíveis para pronta entrega</p>
+          <p className="text-xs text-[#c81930] font-semibold">Disponíveis para pronta entrega</p>
         </div>
 
         <div className={`card-light p-5 space-y-2 ${
           lowStockItems.length > 0 ? 'border-amber-200 bg-amber-50/30' : ''
         }`}>
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Alerta de Reposição</span>
-          <div className="font-bebas text-4xl text-amber-700 leading-none tracking-wider">
+          <span className="text-xs font-bold tracking-normal text-[var(--text-muted)]">Alerta de Reposição</span>
+          <div className="stat-number  text-amber-700 leading-tight tracking-tight">
             {lowStockItems.length}
           </div>
-          <p className="text-[11px] text-slate-600 font-medium">Tamanhos abaixo do estoque mínimo</p>
+          <p className="text-xs text-[var(--text-secondary)] font-medium">Tamanhos abaixo do estoque mínimo</p>
         </div>
 
         <div className="card-light p-5 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Tamanhos Cadastrados</span>
-          <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
+          <span className="text-xs font-bold tracking-normal text-[var(--text-muted)]">Tamanhos Cadastrados</span>
+          <div className="stat-number  text-[var(--text-primary)] leading-tight tracking-tight">
             {items.length}
           </div>
-          <p className="text-[11px] text-slate-500">Do Tam 04 Infantil ao G Adulto</p>
+          <p className="text-xs text-[var(--text-muted)]">Itens disponíveis para controle</p>
         </div>
       </div>
 
       {/* Grid de Tamanhos com Botões Rápidos */}
       <div className="card-light overflow-hidden">
-        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none flex items-center gap-2">
-            <Shirt className="w-5 h-5 text-[#1A6B2E]" />
-            Grade de Uniformes & Kits de Matrícula
+        <div className="p-4 border-b border-[var(--border-color)] flex items-center justify-between">
+          <h2 className="section-title  text-[var(--text-primary)] tracking-tight leading-tight flex items-center gap-2">
+            <Shirt className="w-5 h-5 text-[#c81930]" />
+            Estoque por tamanho
           </h2>
-          <span className="text-xs text-slate-500 font-mono">Ajuste instantâneo de estoque</span>
+          <span className="text-xs text-[var(--text-muted)] font-mono">Entrada ou saída de uma peça</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase tracking-wider font-bold">
+        {items.length === 0 ? <div className="empty-state"><Package size={36} /><strong>Nenhum uniforme cadastrado</strong><p>Cadastre o primeiro item para acompanhar os tamanhos e as reposições.</p></div> : <div className="overflow-x-auto">
+          <table className="data-table mobile-data-table">
+            <thead className="bg-[var(--bg-card-hover)] border-b border-[var(--border-color)] text-[var(--text-secondary)]  tracking-normal font-bold">
               <tr>
                 <th className="px-5 py-3.5">Item / Descrição</th>
                 <th className="px-5 py-3.5">Tamanho</th>
@@ -88,55 +96,55 @@ export function UniformesClient({ inventory }: Props) {
                 <th className="px-5 py-3.5 text-right">Ajuste Rápido</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-[var(--border-color)]">
               {items.map((item) => {
                 const isLow = item.quantity <= item.min_threshold
                 const isOut = item.quantity === 0
 
                 return (
-                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-5 py-3.5 font-bold text-slate-900">
+                  <tr key={item.id} className="hover:bg-[var(--bg-card-hover)]/80 transition-colors">
+                    <td data-label="Item / Descrição" className="px-5 py-3.5 font-bold text-[var(--text-primary)]">
                       {item.item_name}
                     </td>
 
-                    <td className="px-5 py-3.5 font-mono font-bold text-slate-800 text-sm">
+                    <td data-label="Tamanho" className="px-5 py-3.5 font-mono font-bold text-[var(--text-primary)] text-sm">
                       Tam {item.size}
                     </td>
 
-                    <td className="px-5 py-3.5 font-mono text-slate-700 font-bold">
+                    <td data-label="Preço Venda" className="px-5 py-3.5 font-mono text-[var(--text-secondary)] font-bold">
                       {fmt(item.unit_price)}
                     </td>
 
-                    <td className="px-5 py-3.5 text-center font-mono font-bold text-lg text-slate-900">
+                    <td data-label="Estoque Atual" className="px-5 py-3.5 text-center font-mono font-bold text-lg text-[var(--text-primary)]">
                       {item.quantity}
                     </td>
 
-                    <td className="px-5 py-3.5 text-center">
-                      <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
+                    <td data-label="Status" className="px-5 py-3.5 text-center">
+                      <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold tracking-normal border ${
                         isOut
                           ? 'bg-red-50 text-red-700 border-red-200'
                           : isLow
                           ? 'bg-amber-50 text-amber-700 border-amber-200'
-                          : 'bg-[#C8E6C9] text-[#0D4A1C] border-[#1A6B2E]/20'
+                          : 'bg-[#C8E6C9] text-[#a71327] border-[#c81930]/20'
                       }`}>
                         {isOut ? 'Esgotado' : isLow ? 'Estoque Baixo' : 'Disponível'}
                       </span>
                     </td>
 
-                    <td className="px-5 py-3.5 text-right">
+                    <td data-label="Ajuste Rápido" className="px-5 py-3.5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
+                        <button aria-label="Dar saída de 1 peça"
                           onClick={() => handleStockChange(item.id, item.quantity, -1)}
                           disabled={item.quantity === 0 || isPending}
-                          className="w-8 h-8 rounded bg-slate-100 hover:bg-red-50 hover:text-red-700 border border-slate-200 flex items-center justify-center font-bold text-slate-700 transition-all cursor-pointer disabled:opacity-30"
+                          className="button w-11 h-11 rounded bg-[var(--bg-subtle)] hover:bg-red-50 hover:text-red-700 border border-[var(--border-color)] flex items-center justify-center font-bold text-[var(--text-secondary)] transition-all cursor-pointer disabled:opacity-30"
                           title="Dar saída de 1 peça"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <button
+                        <button aria-label="Adicionar 1 peça"
                           onClick={() => handleStockChange(item.id, item.quantity, 1)}
                           disabled={isPending}
-                          className="w-8 h-8 rounded bg-slate-100 hover:bg-[#C8E6C9] hover:text-[#0D4A1C] border border-slate-200 flex items-center justify-center font-bold text-slate-700 transition-all cursor-pointer"
+                          className="button w-11 h-11 rounded bg-[var(--bg-subtle)] hover:bg-[var(--success-bg)] hover:text-[var(--success)] border border-[var(--border-color)] flex items-center justify-center font-bold text-[var(--text-secondary)] transition-all cursor-pointer"
                           title="Adicionar 1 peça"
                         >
                           <Plus className="w-3.5 h-3.5" />
@@ -148,7 +156,7 @@ export function UniformesClient({ inventory }: Props) {
               })}
             </tbody>
           </table>
-        </div>
+        </div>}
       </div>
     </div>
   )

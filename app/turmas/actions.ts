@@ -4,67 +4,62 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-export async function getClassesList(unitId?: string) {
-  const supabase = createAdminClient()
+export async function getClassesList() {
+  const supabase = await createAdminClient('classes.read')
 
-  let query = supabase
-    .from('classes')
-    .select(`
-      *,
-      unit:units(name),
-      category:categories(name, min_age, max_age),
-      coach:coaches(name, phone),
-      enrollments:enrollments(id, status, student:students(id, name, status))
-    `)
-    .order('start_time', { ascending: true })
-
-  if (unitId && unitId !== 'all') {
-    query = query.eq('unit_id', unitId)
-  }
-
-  const { data, error } = await query
-
-  if (error) {
-    console.error('Erro ao buscar turmas:', error)
-    return []
-  }
-
-  return (data ?? []).map((cls: any) => {
-    const activeEnrollments = (cls.enrollments ?? []).filter((e: any) => e.status === 'active' && e.student?.status === 'active')
-    return {
-      ...cls,
-      active_students_count: activeEnrollments.length,
-    }
-  })
+  const {data,error}=await supabase.rpc('staff_class_catalog',{p_unit:null});
+  if(error)throw new Error('Não foi possível carregar as turmas.');return data||[];
 }
 
-export async function getUnitsAndCategoriesForClasses() {
-  const supabase = createAdminClient()
 
-  const [unitsRes, categoriesRes, coachesRes] = await Promise.all([
-    supabase.from('units').select('*').eq('is_active', true).order('name'),
+export async function getUnitsAndCategoriesForClasses() {
+  const supabase = await createAdminClient('classes.read')
+
+  const [categoriesRes, coachesRes] = await Promise.all([
     supabase.from('categories').select('*').order('min_age'),
-    supabase.from('coaches').select('*').eq('is_active', true).order('name'),
+    supabase.from('staff_profiles')
+      .select('id,full_name,username,coach_id,coach:coaches!inner(id,is_active)')
+      .eq('role', 'treinador').eq('active', true).eq('is_test', false)
+      .eq('coach.is_active', true).order('full_name'),
   ])
 
+  if ([categoriesRes, coachesRes].some(result => result.error)) {
+    throw new Error('Não foi possível carregar as opções da turma. Tente novamente.')
+  }
   return {
-    units: unitsRes.data ?? [],
     categories: categoriesRes.data ?? [],
-    coaches: coachesRes.data ?? [],
+    coaches: (coachesRes.data ?? []).map(person => ({
+      id: person.coach_id,
+      user_id: person.id,
+      name: person.full_name,
+      username: person.username,
+    })),
   }
 }
 
 export async function createClassAction(formData: FormData) {
-  const supabase = createAdminClient()
+  const supabase = await createAdminClient('classes.write')
+  const coachId = String(formData.get('coach_id') || '').trim() || null
+  if (coachId) {
+    const trainer = await supabase.from('staff_profiles')
+      .select('id,coach:coaches!inner(id,is_active)')
+      .eq('coach_id', coachId).eq('role', 'treinador').eq('active', true)
+      .eq('is_test', false).eq('coach.is_active', true).limit(1).maybeSingle()
+    if (trainer.error || !trainer.data) throw new Error('Selecione um usuário ativo com cargo de treinador. Confira o cadastro em Equipe e acessos.')
+  }
+  let schoolUnitQuery=supabase.from('units').select('id').eq('is_active',true)
+  if(process.env.SCHOOL_UNIT_ID)schoolUnitQuery=schoolUnitQuery.eq('id',process.env.SCHOOL_UNIT_ID)
+  const schoolUnits=await schoolUnitQuery.limit(2)
+  if(schoolUnits.error||schoolUnits.data?.length!==1)throw new Error('Não foi possível identificar a unidade da escolinha. Confira a configuração antes de cadastrar a turma.')
 
   const rawDays = formData.getAll('days_of_week')
   const days_of_week = rawDays.length > 0 ? rawDays : ['ter', 'qui']
 
   const newClass = {
     name: String(formData.get('name')),
-    unit_id: String(formData.get('unit_id')),
+    unit_id: schoolUnits.data[0].id,
     category_id: String(formData.get('category_id')),
-    coach_id: formData.get('coach_id') ? String(formData.get('coach_id')) : null,
+    coach_id: coachId,
     days_of_week: days_of_week,
     start_time: String(formData.get('start_time')),
     end_time: String(formData.get('end_time')),

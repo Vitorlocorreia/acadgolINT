@@ -210,7 +210,7 @@ export function FifaCard({
     ctx.fillStyle = '#D3D5D6'
     ctx.fillText('★', width / 2, 85)
 
-    // Faixa Superior: SPORT RECIFE • ACADEMIA DO GOL
+    // Faixa Superior: SPORT RECIFE • ESCOLINHA DE FUTEBOL
     ctx.fillStyle = '#FFE899'
     ctx.font = 'bold 30px sans-serif'
     ctx.letterSpacing = '5px'

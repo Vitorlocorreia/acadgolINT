@@ -19,7 +19,7 @@ export function SignaturePad({ name = 'signature_url' }: Props) {
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    ctx.strokeStyle = '#0D4A1C'
+    ctx.strokeStyle = '#c81930'
     ctx.lineWidth = 2.5
     ctx.lineCap = 'round'
     ctx.lineJoin = 'round'
@@ -33,13 +33,13 @@ export function SignaturePad({ name = 'signature_url' }: Props) {
     if ('touches' in e) {
       const touch = e.touches[0]
       return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top,
+        x: (touch.clientX - rect.left) * (canvas.width / rect.width),
+        y: (touch.clientY - rect.top) * (canvas.height / rect.height),
       }
     } else {
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: (e.clientX - rect.left) * (canvas.width / rect.width),
+        y: (e.clientY - rect.top) * (canvas.height / rect.height),
       }
     }
   }
@@ -93,26 +93,27 @@ export function SignaturePad({ name = 'signature_url' }: Props) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-          <PenTool className="w-3.5 h-3.5 text-[#1A6B2E]" />
+        <span className="field-label !mb-0 flex items-center gap-1.5">
+          <PenTool className="w-4 h-4 text-brand" />
           Assinatura Digital do Responsável no Termo
-        </label>
+        </span>
         {hasSignature && (
           <button
             type="button"
             onClick={clearCanvas}
-            className="text-[11px] text-red-600 hover:underline flex items-center gap-1 font-bold cursor-pointer"
+            className="button button-quiet"
           >
             <RotateCcw className="w-3 h-3" /> Limpar Assinatura
           </button>
         )}
       </div>
 
-      <div className="relative border-2 border-dashed border-slate-300 rounded-[6px] bg-slate-50/70 overflow-hidden touch-none hover:border-[#1A6B2E] transition-colors">
+      <div className="relative border border-dashed border-[var(--border-subtle)] rounded-xl bg-white overflow-hidden touch-none">
         <canvas
           ref={canvasRef}
           width={500}
           height={140}
+          aria-label="Área para assinatura do responsável"
           className="w-full h-[140px] cursor-crosshair"
           onMouseDown={startDrawing}
           onMouseMove={draw}
@@ -125,7 +126,7 @@ export function SignaturePad({ name = 'signature_url' }: Props) {
 
         {!hasSignature && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-slate-400 text-xs font-medium">
-            ✍️ Assine com o dedo ou caneta touch nesta área
+            Assine com o dedo, mouse ou caneta touch
           </div>
         )}
       </div>

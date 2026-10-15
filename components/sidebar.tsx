@@ -79,15 +79,15 @@ export function Sidebar() {
         <div className="flex items-center gap-3">
           <div className="relative w-9 h-9 shrink-0">
             <Image
-              src="/logo.png"
-              alt="Academia do Gol"
+              src="/sport-recife.svg"
+              alt="Escolinha do Sport"
               fill
               className="object-contain"
               priority
             />
           </div>
           <div>
-            <h1 className="font-bebas text-xl leading-none tracking-wider text-[#1A6B2E]">Academia do Gol</h1>
+            <h1 className="font-bebas text-xl leading-none tracking-wider text-[#1A6B2E]">Escolinha do Sport</h1>
             <p className="text-[10px] uppercase font-bold tracking-widest text-[#0D4A1C]">Escolinha de Futebol</p>
           </div>
         </div>
@@ -110,15 +110,15 @@ export function Sidebar() {
         <div className="p-5 border-b border-slate-100 flex items-center gap-3.5 bg-gradient-to-b from-[#1A6B2E]/5 to-transparent">
           <div className="relative w-12 h-12 shrink-0 drop-shadow-xs">
             <Image
-              src="/logo.png"
-              alt="Logo Academia do Gol"
+              src="/sport-recife.svg"
+              alt="Logo Escolinha do Sport"
               fill
               className="object-contain"
               priority
             />
           </div>
           <div>
-            <h2 className="font-bebas text-2xl leading-none tracking-wider text-[#1A6B2E]">ACADEMIA DO GOL</h2>
+            <h2 className="font-bebas text-2xl leading-none tracking-wider text-[#1A6B2E]">ESCOLINHA DE FUTEBOL</h2>
             <div className="flex items-center gap-1.5 mt-1">
               <span className="w-2 h-2 rounded-full bg-[#1A6B2E]"></span>
               <span className="text-[10px] uppercase font-bold tracking-widest text-[#0D4A1C]">
@@ -179,7 +179,7 @@ export function Sidebar() {
               <ShieldCheck className="w-3.5 h-3.5 text-[#1A6B2E]" />
               <span>Base Oficial</span>
             </div>
-            <p className="text-[10px] text-slate-500 font-mono">Supabase: acadgolint</p>
+            <p className="text-[10px] text-slate-500">Escolinha do Sport</p>
           </div>
         </div>
       </aside>

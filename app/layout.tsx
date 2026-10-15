@@ -2,17 +2,21 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AppShell } from '@/components/app-shell'
+import { getStaffSession } from '@/lib/auth/session'
 
 export const metadata: Metadata = {
-  title: 'Academia do Gol | DNA Rubro-Negro • Sport Club do Recife',
+  title: 'Escolinha do Sport | DNA Rubro-Negro • Sport Club do Recife',
   description: 'Formação de atletas, turmas, convocações, chamadas e gestão com a tradição e o DNA do Sport Club do Recife.',
+  robots: { index: false, follow: false },
+  icons: { icon: '/sport-recife.svg' },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const session = await getStaffSession()
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
@@ -25,7 +29,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-[var(--bg-main)] text-[var(--text-primary)] antialiased">
         <ThemeProvider>
-          <AppShell>{children}</AppShell>
+          <AppShell staff={session?.staff.active && session.staff.session_valid ? session.staff : null}>{children}</AppShell>
         </ThemeProvider>
       </body>
     </html>

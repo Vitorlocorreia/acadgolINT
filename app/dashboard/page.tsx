@@ -1,314 +1,382 @@
-import Link from 'next/link'
+import { requirePage } from '@/lib/auth/session'
+import Link from "next/link";
+import Image from "next/image";
 import {
-  Users,
-  Calendar,
-  DollarSign,
-  AlertTriangle,
+  ArrowRight,
   ArrowUpRight,
-  Clock,
-  PlusCircle,
-  Flame,
-  ChevronRight,
-} from 'lucide-react'
-import { getDashboardData } from './actions'
+  CalendarDays,
+  ClipboardCheck,
+  Clock3,
+  MapPin,
+  Plus,
+  Trophy,
+  Users,
+  Wallet,
+  AlertCircle,
+  Target,
+} from "lucide-react";
+import { getDashboardData } from "./actions";
+import { formatDate, formatMoney, formatMonth } from "@/lib/format";
 
-function fmt(val: number) {
-  return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const data = await getDashboardData()
-
-  const collectionRate =
-    data.currentMonthRevenue.total > 0
-      ? (data.currentMonthRevenue.collected / data.currentMonthRevenue.total) * 100
-      : 0
-
+  await requirePage('dashboard.read');
+  const data = await getDashboardData();
+  const revenue = data.currentMonthRevenue;
+  const month = formatMonth(data.today.slice(0, 7));
+  const metrics = [
+    {
+      label: "Atletas ativos",
+      value: data.activeStudents ?? "—",
+      detail:
+        data.totalStudents === null
+          ? "Dados indisponíveis"
+          : `${data.totalStudents} atletas cadastrados`,
+      icon: Users,
+      href: "/alunos?status=active",
+    },
+    {
+      label: "Treinos hoje",
+      value: data.errors.includes("turmas") ? "—" : data.classesToday.length,
+      detail: "Confira os horários abaixo",
+      icon: ClipboardCheck,
+      href: "/chamada",
+    },
+    {
+      label: "Recebido no mês",
+      value: revenue ? formatMoney(revenue.collected) : "—",
+      detail: revenue
+        ? `${formatMoney(revenue.total)} previstos`
+        : "Dados indisponíveis",
+      icon: Wallet,
+      href: "/financeiro",
+    },
+    {
+      label: "Mensalidades em atraso",
+      value: revenue ? formatMoney(revenue.overdue) : "—",
+      detail: revenue
+        ? `${revenue.overdueCount} cobranças no mês`
+        : "Dados indisponíveis",
+      icon: AlertCircle,
+      href: "/financeiro?tab=inadimplentes",
+    },
+  ];
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
-      {/* Top Banner / Welcome Sport Club do Recife Hero */}
-      <div className="relative rounded-[10px] overflow-hidden border border-[#FFE300]/30 shadow-lg text-white">
-        {/* Background Image: Estádio Ilha do Retiro */}
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/sport-stadium-hero.jpg"
-            alt="Ilha do Retiro - Sport Club do Recife"
-            className="w-full h-full object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/85 to-[#8B0D12]/75" />
+    <div className="page-container space-y-7">
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow mb-2">O jogo começa na formação</p>
+          <h1 className="page-title">Hoje na escolinha</h1>
+          <p className="page-subtitle capitalize">
+            {formatDate(data.today, {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
         </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/chamada" className="button">
+            <ClipboardCheck size={17} /> Fazer chamada
+          </Link>
+          <Link href="/alunos/novo" className="button button-primary">
+            <Plus size={17} /> Nova matrícula
+          </Link>
+        </div>
+      </div>
 
-        <div className="relative z-10 p-6 sm:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="relative w-7 h-9 shrink-0 drop-shadow-md">
-                <img src="/sport-recife.svg" alt="Sport Club do Recife" className="w-full h-full object-contain" />
-              </div>
-              <span className="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-[#D61F27] text-white border border-[#FFE300]/40 shadow-xs">
-                DNA Rubro-Negro • 1987 & 2008
+      {data.errors.length > 0 && (
+        <div className="notice notice-warning" role="alert">
+          <AlertCircle size={19} className="shrink-0" />
+          <p>
+            Não foi possível carregar {data.errors.join(", ")}. Os dados
+            indisponíveis estão sinalizados; tente atualizar a página.
+          </p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4 xl:gap-5">
+        {metrics.map(({ label, value, detail, icon: Icon, href }) => (
+          <Link
+            href={href}
+            className="surface group p-4 transition-colors hover:border-[var(--border-subtle)] sm:p-5"
+            key={label}
+          >
+            <div className="mb-5 flex items-center justify-between gap-2">
+              <span className="text-xs font-semibold text-[var(--text-secondary)]">
+                {label}
               </span>
-              <span className="text-xs text-[#FFE300] font-bold">★ ★ ★ Leão da Ilha</span>
+              <Icon
+                size={18}
+                className="shrink-0 text-[var(--text-muted)]"
+                aria-hidden="true"
+              />
             </div>
-
-            <h1 className="font-bebas text-3xl sm:text-5xl tracking-wider leading-none">
-              Formando os Novos Leões da Ilha
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
-              Academia do Gol em sintonia com a tradição rubro-negra. Gestão completa de atletas, chamadas de campo, convocações estilo FIFA e desenvolvimento de alta performance.
-            </p>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex items-center gap-3 flex-wrap shrink-0">
-            <Link
-              href="/alunos/novo"
-              className="px-4 py-2.5 bg-gradient-to-r from-[#D61F27] to-[#8B0D12] hover:from-[#A8131A] hover:to-[#6B080D] text-white rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-md transition-all cursor-pointer border border-[#FFE300]/40"
-            >
-              <PlusCircle className="w-4 h-4 text-[#FFE300]" />
-              Nova Matrícula
-            </Link>
-            <Link
-              href="/chamada"
-              className="px-4 py-2.5 bg-black/60 hover:bg-black/80 text-white rounded-[6px] text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-slate-700 backdrop-blur-xs transition-all cursor-pointer"
-            >
-              <Clock className="w-4 h-4 text-[#D61F27]" />
-              Fazer Chamada
-            </Link>
-          </div>
-        </div>
+            <div className="stat-number !text-[clamp(23px,2.4vw,32px)]">
+              {value}
+            </div>
+            <p className="mt-2 text-xs text-[var(--text-muted)]">{detail}</p>
+          </Link>
+        ))}
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Alunos */}
-        <div className="card-light p-5 space-y-3 hover:border-[#D61F27]/50 transition-all border-l-4 border-l-[#D61F27]">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Atletas Ativos</span>
-            <div className="w-9 h-9 rounded-[4px] bg-red-500/10 border border-red-500/20 flex items-center justify-center text-[#D61F27]">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
-              {data.activeStudents} <span className="text-sm font-sans text-slate-400 font-bold">/ {data.totalStudents} total</span>
-            </div>
-            <p className="text-[11px] text-[#D61F27] font-semibold mt-1 flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5" /> 8 categorias em atividade
-            </p>
-          </div>
-        </div>
-
-        {/* Faturamento do Mês */}
-        <div className="card-light p-5 space-y-3 hover:border-blue-300 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Mensalidades do Mês</span>
-            <div className="w-9 h-9 rounded-[4px] bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700">
-              <DollarSign className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
-              {fmt(data.currentMonthRevenue.collected)}
-            </div>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">
-              Previsto: {fmt(data.currentMonthRevenue.total)}
-            </p>
-          </div>
-          {/* Progress bar */}
-          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-[#D61F27] to-[#FFE300] rounded-full transition-all"
-              style={{ width: `${Math.min(collectionRate, 100)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Inadimplência */}
-        <div className="card-light p-5 space-y-3 hover:border-amber-300 transition-all border-amber-200 bg-amber-50/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Em Atraso</span>
-            <div className="w-9 h-9 rounded-[4px] bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
-              <AlertTriangle className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="font-bebas text-4xl text-amber-700 leading-none tracking-wider">
-              {fmt(data.currentMonthRevenue.overdue)}
-            </div>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">
-              {data.currentMonthRevenue.overdueCount} mensalidade(s) pendente(s)
-            </p>
-          </div>
-          <Link
-            href="/financeiro?filter=overdue"
-            className="text-[11px] font-bold text-amber-700 hover:underline flex items-center gap-1"
-          >
-            Cobrar no WhatsApp <ArrowUpRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        {/* Aulas Experimentais */}
-        <div className="card-light p-5 space-y-3 hover:border-purple-300 transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Aulas Experimentais</span>
-            <div className="w-9 h-9 rounded-[4px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-700">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div>
-            <div className="font-bebas text-4xl text-slate-900 leading-none tracking-wider">
-              {data.trialClassesPending.length}
-            </div>
-            <p className="text-[11px] text-slate-500 font-medium mt-1">
-              Novos atletas agendados para esta semana
-            </p>
-          </div>
-          <Link
-            href="/experimentais"
-            className="text-[11px] font-bold text-purple-700 hover:underline flex items-center gap-1"
-          >
-            Ver Leads <ChevronRight className="w-3 h-3" />
-          </Link>
-        </div>
-      </div>
-
-      {/* Main Grid: Treinos de Hoje + Aulas Experimentais + Ações Rápidas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Treinos de Hoje (Chamada na Quadra) */}
-        <div className="lg:col-span-2 card-light p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div>
-              <h2 className="font-bebas text-2xl text-slate-900 tracking-wider leading-none">
-                ⚽ Treinos & Turmas de Hoje
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Clique na turma para abrir a chamada digital e registrar as presenças na quadra.
-              </p>
-            </div>
-            <Link
-              href="/chamada"
-              className="text-xs font-bold uppercase tracking-wider text-[#1A6B2E] hover:underline flex items-center gap-1"
-            >
-              Ver Todas <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {data.classesToday.length === 0 ? (
-            <div className="py-12 text-center space-y-2">
-              <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto text-slate-400">
-                <Calendar className="w-6 h-6" />
-              </div>
-              <p className="text-sm font-bold text-slate-700">Nenhum treino escalado para o dia de hoje.</p>
-              <p className="text-xs text-slate-500">Confira a grade semanal completa na aba de turmas.</p>
-              <div className="pt-2">
-                <Link
-                  href="/turmas"
-                  className="px-4 py-2 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-xs font-bold uppercase tracking-wider text-white rounded-[4px] inline-block shadow-xs"
-                >
-                  Gerenciar Grade de Turmas
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {data.classesToday.map((cls) => (
-                <div
-                  key={cls.id}
-                  className="p-4 rounded-[4px] bg-slate-50 border border-slate-200 flex items-center justify-between gap-4 hover:border-[#1A6B2E] transition-all"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 text-sm">{cls.name}</span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-[#1A6B2E]/10 text-[#0D4A1C] border border-[#1A6B2E]/20">
-                        {cls.category?.name || 'Geral'}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-500 flex items-center gap-3">
-                      <span>📍 {cls.unit?.name}</span>
-                      <span>👨‍🏫 {cls.coach?.name || 'Sem professor'}</span>
-                      <span className="font-mono text-slate-700 font-semibold">
-                        ⏰ {cls.start_time?.slice(0, 5)} - {cls.end_time?.slice(0, 5)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <Link
-                    href={`/chamada?classId=${cls.id}`}
-                    className="px-3.5 py-1.5 bg-[#1A6B2E] hover:bg-[#0D4A1C] text-white rounded-[4px] text-xs font-bold uppercase tracking-wider shrink-0 shadow-xs cursor-pointer"
-                  >
-                    Fazer Chamada
-                  </Link>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Card Lateral: Aulas Experimentais & Atalhos */}
+      <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.65fr)_minmax(280px,1fr)]">
         <div className="space-y-6">
-          {/* Aulas Experimentais Recentes */}
-          <div className="card-light p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bebas text-xl text-slate-900 tracking-wider leading-none flex items-center gap-1.5">
-                <Flame className="w-4 h-4 text-purple-600" /> Aulas Experimentais
-              </h3>
-              <Link href="/experimentais" className="text-xs text-purple-700 font-bold hover:underline">
-                Ver Todas
+          <section
+            className="surface overflow-hidden"
+            aria-labelledby="today-trainings"
+          >
+            <div className="surface-heading">
+              <div className="flex items-center gap-3">
+                <span className="stat-icon">
+                  <CalendarDays size={20} />
+                </span>
+                <div>
+                  <h2 className="section-title" id="today-trainings">
+                    Treinos de hoje
+                  </h2>
+                  <p className="mt-1 text-xs text-[var(--text-muted)]">
+                    Sua agenda dentro de campo
+                  </p>
+                </div>
+              </div>
+              <Link href="/turmas" className="text-link shrink-0">
+                Ver grade <ArrowUpRight size={15} />
               </Link>
             </div>
-
-            {data.trialClassesPending.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">Nenhuma aula teste agendada no momento.</p>
+            {data.errors.includes("turmas") ? (
+              <div className="empty-state">
+                <AlertCircle size={28} />
+                <strong>Agenda indisponível</strong>
+                <p>Não foi possível consultar as turmas agora.</p>
+              </div>
+            ) : data.classesToday.length === 0 ? (
+              <div className="empty-state">
+                <CalendarDays size={30} />
+                <strong>Sem treinos programados para hoje</strong>
+                <p>Os próximos encontros continuam na grade da escolinha.</p>
+                <Link href="/turmas" className="button">
+                  Consultar horários <ArrowRight size={15} />
+                </Link>
+              </div>
             ) : (
-              <div className="space-y-2.5">
-                {data.trialClassesPending.map((tc) => (
-                  <div key={tc.id} className="p-3 bg-slate-50 rounded-[4px] border border-slate-200 space-y-1 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-800">{tc.student_name} ({tc.student_age || '?'} anos)</span>
-                      <span className="text-[10px] text-purple-700 font-mono font-bold">
-                        {tc.scheduled_date?.split('-').reverse().join('/')}
-                      </span>
-                    </div>
-                    <p className="text-slate-500 text-[11px]">
-                      Resp: {tc.guardian_name} • {tc.guardian_phone}
+              data.classesToday.map((item) => (
+                <div key={item.id} className="dashboard-training">
+                  <div className="min-w-[54px] text-center">
+                    <p className="text-lg font-bold tracking-tight">
+                      {item.start_time?.slice(0, 5)}
                     </p>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {item.end_time?.slice(0, 5)}
+                    </p>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold">{item.name}</h3>
+                      {item.category && (
+                        <span className="badge">{item.category.name}</span>
+                      )}
+                    </div>
+                    <p className="mt-2 flex items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                      <MapPin size={13} className="shrink-0" />
+                      {item.unit?.name || "Local a confirmar"}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--text-muted)]">
+                      {item.coach?.name || "Professor a definir"}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/chamada?classId=${item.id}&date=${data.today}`}
+                    className="button shrink-0"
+                  >
+                    Abrir chamada <ArrowRight size={15} />
+                  </Link>
+                </div>
+              ))
+            )}
+          </section>
+
+          <section
+            className="surface overflow-hidden"
+            aria-labelledby="next-matches"
+          >
+            <div className="surface-heading">
+              <div className="flex items-center gap-3">
+                <span className="stat-icon">
+                  <Trophy size={20} />
+                </span>
+                <h2 id="next-matches" className="section-title">
+                  Próximos jogos
+                </h2>
+              </div>
+              <Link href="/jogos" className="text-link">
+                Ver jogos <ArrowUpRight size={15} />
+              </Link>
+            </div>
+            {data.upcomingMatches.length === 0 ? (
+              <div className="empty-state">
+                <Trophy size={28} />
+                <strong>
+                  {data.errors.includes("jogos")
+                    ? "Jogos indisponíveis"
+                    : "O próximo desafio está por vir"}
+                </strong>
+                <p>
+                  {data.errors.includes("jogos")
+                    ? "Tente consultar a agenda novamente."
+                    : "Agende uma partida para organizar os atletas e as convocações."}
+                </p>
+                <Link href="/jogos" className="button">
+                  Ir para jogos
+                </Link>
+              </div>
+            ) : (
+              data.upcomingMatches.map((match) => (
+                <Link
+                  key={match.id}
+                  href="/jogos"
+                  className="dashboard-training hover:bg-[var(--bg-card-hover)]"
+                >
+                  <span className="stat-icon shrink-0">
+                    <Trophy size={19} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold">{match.title}</p>
+                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                      vs. {match.opponent}
+                    </p>
+                    <p className="mt-2 text-xs text-[var(--text-muted)]">
+                      {formatDate(match.match_date)}{" "}
+                      {match.match_time && `· ${match.match_time.slice(0, 5)}`}{" "}
+                      {match.category && `· ${match.category.name}`}
+                    </p>
+                  </div>
+                  <ArrowUpRight
+                    size={17}
+                    className="shrink-0 text-[var(--text-muted)]"
+                  />
+                </Link>
+              ))
+            )}
+          </section>
+        </div>
+
+        <div className="space-y-6">
+          <section
+            className="surface overflow-hidden"
+            aria-labelledby="next-trials"
+          >
+            <div className="surface-heading">
+              <div>
+                <p className="eyebrow mb-1">Novos talentos</p>
+                <h2 className="section-title" id="next-trials">
+                  Aulas experimentais
+                </h2>
+              </div>
+              <Target size={21} className="text-[var(--brand)]" />
+            </div>
+            {data.trialClassesPending.length === 0 ? (
+              <div className="empty-state">
+                <strong>
+                  {data.errors.includes("aulas experimentais")
+                    ? "Agenda indisponível"
+                    : "Nenhuma aula futura agendada"}
+                </strong>
+                <p>Consulte o acompanhamento das aulas experimentais.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[var(--border-color)] px-5">
+                {data.trialClassesPending.map((trial) => (
+                  <div key={trial.id} className="py-4">
+                    <p className="text-sm font-semibold">
+                      {trial.student_name}
+                    </p>
+                    <p className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs text-[var(--text-secondary)]">
+                      <Clock3 size={13} />
+                      {formatDate(trial.scheduled_date)}{" "}
+                      {trial.scheduled_time &&
+                        `· ${trial.scheduled_time.slice(0, 5)}`}
+                    </p>
+                    {trial.category && (
+                      <p className="mt-1 text-xs text-[var(--text-muted)]">
+                        {trial.category.name}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
             )}
-          </div>
-
-          {/* Atalhos Rápidos */}
-          <div className="card-light p-6 space-y-3">
-            <h3 className="font-bebas text-xl text-slate-900 tracking-wider leading-none">
-              ⚡ Gestão Rápida
-            </h3>
-            <div className="grid grid-cols-1 gap-2">
-              <Link
-                href="/alunos/novo"
-                className="p-3 bg-slate-50 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] border border-slate-200 rounded-[4px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
-              >
-                <span>➕ Matricular Novo Atleta</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+            <div className="border-t border-[var(--border-color)] p-4">
+              <Link href="/experimentais" className="button w-full">
+                Acompanhar experimentais <ArrowRight size={15} />
               </Link>
-              <Link
-                href="/financeiro"
-                className="p-3 bg-slate-50 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] border border-slate-200 rounded-[4px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
-              >
-                <span>💬 Cobrar Mensalidades no WhatsApp</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </Link>
-              <Link
-                href="/jogos"
-                className="p-3 bg-slate-50 hover:bg-[#1A6B2E]/10 hover:text-[#0D4A1C] border border-slate-200 rounded-[4px] flex items-center justify-between text-xs font-bold text-slate-700 transition-all"
-              >
-                <span>🏆 Agendar Jogo & Convocação</span>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
-              </Link>
+            </div>
+          </section>
+          <section className="surface p-5">
+            <h2 className="section-title">Financeiro do mês</h2>
+            <p className="mt-1 text-xs capitalize text-[var(--text-muted)]">
+              {month}
+            </p>
+            <div className="my-5 flex items-end justify-between gap-3">
+              <span className="text-sm text-[var(--text-secondary)]">
+                Arrecadação
+              </span>
+              <strong className="text-xl tabular-nums">
+                {revenue
+                  ? `${Math.round(revenue.total ? (revenue.collected / revenue.total) * 100 : 0)}%`
+                  : "—"}
+              </strong>
+            </div>
+            <div
+              className="h-2 overflow-hidden rounded-full bg-[var(--bg-subtle)]"
+              role="progressbar"
+              aria-label="Arrecadação mensal"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={
+                revenue
+                  ? Math.min(
+                      100,
+                      Math.round(
+                        revenue.total
+                          ? (revenue.collected / revenue.total) * 100
+                          : 0,
+                      ),
+                    )
+                  : undefined
+              }
+            >
+              <div
+                className="h-full rounded-full bg-[#c81930]"
+                style={{
+                  width: `${revenue && revenue.total ? Math.min(100, (revenue.collected / revenue.total) * 100) : 0}%`,
+                }}
+              />
+            </div>
+            <Link href="/financeiro" className="text-link mt-5">
+              Abrir financeiro <ArrowRight size={15} />
+            </Link>
+          </section>
+          <div className="relative overflow-hidden rounded-xl bg-[#161a24] p-6 text-white">
+            <Image
+              src="/sport-stadium-hero.jpg"
+              alt=""
+              fill
+              sizes="400px"
+              className="object-cover opacity-15"
+            />
+            <div className="relative">
+              <Image src="/sport-recife.svg" alt="" width={28} height={36} />
+              <p className="font-bebas mt-4 text-2xl">Formando novos leões.</p>
+              <p className="mt-2 max-w-[28ch] text-xs leading-relaxed text-[#b8c2d5]">
+                Cada treino é um passo na história de um atleta.
+              </p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

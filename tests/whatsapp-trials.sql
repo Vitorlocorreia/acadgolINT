@@ -1,0 +1,40 @@
+-- No outgoing messages. All bookings, settings and outbox records are rolled back.
+begin;
+select set_config('request.jwt.claims',(select jsonb_build_object('sub',p.id,'role','authenticated','session_id',s.id)::text from public.staff_profiles p join auth.sessions s on s.user_id=p.id where p.username='secretaria' and p.active and s.created_at>=p.sessions_valid_after order by s.created_at desc limit 1),true);
+do $$begin if auth.uid() is null then raise exception 'Secretary session required';end if;end;$$;
+update public.staff_profiles set must_change_password=false where id=auth.uid();
+update private.whatsapp_settings set trial_confirmation_enabled=true,trial_reminder_enabled=true;
+create temporary table trial_notification_fixture(request uuid default gen_random_uuid(),class uuid,trial uuid,student uuid,without_consent uuid);
+insert into trial_notification_fixture(class) select id from public.classes where is_active limit 1;
+grant select,update on trial_notification_fixture to authenticated;
+set local role authenticated;
+do $$declare f trial_notification_fixture%rowtype;r jsonb;p jsonb;begin
+ select * into f from trial_notification_fixture;
+ p=jsonb_build_object('request_id',f.request,'class_id',f.class,'student_name','Verificação de avisos experimentais','student_age',9,'guardian_name','Responsável de verificação','guardian_phone','81900000000','scheduled_date',current_date+2,'notifications_enabled',true);
+ r=public.schedule_trial(p);update trial_notification_fixture set trial=(r->>'trialId')::uuid;
+ if public.schedule_trial(p)->>'trialId'<>r->>'trialId' then raise exception 'Booking idempotency lost';end if;
+ r=public.schedule_trial(p||jsonb_build_object('request_id',gen_random_uuid(),'notifications_enabled',false));
+ update trial_notification_fixture set without_consent=(r->>'trialId')::uuid;
+end;$$;
+reset role;
+do $$declare f trial_notification_fixture%rowtype;r jsonb;v_at timestamptz;begin
+ select * into f from trial_notification_fixture;
+ select private.whatsapp_trial_student(feedback) into f.student from public.trial_classes where id=f.trial;
+ update trial_notification_fixture set student=f.student;
+ if (select count(*) from private.whatsapp_jobs where kind='trial_confirmation' and entity_id=f.trial)<>1 or exists(select 1 from private.whatsapp_jobs where entity_id=f.without_consent) then raise exception 'Missing confirmation or opt-out ignored';end if;
+ v_at=current_date::timestamp at time zone 'America/Recife';
+ update private.whatsapp_jobs set state='cancelled' where student_id<>f.student and state='queued';
+ r=private.whatsapp_claim_scheduled(v_at+interval '9 hours');
+ if r->>'claim' is null or not exists(select 1 from private.whatsapp_jobs where id=(r->>'id')::uuid and entity_id=f.trial) then raise exception 'Trial athlete could not receive the scheduled confirmation';end if;
+ perform private.whatsapp_complete((r->>'id')::uuid,(r->>'claim')::uuid,'accepted','fixture-only',null);
+ perform private.whatsapp_enqueue_scheduled(v_at+interval '1 day 9 hours');perform private.whatsapp_enqueue_scheduled(v_at+interval '1 day 9 hours');
+ if (select count(*) from private.whatsapp_jobs where entity_id=f.trial and kind='trial_reminder')<>1 then raise exception 'Reminder missing or duplicated';end if;
+ update private.whatsapp_jobs set state='cancelled' where student_id<>f.student and state='queued';
+ update public.trial_classes set status='cancelled' where id=f.trial;
+ r=private.whatsapp_claim_scheduled(v_at+interval '1 day 9 hours');
+ if r is not null then raise exception 'Cancelled trial was dispatched';end if;
+ if not exists(select 1 from private.whatsapp_jobs where entity_id=f.trial and kind='trial_reminder' and state='cancelled') then raise exception 'Cancelled trial reminder stayed queued';end if;
+ update public.trial_classes set status='scheduled',scheduled_date=current_date+3 where id=f.trial;
+ if (select count(*) from private.whatsapp_jobs where entity_id=f.trial and kind='trial_confirmation')<>2 then raise exception 'Reschedule lost the original confirmation history';end if;
+end;$$;
+rollback;

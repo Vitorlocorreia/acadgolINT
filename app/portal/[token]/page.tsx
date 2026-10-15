@@ -1,32 +1,31 @@
-import { notFound } from 'next/navigation'
-import type { Viewport } from 'next'
-import { getStudentPortalData } from '../actions'
-import { PortalClient } from './portal-client'
+import { notFound } from "next/navigation";
+import type { Viewport } from "next";
+import { getStudentPortalData } from "../actions";
+import { PortalClient } from "./portal-client";
 
 export const metadata = {
-  title: 'Sport Club do Recife | Portal do Responsável',
-  description: 'Portal do Responsável - Escolinha Oficial do Sport Club do Recife',
-}
+  title: "Sport Club do Recife | Portal do Responsável",
+  description:
+    "Portal do Responsável - Escolinha Oficial do Sport Club do Recife",
+};
 
 export const viewport: Viewport = {
-  width: 'device-width',
+  width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
-  themeColor: '#070709',
-}
+  themeColor: "#c81930",
+};
 
 interface Props {
-  params: Promise<{ token: string }>
+  params: Promise<{ token: string }>;
 }
 
 export default async function StudentPortalPage({ params }: Props) {
-  const { token } = await params
-  const data = await getStudentPortalData(token)
+  const { token } = await params;
+  const data = await getStudentPortalData(token);
 
   if (!data) {
-    notFound()
+    notFound();
   }
 
-  return <PortalClient data={data} />
+  return <PortalClient data={data} />;
 }
