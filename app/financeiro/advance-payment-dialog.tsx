@@ -1,45 +1,120 @@
 'use client'
 
-import {useState,useTransition} from 'react'
-import {Calendar,Check,Loader2,Search,X} from 'lucide-react'
+import {useEffect,useState,useTransition} from 'react'
+import {Calendar,Check,ChevronLeft,ChevronRight,Loader2,Search,X} from 'lucide-react'
 import {ModalFrame} from '@/components/modal-frame'
 import {ManualPaymentDialog} from './manual-payment-dialog'
-import {prepareAdvanceInvoiceAction,searchAdvanceStudentsAction,type AdvanceInvoice,type AdvanceStudent} from './advance-actions'
+import {getAdvanceStudentDirectoryAction,prepareAdvanceInvoicesAction,type AdvanceInvoice,type AdvanceStudent,type AdvanceStudentDirectory} from './advance-actions'
 
 const money=(value:number)=>value.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
 const monthLabel=(value:string)=>value.split('-').reverse().join('/')
+export interface AdvanceCompletion{month:string;invoices:AdvanceInvoice[];paidCount:number}
 export function AdvancePaymentDialog({initialMonth,initialSearch,todayStr,operatorName,onClose,onFinished}:{
- initialMonth:string;initialSearch:string;todayStr:string;operatorName:string;onClose:()=>void;
- onFinished:(invoice:AdvanceInvoice,paid:boolean)=>void
+ initialMonth:string;initialSearch:string;todayStr:string;operatorName:string;onClose:()=>void;onFinished:(result:AdvanceCompletion)=>void
 }){
  const currentMonth=todayStr.slice(0,7)
  const nextMonth=new Date(`${currentMonth}-01T12:00:00Z`);nextMonth.setUTCMonth(nextMonth.getUTCMonth()+1)
  const lastMonth=new Date(`${currentMonth}-01T12:00:00Z`);lastMonth.setUTCMonth(lastMonth.getUTCMonth()+12)
  const [month,setMonth]=useState(initialMonth>currentMonth?initialMonth:nextMonth.toISOString().slice(0,7))
- const [query,setQuery]=useState(initialSearch),[students,setStudents]=useState<AdvanceStudent[]>([]),[selected,setSelected]=useState<AdvanceStudent|null>(null)
- const [searched,setSearched]=useState(false),[error,setError]=useState(''),[pending,start]=useTransition()
- const [invoice,setInvoice]=useState<(AdvanceInvoice&{idempotencyKey:string})|null>(null)
- function search(event:React.FormEvent){
-  event.preventDefault();if(pending)return;setError('');setSelected(null)
-  start(async()=>{try{const result=await searchAdvanceStudentsAction(query);if(result.success){setStudents(result.students);setSearched(true)}else{setStudents([]);setSearched(false);setError(result.error)}}catch{setError('Não foi possível buscar os atletas. Tente novamente.')}})
+ const [query,setQuery]=useState(initialSearch),[page,setPage]=useState(1),[retry,setRetry]=useState(0)
+ const [directory,setDirectory]=useState<AdvanceStudentDirectory|null>(null)
+ const [selected,setSelected]=useState<AdvanceStudent[]>([]),[loading,setLoading]=useState(true),[searchError,setSearchError]=useState('')
+ const [error,setError]=useState(''),[pending,start]=useTransition()
+ const [prepared,setPrepared]=useState<{invoices:AdvanceInvoice[];createdCount:number}|null>(null)
+ const [paidIds,setPaidIds]=useState<string[]>([]),[invoice,setInvoice]=useState<(AdvanceInvoice&{idempotencyKey:string})|null>(null)
+
+ useEffect(()=>{
+  if(prepared)return
+  let active=true
+  // Ignore superseded requests and cancelled timers: a slow response cannot replace a newer search.
+  const timer=setTimeout(async()=>{
+   try{
+    const result=await getAdvanceStudentDirectoryAction(query,page)
+    if(!active)return
+    if(result.success){setDirectory(result.directory);setSearchError('')}else{setDirectory(null);setSearchError(result.error)}
+   }catch{if(active){setDirectory(null);setSearchError('Não foi possível carregar os atletas. Tente novamente.')}}
+   finally{if(active)setLoading(false)}
+  },300)
+  return()=>{active=false;clearTimeout(timer)}
+ },[query,page,retry,prepared])
+
+ function changeQuery(value:string){setLoading(true);setQuery(value);setPage(1);setSearchError('')}
+ function changePage(value:number){setLoading(true);setPage(value);setSearchError('')}
+ function toggle(student:AdvanceStudent){
+  setError('')
+  setSelected(current=>current.some(item=>item.id===student.id)?current.filter(item=>item.id!==student.id):current.length<50?[...current,student]:current)
  }
+ const rows=directory?.students||[]
+ const allVisibleSelected=rows.length>0&&rows.every(student=>selected.some(item=>item.id===student.id))
+ const additionalVisible=rows.filter(student=>!selected.some(item=>item.id===student.id))
+ function togglePage(){
+  setError('')
+  setSelected(current=>rows.every(row=>current.some(student=>student.id===row.id))
+   ?current.filter(student=>!rows.some(row=>row.id===student.id))
+   :[...current,...rows.filter(row=>!current.some(student=>student.id===row.id))].slice(0,50))
+ }
+ function finish(){if(prepared)onFinished({month,invoices:prepared.invoices,paidCount:paidIds.length});else onClose()}
+ function openPayment(value:AdvanceInvoice){setInvoice({...value,idempotencyKey:crypto.randomUUID()})}
  function prepare(){
-  if(!selected||pending)return;setError('')
-  start(async()=>{try{const result=await prepareAdvanceInvoiceAction(selected.id,month);if(result.success)setInvoice({...result.invoice,idempotencyKey:crypto.randomUUID()});else setError(result.error)}catch{setError('Não foi possível conferir a mensalidade. Tente novamente; uma cobrança existente será reaproveitada.')}})
+  if(!selected.length||pending)return;setError('')
+  start(async()=>{
+   try{
+    const result=await prepareAdvanceInvoicesAction(selected.map(student=>student.id),month)
+    if(result.success){setPrepared(result);if(result.invoices.length===1)openPayment(result.invoices[0])}else setError(result.error)
+   }catch{setError('A conexão foi interrompida. Confira os lançamentos antes de tentar novamente; cobranças existentes serão reaproveitadas.')}
+  })
  }
- // Replace the selection dialog with the existing receipt form, keeping one native modal open at a time.
+ // Keep each athlete's discount, payment methods, proof and audit separate, with one native dialog open.
  if(invoice)return <ManualPaymentDialog key={invoice.idempotencyKey} invoice={invoice} operatorName={operatorName}
-  onClose={()=>onFinished(invoice,false)} onSuccess={()=>onFinished(invoice,true)}/>
- return <ModalFrame key="advance-selection" label="Antecipar mensalidade" onClose={()=>{if(!pending)onClose()}} wide>
-  <div className="surface max-w-xl w-full p-6 space-y-5 max-h-[92vh] overflow-y-auto">
-   <div className="flex items-start justify-between gap-4"><div><p className="eyebrow">Recebimento antecipado</p><h2 className="section-title mt-2">Antecipar mensalidade</h2><p className="text-sm text-[var(--text-secondary)] mt-2">Escolha o atleta e o mês do pagamento. A cobrança será preparada apenas para ele.</p></div><button type="button" className="icon-button" aria-label="Fechar antecipação" disabled={pending} onClick={onClose}><X size={20}/></button></div>
-   <form onSubmit={search} className="space-y-2"><label className="field-label" htmlFor="advance-search">Nome do atleta ou responsável</label><div className="flex gap-2"><input id="advance-search" autoFocus className="input-escolinha min-w-0 flex-1" value={query} onChange={e=>{setQuery(e.target.value);setSelected(null);setStudents([]);setSearched(false)}} minLength={2} maxLength={120} required disabled={pending} placeholder="Digite pelo menos 2 caracteres"/><button className="button" disabled={pending||query.trim().length<2}><Search size={17}/>Buscar</button></div></form>
-   {searched&&<div className="space-y-2"><p role="status" className="text-xs text-[var(--text-muted)]">{students.length?`${students.length} atleta(s) ativo(s). Selecione o nome correto${students.length===20?' ou refine a pesquisa':''}.`:'Nenhum atleta ativo com matrícula encontrado. Confira o nome e a situação cadastral.'}</p><div className="max-h-56 overflow-y-auto space-y-2">{students.map(student=><button type="button" key={student.id} aria-pressed={selected?.id===student.id} disabled={pending} onClick={()=>setSelected(student)} className={`w-full text-left border rounded-xl p-3 ${selected?.id===student.id?'border-[#c81930] bg-[#c81930]/5':'border-[var(--border-color)]'}`}><span className="flex justify-between gap-3"><strong className="text-sm">{student.name}</strong>{selected?.id===student.id&&<Check size={18} className="shrink-0 text-[#c81930]"/>}</span>{student.guardian_name&&<span className="block text-xs text-[var(--text-muted)] mt-1">Responsável: {student.guardian_name}</span>}<span className="block text-xs mt-1">Mensalidade acordada: {money(student.monthly_fee)} · vencimento dia {student.due_day}</span></button>)}</div></div>}
-   <div><label className="field-label" htmlFor="advance-month">Mês de referência da mensalidade</label><input id="advance-month" type="month" required min={currentMonth} max={lastMonth.toISOString().slice(0,7)} value={month} disabled={pending} onChange={e=>setMonth(e.target.value)} className="input-escolinha"/><p className="text-xs text-[var(--text-muted)] mt-2">A data do recebimento será informada na próxima tela, mesmo que a mensalidade seja de um mês futuro.</p></div>
-   {selected&&<p className="notice text-sm"><Calendar size={17} className="inline mr-2"/><strong>{selected.name}</strong> · referência {monthLabel(month)}. O valor da cobrança existente será preservado; se ainda não existir, será usado o valor acordado na matrícula.</p>}
-   <p className="text-xs text-[var(--text-secondary)]">Preparar a mensalidade não confirma pagamento. Na próxima tela, confira o valor recebido, o desconto e as formas de pagamento antes de confirmar a baixa.</p>
-   {error&&<p role="alert" className="notice notice-error">{error}</p>}
-   <div className="flex justify-end gap-3 border-t border-[var(--border-color)] pt-4"><button type="button" className="button" disabled={pending} onClick={onClose}>Cancelar</button><button type="button" className="button button-primary" disabled={pending||!selected||!month||month<currentMonth||month>lastMonth.toISOString().slice(0,7)} onClick={prepare}>{pending?<Loader2 size={17} className="animate-spin"/>:<Calendar size={17}/>}Preparar e abrir baixa</button></div>
+  onClose={()=>setInvoice(null)} onSuccess={()=>{setPaidIds(current=>current.includes(invoice.id)?current:[...current,invoice.id]);setInvoice(null)}}/>
+
+ return <ModalFrame key="advance-selection" label={prepared?'Mensalidades preparadas':'Antecipar mensalidade'} onClose={()=>{if(!pending)finish()}} wide>
+  <div className="surface w-full flex flex-col max-h-[92vh] overflow-hidden">
+   <div className="flex items-start justify-between gap-4 p-6 pb-4 border-b border-[var(--border-color)] shrink-0">
+    <div><p className="eyebrow">Recebimento antecipado</p><h2 className="section-title mt-2">{prepared?'Mensalidades preparadas':'Antecipar mensalidade'}</h2><p className="text-sm text-[var(--text-secondary)] mt-2">{prepared?`Referência ${monthLabel(month)} · ${prepared.invoices.length} mensalidade(s) pronta(s) para conferência.`:'Selecione um ou mais atletas e escolha o mês. A pesquisa acompanha o que você digita.'}</p></div>
+    <button type="button" className="icon-button shrink-0" aria-label="Fechar antecipação" disabled={pending} onClick={finish}><X size={20}/></button>
+   </div>
+   <div className="space-y-4 overflow-y-auto min-h-0 p-6 py-4">
+   {prepared?<>
+    <p role="status" className="notice text-sm">{paidIds.length} recebimento(s) registrado(s) · {prepared.invoices.length-paidIds.length} sem baixa nesta seleção. {prepared.createdCount} cobrança(s) nova(s); as demais já existiam.</p>
+    <p className="text-xs text-[var(--text-secondary)]">Abra a baixa de cada atleta para conferir o valor recebido, o desconto, as formas de pagamento e o comprovante. Preparar a seleção não confirma nenhum pagamento.</p>
+    <div className="space-y-2 max-h-80 overflow-y-auto">{prepared.invoices.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 border border-[var(--border-color)] rounded-xl p-3">
+     <div><strong className="text-sm">{item.student.name}</strong><p className="text-xs text-[var(--text-muted)] mt-1">{money(item.amount)} · referência {monthLabel(item.reference_month)}</p></div>
+     {paidIds.includes(item.id)?<span className="badge badge-success"><Check size={14}/>Recebimento registrado</span>:<button type="button" className="button button-primary !text-xs" onClick={()=>openPayment(item)}>Dar baixa<span className="sr-only"> de {item.student.name}</span></button>}
+    </div>)}</div>
+   </>:<>
+    <div><label className="field-label" htmlFor="advance-search">Nome do atleta ou responsável</label><div className="relative"><Search size={17} className="absolute left-3 top-3.5 text-[var(--text-muted)] pointer-events-none"/><input id="advance-search" autoFocus type="search" className="input-escolinha !pl-10" value={query} onChange={e=>changeQuery(e.target.value)} maxLength={120} disabled={pending} placeholder="Digite para pesquisar ou selecione na lista…"/></div></div>
+    <section aria-label="Lista de atletas para antecipação" aria-busy={loading} className="space-y-2">
+     <div className="flex flex-wrap items-center justify-between gap-2">
+      <p role="status" className="text-xs text-[var(--text-muted)]">{loading?'Buscando atletas…':directory?`${directory.total} atleta(s) encontrado(s) · página ${directory.page} de ${directory.pages}`:'Lista indisponível'}</p>
+      {!loading&&rows.length>0&&<label className="text-xs font-semibold flex items-center gap-2"><input type="checkbox" checked={allVisibleSelected} disabled={pending||(!allVisibleSelected&&selected.length+additionalVisible.length>50)} onChange={togglePage} className="accent-[#c81930]"/>Selecionar esta página</label>}
+     </div>
+     {loading?<div className="flex items-center justify-center gap-2 py-12 text-sm text-[var(--text-muted)]"><Loader2 size={19} className="animate-spin"/>Carregando lista…</div>
+      :searchError?<div role="alert" className="notice notice-error text-sm">{searchError}<button type="button" className="button !text-xs mt-2" onClick={()=>{setLoading(true);setRetry(value=>value+1)}}>Tentar novamente</button></div>
+      :rows.length?<div className="max-h-60 overflow-y-auto space-y-2">{rows.map(student=>{
+       const checked=selected.some(item=>item.id===student.id)
+       return <label key={student.id} className={`flex items-start gap-3 border rounded-xl p-3 cursor-pointer ${checked?'border-[#c81930] bg-[#c81930]/5':'border-[var(--border-color)]'}`}>
+        <input type="checkbox" aria-label={`Selecionar ${student.name}`} checked={checked} disabled={pending||(!checked&&selected.length>=50)} onChange={()=>toggle(student)} className="accent-[#c81930] mt-1 shrink-0"/>
+        <span className="min-w-0"><strong className="block text-sm">{student.name}</strong>{student.guardian_name&&<span className="block text-xs text-[var(--text-muted)] mt-1">Responsável: {student.guardian_name}</span>}<span className="block text-xs mt-1">Acordado na matrícula: {money(student.monthly_fee)} · vencimento dia {student.due_day}</span></span>
+       </label>
+      })}</div>:<p className="py-6 text-sm text-[var(--text-muted)]">Nenhum atleta ativo com matrícula encontrado. Confira a pesquisa e a situação cadastral.</p>}
+     {!loading&&directory&&directory.pages>1&&<div className="flex justify-between gap-2"><button type="button" className="button !text-xs" disabled={pending||directory.page<=1} onClick={()=>changePage(directory.page-1)}><ChevronLeft size={15}/>Anterior</button><button type="button" className="button !text-xs" disabled={pending||directory.page>=directory.pages} onClick={()=>changePage(directory.page+1)}>Próxima<ChevronRight size={15}/></button></div>}
+    </section>
+    <section aria-label="Atletas selecionados" className="rounded-xl bg-[var(--bg-subtle)] p-3 space-y-2">
+     <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">{selected.length} selecionado(s) <span className="text-xs font-normal text-[var(--text-muted)]">· até 50 por vez</span></p>{selected.length>0&&<button type="button" className="text-link text-xs" disabled={pending} onClick={()=>setSelected([])}>Limpar seleção</button>}</div>
+     {selected.length>0?<div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">{selected.map(student=><button type="button" key={student.id} disabled={pending} aria-label={`Remover ${student.name} da seleção`} onClick={()=>toggle(student)} className="inline-flex items-center gap-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2 py-1 text-xs">{student.name}<X size={12} className="shrink-0"/></button>)}</div>:<p className="text-xs text-[var(--text-muted)]">Marque os atletas na lista. A seleção permanece ao pesquisar outros nomes ou trocar de página.</p>}
+    </section>
+    <div><label className="field-label" htmlFor="advance-month">Mês de referência das mensalidades</label><input id="advance-month" type="month" required min={currentMonth} max={lastMonth.toISOString().slice(0,7)} value={month} disabled={pending} onChange={e=>setMonth(e.target.value)} className="input-escolinha"/><p className="text-xs text-[var(--text-muted)] mt-2">A referência escolhida vale para todos os selecionados. A data real do recebimento será informada na baixa de cada atleta.</p></div>
+    <p className="text-xs text-[var(--text-secondary)]">Serão preparadas apenas as mensalidades dos selecionados. Cobranças existentes serão reaproveitadas. Cada recebimento será conferido e confirmado separadamente.</p>
+    {error&&<p role="alert" className="notice notice-error">{error}</p>}
+   </>}
+   </div>
+   <div className="flex flex-wrap justify-end gap-3 border-t border-[var(--border-color)] p-4 px-6 shrink-0">
+    {prepared?<button type="button" className="button button-primary" onClick={finish}>Concluir e ver mensalidades</button>:<>
+     <button type="button" className="button" disabled={pending} onClick={onClose}>Cancelar</button>
+     <button type="button" className="button button-primary" disabled={pending||!selected.length||!month||month<currentMonth||month>lastMonth.toISOString().slice(0,7)} onClick={prepare}>{pending?<Loader2 size={17} className="animate-spin"/>:<Calendar size={17}/>} {selected.length?`Preparar ${selected.length} mensalidade${selected.length===1?'':'s'}`:'Selecione os atletas'}</button>
+    </>}
+   </div>
   </div>
  </ModalFrame>
 }

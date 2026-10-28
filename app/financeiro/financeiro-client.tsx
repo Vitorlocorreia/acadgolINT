@@ -939,10 +939,10 @@ export function FinanceiroClient({
       {/* MODAL DE BAIXA MANUAL DESCOMPLICADA (SECRETARIA) */}
       {/* ======================================================== */}
       {showAdvancePayment&&<AdvancePaymentDialog initialMonth={currentMonth} initialSearch={filters.q} todayStr={todayStr} operatorName={operatorName}
-        onClose={()=>setShowAdvancePayment(false)} onFinished={(invoice,paid)=>{
+        onClose={()=>setShowAdvancePayment(false)} onFinished={({month,invoices:preparedInvoices,paidCount})=>{
           setShowAdvancePayment(false)
-          setFeedback({type:'success',message:paid?`Recebimento de ${invoice.reference_month.split('-').reverse().join('/')} registrado com sucesso.`:'Mensalidade preparada. Ela permanece pendente até a confirmação do recebimento.'})
-          goTo(financeHref({...currentContext,month:invoice.reference_month,status:'all',tab:'mensalidades'}, {...defaultFinanceFilters,q:invoice.student.name}))
+          setFeedback({type:'success',message:`${preparedInvoices.length} mensalidade(s) preparada(s) de ${month.split('-').reverse().join('/')}. ${paidCount} recebimento(s) registrado(s); ${preparedInvoices.length-paidCount} sem baixa nesta seleção.`})
+          goTo(financeHref({...currentContext,month,status:'all',tab:'mensalidades'}, {...defaultFinanceFilters,q:preparedInvoices.length===1?preparedInvoices[0].student.name:''}))
           router.refresh()
         }}/>}
       {modalInvoice&&<ManualPaymentDialog key={modalInvoice.idempotencyKey} invoice={modalInvoice} operatorName={operatorName} onClose={()=>setModalInvoice(null)} onSuccess={()=>{setModalInvoice(null);setFeedback({type:'success',message:'Recebimento registrado com sucesso.'});router.refresh()}}/>}

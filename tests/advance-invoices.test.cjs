@@ -39,3 +39,36 @@ test('athlete lookup is bounded, requires finance permission, and strips unrelat
  assert.deepEqual(run.calls,[{name:'finance_advance_students',args:{p_search:'Atleta'}}]);assert.equal(run.paths.length,0);assert.deepEqual(run.permissions,['finance.write']);
  for(const query of ['a',' ', 'x'.repeat(121)]){const short=scenario();assert.equal((await short.actions.searchAdvanceStudentsAction(query)).success,false);assert.equal(short.calls.length,0);}
 });
+
+test('automatic lookup accepts the initial empty search and a single typed character, with bounded pages',async()=>{
+ for(const search of ['', 'A', '  Atleta  ']){
+  const run=scenario({data:{students:[],total:0,page:1,pages:1,pageSize:25},error:null});
+  const result=await run.actions.getAdvanceStudentDirectoryAction(search,2);assert.equal(result.success,true);
+  assert.deepEqual(run.calls,[{name:'finance_advance_student_directory',args:{p_search:search.trim(),p_page:2}}]);assert.equal(run.paths.length,0);
+ }
+ for(const [search,page] of [['x'.repeat(121),1],['',0],['',100001],['',1.5]]){
+  const run=scenario();assert.equal((await run.actions.getAdvanceStudentDirectoryAction(search,page)).success,false);assert.equal(run.calls.length,0);
+ }
+});
+test('multiple selected athletes are prepared in one atomic call without recording receipts',async()=>{
+ const second='10000000-0000-4000-8000-000000000002';
+ const invoices=[invoice,{...invoice,id:'20000000-0000-4000-8000-000000000002',student:{id:second,name:'Outro atleta de teste'}}];
+ const run=scenario({data:{success:true,createdCount:1,invoices},error:null});
+ const result=await run.actions.prepareAdvanceInvoicesAction([student,second],'2026-11');assert.equal(result.success,true);assert.equal(result.invoices.length,2);
+ assert.deepEqual(run.calls,[{name:'prepare_advance_monthly_invoices',args:{p_students:[student,second],p_month:'2026-11'}}]);assert.deepEqual(run.permissions,['finance.write']);assert.deepEqual(run.paths,['/financeiro','/dashboard']);
+});
+test('invalid, duplicated or excessive selections cannot reach billing',async()=>{
+ const many=Array.from({length:51},(_,i)=>`10000000-0000-4000-8000-${String(i+1).padStart(12,'0')}`);
+ for(const ids of [[],[student,student],['invalid'],many]){
+  const run=scenario();assert.equal((await run.actions.prepareAdvanceInvoicesAction(ids,'2026-11')).success,false);assert.equal(run.calls.length,0);
+ }
+ const denied=scenario(undefined,false);await assert.rejects(denied.actions.prepareAdvanceInvoicesAction([student],'2026-11'),/Acesso negado/);assert.equal(denied.calls.length,0);
+});
+test('a failed selection or mismatched response never reports a complete batch',async()=>{
+ const second='10000000-0000-4000-8000-000000000002';
+ const failed=scenario({data:null,error:{message:'Atleta já quitado. Nenhuma nova mensalidade emitida.'}});
+ const result=await failed.actions.prepareAdvanceInvoicesAction([student,second],'2026-11');assert.equal(result.success,false);assert.match(result.error,/quitado/);assert.equal(failed.paths.length,0);
+ for(const invoices of [[invoice],[invoice,invoice],[invoice,{...invoice,student:{id:'10000000-0000-4000-8000-000000000003',name:'Outro'}}],[invoice,{...invoice,reference_month:'2026-12',student:{id:second,name:'Outro'}}]]){
+  const run=scenario({data:{success:true,createdCount:1,invoices},error:null});assert.equal((await run.actions.prepareAdvanceInvoicesAction([student,second],'2026-11')).success,false);assert.equal(run.paths.length,0);
+ }
+});
