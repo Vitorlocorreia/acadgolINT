@@ -8,6 +8,7 @@ export async function getStudentsList(filters?: {
   search?: string;
   categoryId?: string;
   unitId?: string;
+  classId?: string;
   status?: string;
   page?: number;
 }) {
@@ -15,9 +16,11 @@ export async function getStudentsList(filters?: {
   const rawPage=filters?.page??1;
   const page=Number.isInteger(rawPage)&&rawPage>0?Math.min(rawPage,100000):1;
   const status=['all','active','paused','trial','overdue','deleted'].includes(filters?.status||'')?filters!.status!:'all';
-  const {data,error}=await supabase.rpc('student_directory',{p_search:(filters?.search||'').trim().slice(0,120),p_status:status,p_page:page});
+  const rawClass=filters?.classId||'all';
+  const classId=['all','unassigned'].includes(rawClass)||/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawClass)?rawClass.toLowerCase():'all';
+  const {data,error}=await supabase.rpc('student_directory',{p_search:(filters?.search||'').trim().slice(0,120),p_status:status,p_page:page,p_class:classId});
   if(error||!data||!Array.isArray(data.students))throw new Error('Não foi possível carregar os atletas. Tente novamente.');
-  return data as {students:unknown[];total:number;page:number;pages:number;pageSize:number};
+  return {...data,classId,classes:Array.isArray(data.classes)?data.classes:[]} as {students:unknown[];total:number;page:number;pages:number;pageSize:number;classId:string;classes:{id:string;name:string;is_active:boolean|null}[]};
 }
 
 export async function toggleStudentStatusAction(

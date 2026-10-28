@@ -63,6 +63,12 @@ Nas novas matrículas, informe separadamente o **valor acordado da matrícula** 
 
 Na aula experimental, escolha a turma e a data. O atleta aparece na chamada da data agendada. A data de nascimento calculada a partir da idade é provisória. Após o comparecimento, use **Matricular** e confirme os dados; a matrícula aproveita a ficha do mesmo atleta.
 
+## Consultar atletas por turma
+
+Em **Atletas**, escolha a **Turma** e clique em **Aplicar filtros**. A pesquisa por nome, responsável ou telefone pode ser combinada com a turma e com as opções **Ativos**, **Trancados**, **Com pendências** e **Excluídos**. A seleção é mantida ao trocar de página. Use **Sem turma vinculada** para localizar cadastros que ainda precisam de organização e **Limpar filtros** para voltar à lista geral.
+
+Para conferir a relação que será usada pelos professores, combine a turma com **Ativos**. O atalho **Abrir chamada desta turma** abre a chamada com a mesma turma selecionada; confira a data do treino antes de registrar presenças. Filtrar a lista não muda a turma, a situação ou a presença de nenhum atleta.
+
 ## Trancar, excluir e recuperar atletas
 
 Use **Trancar** na ficha quando o atleta interromper os treinos e precisar manter o cadastro na relação de trancados.

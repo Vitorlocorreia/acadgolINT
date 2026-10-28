@@ -35,20 +35,24 @@ interface Student {
 export default async function AlunosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string; status?: string;page?:string }>;
+  searchParams: Promise<{ search?: string; status?: string;page?:string;classId?:string }>;
 }) {
   await requirePage('students.read');
   const params = await searchParams;
   const directory = await getStudentsList({
     search: params.search,
     status: params.status,
+    classId:params.classId,
     page:Number(params.page||1),
   });
   const students=directory.students as Student[];
+  const selectedClass=directory.classes.find(item=>item.id===directory.classId);
+  const hasFilters=Boolean(params.search||params.status||directory.classId!=='all');
   const today = schoolClock().date;
   const filterLink = (status: string) => {
     const query = new URLSearchParams();
     if (params.search) query.set("search", params.search);
+    if (directory.classId!=='all') query.set('classId',directory.classId);
     if (status !== "all") query.set("status", status);
     return `/alunos${query.size ? `?${query}` : ""}`;
   };
@@ -103,15 +107,13 @@ export default async function AlunosPage({
           <Plus size={17} /> Nova matrícula
         </Link>
       </div>
-      <div className="surface flex flex-wrap items-center gap-4 p-4">
-        <form className="relative min-w-[180px] flex-1" method="get">
+      <div className="surface space-y-4 p-4">
+        <form key={`${params.search||''}:${params.status||''}:${directory.classId}`} className="grid items-end gap-3 md:grid-cols-[minmax(180px,1fr)_minmax(220px,1fr)_auto]" method="get">
+          <div><label htmlFor="student-search" className="field-label">Atleta, responsável ou telefone</label><div className="relative">
           <Search
             size={18}
             className="pointer-events-none absolute left-3 top-3.5 text-[var(--text-muted)]"
           />
-          <label htmlFor="student-search" className="sr-only">
-            Buscar atleta por nome, responsável ou telefone
-          </label>
           <input
             id="student-search"
             type="search"
@@ -120,10 +122,19 @@ export default async function AlunosPage({
             placeholder="Buscar atleta ou responsável…"
             className="field !pl-10"
           />
+          </div></div>
+          <div><label htmlFor="student-class" className="field-label">Turma</label><select id="student-class" name="classId" className="field" defaultValue={directory.classId}>
+            <option value="all">Todas as turmas</option>
+            <option value="unassigned">Sem turma vinculada</option>
+            {directory.classId!=='all'&&directory.classId!=='unassigned'&&!selectedClass&&<option value={directory.classId}>Turma indisponível</option>}
+            {directory.classes.map(item=><option key={item.id} value={item.id}>{item.name}{item.is_active===false?' · inativa':''}</option>)}
+          </select></div>
           {params.status && (
             <input type="hidden" name="status" value={params.status} />
           )}
+          <button className="button button-primary" type="submit"><Search size={16}/>Aplicar filtros</button>
         </form>
+        <div className="flex flex-wrap items-center justify-between gap-3">
         <nav className="flex flex-wrap gap-1.5" aria-label="Filtrar atletas">
           {[
             ["all", "Todos"],
@@ -144,26 +155,29 @@ export default async function AlunosPage({
             </Link>
           ))}
         </nav>
+        {hasFilters&&<Link href="/alunos" className="button button-quiet !text-xs">Limpar filtros</Link>}
+        </div>
+        {directory.classId!=='all'&&<div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border-color)] pt-3"><p className="text-sm text-[var(--text-secondary)]"><strong>{directory.total}</strong> atleta(s) nos filtros · {directory.classId==='unassigned'?'Sem turma vinculada':selectedClass?.name||'Turma indisponível'}</p>{selectedClass&&<Link className="text-link text-sm" href={`/chamada?classId=${selectedClass.id}`}>Abrir chamada desta turma <ArrowRight size={15}/></Link>}</div>}
       </div>
       {params.status === 'deleted' && <p className="notice text-sm">Cadastros excluídos ficam fora da operação. Ao recuperar, o atleta volta como trancado. As cobranças e os pagamentos permanecem no financeiro.</p>}
       {!students.length ? (
         <div className="surface empty-state">
           <Users size={32} />
           <strong>
-            {params.search || params.status
+            {hasFilters
               ? "Nenhum atleta neste filtro"
               : "A próxima jornada começa aqui"}
           </strong>
           <p>
-            {params.search || params.status
-              ? "Confira o nome pesquisado ou remova os filtros."
+            {hasFilters
+              ? "Confira o nome, a turma e a situação selecionados, ou remova os filtros."
               : "Cadastre um atleta para organizar a turma e acompanhar os treinos."}
           </p>
           <Link
             className="button"
-            href={params.search || params.status ? "/alunos" : "/alunos/novo"}
+            href={hasFilters ? "/alunos" : "/alunos/novo"}
           >
-            {params.search || params.status
+            {hasFilters
               ? "Limpar filtros"
               : "Nova matrícula"}
           </Link>
@@ -325,7 +339,7 @@ export default async function AlunosPage({
           </div>
         </>
       )}
-      <ListPagination {...directory} path="/alunos" filters={{search:params.search,status:params.status}}/>
+      <ListPagination {...directory} path="/alunos" filters={{search:params.search,status:params.status,classId:directory.classId==='all'?undefined:directory.classId}}/>
     </div>
   );
 }
