@@ -4,6 +4,7 @@ import { ModalFrame } from '@/components/modal-frame'
 import {InvoiceProofsButton} from './invoice-proofs-button'
 import {AuditTab} from './audit-tab'
 import {ManualPaymentDialog} from './manual-payment-dialog'
+import {AdvancePaymentDialog} from './advance-payment-dialog'
 import {paymentPartsLabel} from '@/lib/finance/payment-parts'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -133,6 +134,7 @@ export function FinanceiroClient({
   // Modais
   const [showReguaModal, setShowReguaModal] = useState(false)
   const [modalInvoice, setModalInvoice] = useState<any | null>(null)
+  const [showAdvancePayment,setShowAdvancePayment]=useState(false)
   const [revertInvoiceId, setRevertInvoiceId] = useState<string | null>(null)
   const [revertReason, setRevertReason] = useState('')
 
@@ -176,6 +178,7 @@ export function FinanceiroClient({
           type: 'success',
           message: res.count ? `${res.count} mensalidade(s) faltante(s) gerada(s) para ${currentMonth}.` : 'Tudo em dia: nenhuma mensalidade faltante para gerar neste mês.',
         })
+        router.refresh()
       } else {
         setFeedback({ type: 'error', message: res.error || 'Erro ao gerar mensalidades.' })
       }
@@ -283,13 +286,16 @@ export function FinanceiroClient({
                 </button>
               )}
 
+              <button type="button" className="button button-primary" disabled={isPending||isNavigating} onClick={()=>{setFeedback(null);setShowAdvancePayment(true)}}>
+                <Calendar size={16}/>Antecipar mensalidade
+              </button>
               <button
                 onClick={handleGenerateInvoices}
                 disabled={isPending || isNavigating}
                 className="button px-4 py-2 rounded-lg text-xs font-bold tracking-normal flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                {currentMonth>todayStr.slice(0,7) ? 'Antecipar mensalidades' : 'Gerar faltantes'}
+                {currentMonth>todayStr.slice(0,7) ? 'Emitir mês completo' : 'Gerar faltantes'}
               </button>
             </div>
           </div>
@@ -324,7 +330,7 @@ export function FinanceiroClient({
 
           <FinanceFilterPanel filters={filters} month={currentMonth} status={currentStatus} counts={filterCounts} classes={classOptions} total={pagination.total} pending={isNavigating}
             onApply={handleFiltersApply} onStatus={handleStatusFilter} onClear={()=>goTo(financeHref({...currentContext,status:'all'},defaultFinanceFilters))}/>
-          <details className="card-light p-4 text-sm"><summary className="cursor-pointer font-semibold">Emissão automática e conferência da importação</summary><div className="space-y-2 text-xs text-[var(--text-secondary)] mt-3"><p>{currentMonth>todayStr.slice(0,7) ? 'As mensalidades deste mês serão emitidas no início dele. Use “Antecipar mensalidades” somente se precisar emitir antes.' : 'As mensalidades são emitidas no início de cada mês. “Gerar faltantes” permite uma conferência extra, sem duplicar cobranças.'}</p>
+          <details className="card-light p-4 text-sm"><summary className="cursor-pointer font-semibold">Emissão automática e conferência da importação</summary><div className="space-y-2 text-xs text-[var(--text-secondary)] mt-3"><p>{currentMonth>todayStr.slice(0,7) ? 'As mensalidades deste mês serão emitidas no início dele. Para receber antes de um atleta, use “Antecipar mensalidade”. “Emitir mês completo” prepara as cobranças de todos os atletas elegíveis, independentemente dos filtros.' : 'As mensalidades são emitidas no início de cada mês. “Gerar faltantes” confere o mês inteiro, independentemente dos filtros, sem duplicar cobranças. Para receber um mês futuro de um atleta, use “Antecipar mensalidade”.'}</p>
             {(stats.openingPaidCount>0||stats.unconfirmedCount>0)&&<><p>{stats.openingPaidCount} mensalidade(s) quitada(s) antes da importação, no total de {fmt(stats.openingPaid)}, sem nova entrada no caixa.</p><p>{stats.unconfirmedCount} pagamento(s) a confirmar ({fmt(stats.unconfirmed)}). Campo vazio na planilha não foi tratado como inadimplência.</p></>}</div></details>
 
           {/* Tabela de Mensalidades */}
@@ -333,8 +339,9 @@ export function FinanceiroClient({
               <DollarSign className="w-12 h-12 text-[var(--text-muted)] mx-auto" />
               <p className="text-sm font-bold text-[var(--text-secondary)]">Nenhuma cobrança corresponde aos filtros.</p>
               <p className="text-xs text-[var(--text-muted)]">
-                Confira o nome, a turma e o mês selecionados, ou use “Limpar filtros”.
+                {currentMonth>todayStr.slice(0,7)?'Este mês ainda pode não ter sido emitido. Para receber antecipadamente de um atleta, prepare a mensalidade dele abaixo.':'Confira o nome, a turma e o mês selecionados, ou use “Limpar filtros”.'}
               </p>
+              {currentMonth>todayStr.slice(0,7)&&<button type="button" className="button button-primary mt-3" disabled={isNavigating} onClick={()=>setShowAdvancePayment(true)}><Calendar size={16}/>Antecipar mensalidade de um atleta</button>}
             </div>
           ) : (
             <div className="card-light overflow-hidden" inert={isNavigating} style={isNavigating?{opacity:0.5}:undefined}>
@@ -931,6 +938,13 @@ export function FinanceiroClient({
       {/* ======================================================== */}
       {/* MODAL DE BAIXA MANUAL DESCOMPLICADA (SECRETARIA) */}
       {/* ======================================================== */}
+      {showAdvancePayment&&<AdvancePaymentDialog initialMonth={currentMonth} initialSearch={filters.q} todayStr={todayStr} operatorName={operatorName}
+        onClose={()=>setShowAdvancePayment(false)} onFinished={(invoice,paid)=>{
+          setShowAdvancePayment(false)
+          setFeedback({type:'success',message:paid?`Recebimento de ${invoice.reference_month.split('-').reverse().join('/')} registrado com sucesso.`:'Mensalidade preparada. Ela permanece pendente até a confirmação do recebimento.'})
+          goTo(financeHref({...currentContext,month:invoice.reference_month,status:'all',tab:'mensalidades'}, {...defaultFinanceFilters,q:invoice.student.name}))
+          router.refresh()
+        }}/>}
       {modalInvoice&&<ManualPaymentDialog key={modalInvoice.idempotencyKey} invoice={modalInvoice} operatorName={operatorName} onClose={()=>setModalInvoice(null)} onSuccess={()=>{setModalInvoice(null);setFeedback({type:'success',message:'Recebimento registrado com sucesso.'});router.refresh()}}/>}
 
       {/* ======================================================== */}
