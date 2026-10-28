@@ -11,6 +11,24 @@ export type AdvanceStudent=z.infer<typeof studentSchema>
 export type AdvanceInvoice=z.infer<typeof invoiceSchema>
 export interface AdvanceStudentDirectory{students:AdvanceStudent[];total:number;page:number;pages:number;pageSize:25}
 
+export async function prepareAdvancePeriodsAction(studentIds:string[],months:string[]){
+ const db=await createAdminClient('finance.write')
+ const input=z.object({studentIds:z.array(z.uuid()).min(1).max(50).refine(ids=>new Set(ids).size===ids.length),months:z.array(monthSchema).min(1).max(12).refine(values=>new Set(values).size===values.length)})
+  .refine(value=>value.studentIds.length*value.months.length<=120).safeParse({studentIds,months})
+ if(!input.success)return {success:false as const,error:'Selecione os atletas e os meses, com até 120 mensalidades por vez.'}
+ const expected=input.data.studentIds.length*input.data.months.length
+ const {data,error}=await db.rpc('prepare_advance_monthly_periods',{p_students:input.data.studentIds,p_months:[...input.data.months].sort()})
+ if(error)return {success:false as const,error:error.message}
+ const result=z.object({success:z.literal(true),createdCount:z.number().int().min(0).max(expected),invoices:z.array(invoiceSchema).length(expected)}).safeParse(data)
+ if(!result.success||new Set(result.data.invoices.map(invoice=>`${invoice.student.id}:${invoice.reference_month}`)).size!==expected
+  ||new Set(result.data.invoices.map(invoice=>invoice.id)).size!==expected
+  ||result.data.invoices.some(invoice=>!input.data.months.includes(invoice.reference_month)||!input.data.studentIds.includes(invoice.student.id))){
+  return {success:false as const,error:'Não foi possível conferir todas as mensalidades dos meses escolhidos. Atualize a consulta antes de tentar novamente.'}
+ }
+ revalidatePath('/financeiro');revalidatePath('/dashboard')
+ return result.data
+}
+
 export async function getAdvanceStudentDirectoryAction(search:string,page=1){
  const db=await createAdminClient('finance.write')
  const input=z.object({search:z.string().trim().max(120),page:z.number().int().min(1).max(100000)}).safeParse({search,page})

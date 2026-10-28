@@ -6,10 +6,11 @@ insert into billing_fixture(kind) values('eligible'),('inactive_student'),('tria
 create temporary table billing_existing as select id,amount,paid_amount,status,notes,due_date from public.invoices;
 insert into public.students(id,name,birth_date,status)
 select student,'Verificação mensal automática: '||kind,date '2017-01-01',case kind when 'inactive_student' then 'inactive' when 'trial_student' then 'trial' else 'active' end from billing_fixture;
-insert into public.enrollments(id,student_id,class_id,plan_id,start_date,due_day,monthly_fee,status,created_at)
+insert into public.enrollments(id,student_id,class_id,plan_id,start_date,due_day,monthly_fee,status,created_at,first_billing_month)
 select enrollment,student,(select id from public.classes limit 1),(select id from public.plans limit 1),
  case when kind='future_start' then (date_trunc('month',now() at time zone 'America/Recife')+interval '1 month')::date else date '2020-01-01' end,
- 31,137.50,case when kind='inactive_enrollment' then 'inactive' else 'active' end,now() from billing_fixture;
+ 31,137.50,case when kind='inactive_enrollment' then 'inactive' else 'active' end,now(),
+ case when kind='future_start' then (date_trunc('month',now() at time zone 'America/Recife')+interval '2 months')::date else date '2020-01-01' end from billing_fixture;
 -- Two active registrations still produce a single invoice with the latest agreed fee.
 insert into public.enrollments(student_id,class_id,plan_id,start_date,due_day,monthly_fee,status,created_at)
 select student,(select id from public.classes limit 1),(select id from public.plans limit 1),date '2020-01-01',31,149.25,'active',now()+interval '1 second' from billing_fixture where kind='eligible';
@@ -27,8 +28,10 @@ do $$ declare result jsonb;month_ref text:=to_char(now() at time zone 'America/R
  if not exists(select 1 from public.invoices i join billing_fixture f on f.student=i.student_id where f.kind='eligible' and i.reference_month=month_ref and i.amount=149.25 and i.status='pending' and i.due_date=(date_trunc('month',now() at time zone 'America/Recife')+interval '1 month'-interval '1 day')::date) then raise exception 'Wrong fee, status or month-end due date';end if;
  if exists(select 1 from public.invoices i join billing_fixture f on f.student=i.student_id where f.kind in('inactive_student','trial_student','inactive_enrollment','future_start')) then raise exception 'Ineligible or future student was billed';end if;
  result=private.run_monthly_billing();
- if(result->>'count')::integer<>0 then raise exception 'Daily retry duplicated a monthly invoice';end if;
- if(select count(*) from public.invoices i join billing_fixture f on f.student=i.student_id where f.kind='cancelled')<>1 then raise exception 'Cancelled invoice was reissued';end if;
+ if(result->>'count')::integer<>0 or (result->>'nextCount')::integer<>0 then raise exception 'Daily retry duplicated a monthly invoice';end if;
+ if result->>'nextMonth'<>to_char(date_trunc('month',now() at time zone 'America/Recife')+interval '1 month','YYYY-MM') then raise exception 'Following reference month is incorrect';end if;
+ if not exists(select 1 from public.invoices i join billing_fixture f on f.student=i.student_id where f.kind='eligible' and i.reference_month=result->>'nextMonth' and i.status='pending' and i.amount=149.25 and i.due_date=(date_trunc('month',now() at time zone 'America/Recife')+interval '2 months - 1 day')::date) then raise exception 'Following month was not issued in advance';end if;
+ if(select count(*) from public.invoices i join billing_fixture f on f.student=i.student_id where f.kind='cancelled' and i.reference_month=month_ref)<>1 then raise exception 'Cancelled invoice was reissued';end if;
  if not exists(select 1 from public.invoices i join billing_fixture f on f.student=i.student_id where f.kind='paid' and i.amount=88 and i.paid_amount=85 and i.notes='Preservar decisão financeira' and i.status='paid') then raise exception 'Existing payment was changed';end if;
  if exists(select * from billing_existing except select id,amount,paid_amount,status,notes,due_date from public.invoices) then raise exception 'An existing real invoice changed';end if;
  if not exists(select 1 from private.monthly_billing_runs where reference_month=month_ref and generated_count=1) then raise exception 'Worker result was not logged';end if;
@@ -61,4 +64,4 @@ do $$ begin
 end;$$;
 reset role;
 rollback;
-select 'PASS: automatic issuance without a staff JWT; eligible registrations only; latest agreed fee; retries; cancellation/payment preservation; February; enrollment start; daily schedule; financial fallback and trainer denial. All test changes rolled back.' as verification;
+select 'PASS: automatic current/following month issuance without a staff JWT; eligible registrations only; latest agreed fee; retries; cancellation/payment preservation; February; first billing month; daily schedule; financial fallback and trainer denial. All test changes rolled back.' as verification;

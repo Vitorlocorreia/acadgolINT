@@ -4,18 +4,18 @@ import {useEffect,useState,useTransition} from 'react'
 import {Calendar,Check,ChevronLeft,ChevronRight,Loader2,Search,X} from 'lucide-react'
 import {ModalFrame} from '@/components/modal-frame'
 import {ManualPaymentDialog} from './manual-payment-dialog'
-import {getAdvanceStudentDirectoryAction,prepareAdvanceInvoicesAction,type AdvanceInvoice,type AdvanceStudent,type AdvanceStudentDirectory} from './advance-actions'
+import {getAdvanceStudentDirectoryAction,prepareAdvancePeriodsAction,type AdvanceInvoice,type AdvanceStudent,type AdvanceStudentDirectory} from './advance-actions'
+import {advanceMonthOptions} from '@/lib/finance/billing-months'
 
 const money=(value:number)=>value.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})
 const monthLabel=(value:string)=>value.split('-').reverse().join('/')
-export interface AdvanceCompletion{month:string;invoices:AdvanceInvoice[];paidCount:number}
+export interface AdvanceCompletion{months:string[];invoices:AdvanceInvoice[];paidCount:number}
 export function AdvancePaymentDialog({initialMonth,initialSearch,todayStr,operatorName,onClose,onFinished}:{
  initialMonth:string;initialSearch:string;todayStr:string;operatorName:string;onClose:()=>void;onFinished:(result:AdvanceCompletion)=>void
 }){
  const currentMonth=todayStr.slice(0,7)
- const nextMonth=new Date(`${currentMonth}-01T12:00:00Z`);nextMonth.setUTCMonth(nextMonth.getUTCMonth()+1)
- const lastMonth=new Date(`${currentMonth}-01T12:00:00Z`);lastMonth.setUTCMonth(lastMonth.getUTCMonth()+12)
- const [month,setMonth]=useState(initialMonth>currentMonth?initialMonth:nextMonth.toISOString().slice(0,7))
+ const monthOptions=advanceMonthOptions(todayStr)
+ const [months,setMonths]=useState<string[]>([monthOptions.includes(initialMonth)&&initialMonth>currentMonth?initialMonth:monthOptions[1]])
  const [query,setQuery]=useState(initialSearch),[page,setPage]=useState(1),[retry,setRetry]=useState(0)
  const [directory,setDirectory]=useState<AdvanceStudentDirectory|null>(null)
  const [selected,setSelected]=useState<AdvanceStudent[]>([]),[loading,setLoading]=useState(true),[searchError,setSearchError]=useState('')
@@ -53,13 +53,15 @@ export function AdvancePaymentDialog({initialMonth,initialSearch,todayStr,operat
    ?current.filter(student=>!rows.some(row=>row.id===student.id))
    :[...current,...rows.filter(row=>!current.some(student=>student.id===row.id))].slice(0,50))
  }
- function finish(){if(prepared)onFinished({month,invoices:prepared.invoices,paidCount:paidIds.length});else onClose()}
+ const chargeCount=selected.length*months.length
+ function toggleMonth(value:string){setError('');setMonths(current=>current.includes(value)?current.filter(item=>item!==value):[...current,value].sort())}
+ function finish(){if(prepared)onFinished({months,invoices:prepared.invoices,paidCount:paidIds.length});else onClose()}
  function openPayment(value:AdvanceInvoice){setInvoice({...value,idempotencyKey:crypto.randomUUID()})}
  function prepare(){
-  if(!selected.length||pending)return;setError('')
+  if(!selected.length||!months.length||chargeCount>120||pending)return;setError('')
   start(async()=>{
    try{
-    const result=await prepareAdvanceInvoicesAction(selected.map(student=>student.id),month)
+    const result=await prepareAdvancePeriodsAction(selected.map(student=>student.id),months)
     if(result.success){setPrepared(result);if(result.invoices.length===1)openPayment(result.invoices[0])}else setError(result.error)
    }catch{setError('A conexão foi interrompida. Confira os lançamentos antes de tentar novamente; cobranças existentes serão reaproveitadas.')}
   })
@@ -71,7 +73,7 @@ export function AdvancePaymentDialog({initialMonth,initialSearch,todayStr,operat
  return <ModalFrame key="advance-selection" label={prepared?'Mensalidades preparadas':'Antecipar mensalidade'} onClose={()=>{if(!pending)finish()}} wide>
   <div className="surface w-full flex flex-col max-h-[92vh] overflow-hidden">
    <div className="flex items-start justify-between gap-4 p-6 pb-4 border-b border-[var(--border-color)] shrink-0">
-    <div><p className="eyebrow">Recebimento antecipado</p><h2 className="section-title mt-2">{prepared?'Mensalidades preparadas':'Antecipar mensalidade'}</h2><p className="text-sm text-[var(--text-secondary)] mt-2">{prepared?`Referência ${monthLabel(month)} · ${prepared.invoices.length} mensalidade(s) pronta(s) para conferência.`:'Selecione um ou mais atletas e escolha o mês. A pesquisa acompanha o que você digita.'}</p></div>
+    <div><p className="eyebrow">Recebimento antecipado</p><h2 className="section-title mt-2">{prepared?'Mensalidades preparadas':'Antecipar mensalidades'}</h2><p className="text-sm text-[var(--text-secondary)] mt-2">{prepared?`Referências ${months.map(monthLabel).join(', ')} · ${prepared.invoices.length} mensalidade(s) pronta(s) para conferência.`:'Escolha os atletas e marque os meses que deseja antecipar. A pesquisa acompanha o que você digita.'}</p></div>
     <button type="button" className="icon-button shrink-0" aria-label="Fechar antecipação" disabled={pending} onClick={finish}><X size={20}/></button>
    </div>
    <div className="space-y-4 overflow-y-auto min-h-0 p-6 py-4">
@@ -80,7 +82,7 @@ export function AdvancePaymentDialog({initialMonth,initialSearch,todayStr,operat
     <p className="text-xs text-[var(--text-secondary)]">Abra a baixa de cada atleta para conferir o valor recebido, o desconto, as formas de pagamento e o comprovante. Preparar a seleção não confirma nenhum pagamento.</p>
     <div className="space-y-2 max-h-80 overflow-y-auto">{prepared.invoices.map(item=><div key={item.id} className="flex flex-wrap items-center justify-between gap-3 border border-[var(--border-color)] rounded-xl p-3">
      <div><strong className="text-sm">{item.student.name}</strong><p className="text-xs text-[var(--text-muted)] mt-1">{money(item.amount)} · referência {monthLabel(item.reference_month)}</p></div>
-     {paidIds.includes(item.id)?<span className="badge badge-success"><Check size={14}/>Recebimento registrado</span>:<button type="button" className="button button-primary !text-xs" onClick={()=>openPayment(item)}>Dar baixa<span className="sr-only"> de {item.student.name}</span></button>}
+     {paidIds.includes(item.id)?<span className="badge badge-success"><Check size={14}/>Recebimento registrado</span>:<button type="button" className="button button-primary !text-xs" onClick={()=>openPayment(item)}>Dar baixa<span className="sr-only"> de {item.student.name}, referência {monthLabel(item.reference_month)}</span></button>}
     </div>)}</div>
    </>:<>
     <div><label className="field-label" htmlFor="advance-search">Nome do atleta ou responsável</label><div className="relative"><Search size={17} className="absolute left-3 top-3.5 text-[var(--text-muted)] pointer-events-none"/><input id="advance-search" autoFocus type="search" className="input-escolinha !pl-10" value={query} onChange={e=>changeQuery(e.target.value)} maxLength={120} disabled={pending} placeholder="Digite para pesquisar ou selecione na lista…"/></div></div>
@@ -104,7 +106,9 @@ export function AdvancePaymentDialog({initialMonth,initialSearch,todayStr,operat
      <div className="flex items-center justify-between gap-3"><p className="text-sm font-semibold">{selected.length} selecionado(s) <span className="text-xs font-normal text-[var(--text-muted)]">· até 50 por vez</span></p>{selected.length>0&&<button type="button" className="text-link text-xs" disabled={pending} onClick={()=>setSelected([])}>Limpar seleção</button>}</div>
      {selected.length>0?<div className="flex flex-wrap gap-2 max-h-24 overflow-y-auto">{selected.map(student=><button type="button" key={student.id} disabled={pending} aria-label={`Remover ${student.name} da seleção`} onClick={()=>toggle(student)} className="inline-flex items-center gap-2 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-lg px-2 py-1 text-xs">{student.name}<X size={12} className="shrink-0"/></button>)}</div>:<p className="text-xs text-[var(--text-muted)]">Marque os atletas na lista. A seleção permanece ao pesquisar outros nomes ou trocar de página.</p>}
     </section>
-    <div><label className="field-label" htmlFor="advance-month">Mês de referência das mensalidades</label><input id="advance-month" type="month" required min={currentMonth} max={lastMonth.toISOString().slice(0,7)} value={month} disabled={pending} onChange={e=>setMonth(e.target.value)} className="input-escolinha"/><p className="text-xs text-[var(--text-muted)] mt-2">A referência escolhida vale para todos os selecionados. A data real do recebimento será informada na baixa de cada atleta.</p></div>
+    <fieldset className="space-y-2" disabled={pending}><legend className="field-label">Meses para antecipar</legend><div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{monthOptions.map(value=><label key={value} className={`flex items-center gap-2 p-2.5 border rounded-lg text-sm cursor-pointer ${months.includes(value)?'border-[#c81930] bg-[#c81930]/5':'border-[var(--border-color)]'}`}><input type="checkbox" aria-label={`Antecipar ${monthLabel(value)}`} checked={months.includes(value)} disabled={!months.includes(value)&&months.length>=12} onChange={()=>toggleMonth(value)} className="accent-[#c81930]"/><span>{monthLabel(value)}{value===currentMonth&&<span className="text-xs text-[var(--text-muted)]"> · atual</span>}</span></label>)}</div><p className="text-xs text-[var(--text-muted)]">Marque mais de um mês para antecipar várias mensalidades do mesmo atleta. Os meses escolhidos valem para todos os atletas selecionados. A data real de recebimento é informada em cada baixa.</p></fieldset>
+    <p role="status" className="notice text-sm">{selected.length} atleta(s) × {months.length} mês(es) = <strong>{chargeCount} mensalidade(s)</strong>.</p>
+    {chargeCount>120&&<p role="alert" className="notice notice-error text-sm">Prepare até 120 mensalidades por vez. Reduza a quantidade de atletas ou meses desta seleção.</p>}
     <p className="text-xs text-[var(--text-secondary)]">Serão preparadas apenas as mensalidades dos selecionados. Cobranças existentes serão reaproveitadas. Cada recebimento será conferido e confirmado separadamente.</p>
     {error&&<p role="alert" className="notice notice-error">{error}</p>}
    </>}
@@ -112,7 +116,7 @@ export function AdvancePaymentDialog({initialMonth,initialSearch,todayStr,operat
    <div className="flex flex-wrap justify-end gap-3 border-t border-[var(--border-color)] p-4 px-6 shrink-0">
     {prepared?<button type="button" className="button button-primary" onClick={finish}>Concluir e ver mensalidades</button>:<>
      <button type="button" className="button" disabled={pending} onClick={onClose}>Cancelar</button>
-     <button type="button" className="button button-primary" disabled={pending||!selected.length||!month||month<currentMonth||month>lastMonth.toISOString().slice(0,7)} onClick={prepare}>{pending?<Loader2 size={17} className="animate-spin"/>:<Calendar size={17}/>} {selected.length?`Preparar ${selected.length} mensalidade${selected.length===1?'':'s'}`:'Selecione os atletas'}</button>
+     <button type="button" className="button button-primary" disabled={pending||!chargeCount||chargeCount>120} onClick={prepare}>{pending?<Loader2 size={17} className="animate-spin"/>:<Calendar size={17}/>} {!selected.length?'Selecione os atletas':!months.length?'Selecione os meses':`Preparar ${chargeCount} mensalidade${chargeCount===1?'':'s'}`}</button>
     </>}
    </div>
   </div>

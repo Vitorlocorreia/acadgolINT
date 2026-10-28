@@ -5,6 +5,7 @@ import {InvoiceProofsButton} from './invoice-proofs-button'
 import {AuditTab} from './audit-tab'
 import {ManualPaymentDialog} from './manual-payment-dialog'
 import {AdvancePaymentDialog} from './advance-payment-dialog'
+import {nextBillingMonth} from '@/lib/finance/billing-months'
 import {paymentPartsLabel} from '@/lib/finance/payment-parts'
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
@@ -295,7 +296,7 @@ export function FinanceiroClient({
                 className="button px-4 py-2 rounded-lg text-xs font-bold tracking-normal flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                {currentMonth>todayStr.slice(0,7) ? 'Emitir mês completo' : 'Gerar faltantes'}
+                {currentMonth>nextBillingMonth(todayStr) ? 'Emitir mês completo' : 'Gerar faltantes'}
               </button>
             </div>
           </div>
@@ -330,7 +331,7 @@ export function FinanceiroClient({
 
           <FinanceFilterPanel filters={filters} month={currentMonth} status={currentStatus} counts={filterCounts} classes={classOptions} total={pagination.total} pending={isNavigating}
             onApply={handleFiltersApply} onStatus={handleStatusFilter} onClear={()=>goTo(financeHref({...currentContext,status:'all'},defaultFinanceFilters))}/>
-          <details className="card-light p-4 text-sm"><summary className="cursor-pointer font-semibold">Emissão automática e conferência da importação</summary><div className="space-y-2 text-xs text-[var(--text-secondary)] mt-3"><p>{currentMonth>todayStr.slice(0,7) ? 'As mensalidades deste mês serão emitidas no início dele. Para receber antes de um atleta, use “Antecipar mensalidade”. “Emitir mês completo” prepara as cobranças de todos os atletas elegíveis, independentemente dos filtros.' : 'As mensalidades são emitidas no início de cada mês. “Gerar faltantes” confere o mês inteiro, independentemente dos filtros, sem duplicar cobranças. Para receber um mês futuro de um atleta, use “Antecipar mensalidade”.'}</p>
+          <details className="card-light p-4 text-sm"><summary className="cursor-pointer font-semibold">Emissão automática e conferência da importação</summary><div className="space-y-2 text-xs text-[var(--text-secondary)] mt-3"><p>A rotina diária mantém as mensalidades do mês atual e do seguinte emitidas, sem precisar esperar a virada do mês. Para antecipar vários meses de um atleta, use “Antecipar mensalidade” e marque os meses desejados. “Gerar faltantes” e “Emitir mês completo” conferem o mês inteiro, independentemente dos filtros, sem duplicar cobranças existentes.</p>
             {(stats.openingPaidCount>0||stats.unconfirmedCount>0)&&<><p>{stats.openingPaidCount} mensalidade(s) quitada(s) antes da importação, no total de {fmt(stats.openingPaid)}, sem nova entrada no caixa.</p><p>{stats.unconfirmedCount} pagamento(s) a confirmar ({fmt(stats.unconfirmed)}). Campo vazio na planilha não foi tratado como inadimplência.</p></>}</div></details>
 
           {/* Tabela de Mensalidades */}
@@ -339,7 +340,7 @@ export function FinanceiroClient({
               <DollarSign className="w-12 h-12 text-[var(--text-muted)] mx-auto" />
               <p className="text-sm font-bold text-[var(--text-secondary)]">Nenhuma cobrança corresponde aos filtros.</p>
               <p className="text-xs text-[var(--text-muted)]">
-                {currentMonth>todayStr.slice(0,7)?'Este mês ainda pode não ter sido emitido. Para receber antecipadamente de um atleta, prepare a mensalidade dele abaixo.':'Confira o nome, a turma e o mês selecionados, ou use “Limpar filtros”.'}
+                {currentMonth>nextBillingMonth(todayStr)?'O mês atual e o seguinte são emitidos automaticamente. Para meses mais adiante, escolha os atletas e marque os meses que deseja antecipar.':'Confira o nome, a turma e o mês selecionados, ou use “Limpar filtros”.'}
               </p>
               {currentMonth>todayStr.slice(0,7)&&<button type="button" className="button button-primary mt-3" disabled={isNavigating} onClick={()=>setShowAdvancePayment(true)}><Calendar size={16}/>Antecipar mensalidade de um atleta</button>}
             </div>
@@ -939,10 +940,10 @@ export function FinanceiroClient({
       {/* MODAL DE BAIXA MANUAL DESCOMPLICADA (SECRETARIA) */}
       {/* ======================================================== */}
       {showAdvancePayment&&<AdvancePaymentDialog initialMonth={currentMonth} initialSearch={filters.q} todayStr={todayStr} operatorName={operatorName}
-        onClose={()=>setShowAdvancePayment(false)} onFinished={({month,invoices:preparedInvoices,paidCount})=>{
+        onClose={()=>setShowAdvancePayment(false)} onFinished={({months,invoices:preparedInvoices,paidCount})=>{
           setShowAdvancePayment(false)
-          setFeedback({type:'success',message:`${preparedInvoices.length} mensalidade(s) preparada(s) de ${month.split('-').reverse().join('/')}. ${paidCount} recebimento(s) registrado(s); ${preparedInvoices.length-paidCount} sem baixa nesta seleção.`})
-          goTo(financeHref({...currentContext,month,status:'all',tab:'mensalidades'}, {...defaultFinanceFilters,q:preparedInvoices.length===1?preparedInvoices[0].student.name:''}))
+          setFeedback({type:'success',message:`${preparedInvoices.length} mensalidade(s) preparada(s): ${months.map(value=>value.split('-').reverse().join('/')).join(', ')}. ${paidCount} recebimento(s) registrado(s); ${preparedInvoices.length-paidCount} sem baixa nesta seleção.`})
+          goTo(financeHref({...currentContext,month:months[0],status:'all',tab:'mensalidades'}, {...defaultFinanceFilters,q:new Set(preparedInvoices.map(item=>item.student.id)).size===1?preparedInvoices[0].student.name:''}))
           router.refresh()
         }}/>}
       {modalInvoice&&<ManualPaymentDialog key={modalInvoice.idempotencyKey} invoice={modalInvoice} operatorName={operatorName} onClose={()=>setModalInvoice(null)} onSuccess={()=>{setModalInvoice(null);setFeedback({type:'success',message:'Recebimento registrado com sucesso.'});router.refresh()}}/>}

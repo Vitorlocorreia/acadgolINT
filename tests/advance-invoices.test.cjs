@@ -72,3 +72,30 @@ test('a failed selection or mismatched response never reports a complete batch',
   const run=scenario({data:{success:true,createdCount:1,invoices},error:null});assert.equal((await run.actions.prepareAdvanceInvoicesAction([student,second],'2026-11')).success,false);assert.equal(run.paths.length,0);
  }
 });
+
+test('one athlete can prepare several reference months in one atomic request',async()=>{
+ const december={...invoice,id:'20000000-0000-4000-8000-000000000002',reference_month:'2026-12',due_date:'2026-12-31'};
+ const run=scenario({data:{success:true,createdCount:1,invoices:[invoice,december]},error:null});
+ const result=await run.actions.prepareAdvancePeriodsAction([student],['2026-12','2026-11']);
+ assert.equal(result.success,true);assert.equal(result.invoices.length,2);
+ assert.deepEqual(run.calls,[{name:'prepare_advance_monthly_periods',args:{p_students:[student],p_months:['2026-11','2026-12']}}]);assert.deepEqual(run.paths,['/financeiro','/dashboard']);
+});
+test('several athletes and months must return every unique athlete/month pair',async()=>{
+ const second='10000000-0000-4000-8000-000000000002';
+ const invoices=[invoice,{...invoice,id:'20000000-0000-4000-8000-000000000002',reference_month:'2026-12'},
+  {...invoice,id:'20000000-0000-4000-8000-000000000003',student:{id:second,name:'Outro'}},
+  {...invoice,id:'20000000-0000-4000-8000-000000000004',reference_month:'2026-12',student:{id:second,name:'Outro'}}];
+ const run=scenario({data:{success:true,createdCount:4,invoices},error:null});assert.equal((await run.actions.prepareAdvancePeriodsAction([student,second],['2026-11','2026-12'])).success,true);
+ for(const rows of [invoices.slice(0,3),[invoices[0],invoices[0],invoices[2],invoices[3]],[...invoices.slice(0,3),{...invoices[3],reference_month:'2027-01'}]]){
+  const failed=scenario({data:{success:true,createdCount:4,invoices:rows},error:null});assert.equal((await failed.actions.prepareAdvancePeriodsAction([student,second],['2026-11','2026-12'])).success,false);assert.equal(failed.paths.length,0);
+ }
+});
+test('empty/repeated months, excessive cross products and unprivileged requests fail before issuance',async()=>{
+ const many=Array.from({length:50},(_,i)=>`10000000-0000-4000-8000-${String(i+1).padStart(12,'0')}`);
+ for(const [ids,months] of [[[student],[]],[[student],['2026-11','2026-11']],[[student],['2026-13']],[[student,student],['2026-11']],[many,['2026-11','2026-12','2027-01']]]){
+  const run=scenario();assert.equal((await run.actions.prepareAdvancePeriodsAction(ids,months)).success,false);assert.equal(run.calls.length,0);
+ }
+ const denied=scenario(undefined,false);await assert.rejects(denied.actions.prepareAdvancePeriodsAction([student],['2026-11']),/Acesso negado/);assert.equal(denied.calls.length,0);
+ const failed=scenario({data:null,error:{message:'Uma mensalidade já está quitada. Nenhuma nova mensalidade emitida.'}});
+ assert.equal((await failed.actions.prepareAdvancePeriodsAction([student],['2026-11','2026-12'])).success,false);assert.equal(failed.paths.length,0);
+});
