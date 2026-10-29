@@ -7,6 +7,7 @@ import { formatDate, formatMoney, formatMonth, SCHOOL_TIME_ZONE } from '@/lib/fo
 import { paymentMethodLabels } from '@/lib/finance/payment-parts'
 import type { FinancialAuditEntry, FinancialAuditFilters, FinancialAuditPage } from '@/lib/finance/audit'
 import { getFinancialAuditAction } from './actions'
+import {CashDayAudit} from './cash-day-closure-panel'
 
 const actionLabels = { created: 'Cobrança criada', payment: 'Baixa de pagamento', reversal: 'Estorno' }
 const dateTime = (value: string) => new Date(value).toLocaleString('pt-BR', { timeZone: SCHOOL_TIME_ZONE, dateStyle: 'short', timeStyle: 'short' })
@@ -76,6 +77,7 @@ export function AuditTab({ initialMonth }: { initialMonth: string }) {
   }
 
   return <section className="space-y-5" aria-label="Auditoria financeira">
+    <CashDayAudit/>
     <div className="surface p-5 flex flex-wrap justify-between items-start gap-4">
       <div><h2 className="section-title flex items-center gap-2"><ShieldCheck size={21} className="text-[#c81930]" />Auditoria financeira</h2><p className="text-sm text-[var(--text-secondary)] mt-2">Consulte quem registrou cada cobrança, baixa e estorno. Horários de Recife.</p></div>
       <button type="button" className="button" disabled={loading} onClick={() => void load(applied)}><RefreshCw size={16} />Atualizar registros</button>

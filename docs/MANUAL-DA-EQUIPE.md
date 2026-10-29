@@ -121,6 +121,24 @@ O PIX é uma **forma de recebimento manual** nesta versão. Não há geração d
 
 Se houver erro, administrador, secretaria ou financeiro deve usar **Estornar** e informar o motivo. O lançamento original fica preservado no histórico do banco; o estorno reabre a cobrança com o valor original. Registre novamente após conferir os dados corretos.
 
+## Fechar e reabrir o caixa do dia
+
+Em **Financeiro → Caixa diário**, selecione a **Data do fechamento**. O caixa é **geral por dia**, reunindo os recebimentos de todos os usuários no horário de Recife. A referência da mensalidade não muda o dia do caixa: um pagamento recebido hoje para novembro entra no caixa de hoje. Valores quitados antes da importação não entram novamente no caixa. Estornos são desconsiderados na conferência do recebimento original.
+
+1. Clique em **Fechar caixa do dia**. Administrador, secretaria e financeiro podem fechar.
+2. Informe o **Fundo de troco inicial em dinheiro**. Use 0 se não havia dinheiro na gaveta antes dos recebimentos. Esse fundo não é receita de mensalidade.
+3. Preencha o valor **conferido** em dinheiro, PIX, débito e crédito; preencha 0 nas formas sem movimento. O dinheiro esperado é o fundo inicial mais o dinheiro recebido. Confira PIX e cartões com os extratos e comprovantes.
+4. Se houver diferença em qualquer forma, informe a justificativa. Uma sobra em dinheiro não apaga uma falta em PIX, mesmo que a diferença total seja zero.
+5. Marque a confirmação da conferência e clique em **Confirmar fechamento**. Se um recebimento tiver entrado durante a conferência, o sistema exige atualizar os valores antes de fechar.
+
+Após o fechamento, novas baixas, alterações financeiras e estornos que afetem o dia ficam **bloqueados no banco**, inclusive quando alguém usa uma tela antiga ou tenta informar uma data retroativa. A emissão de mensalidades ainda não recebidas continua funcionando. Para estornar um recebimento de um dia fechado, primeiro é necessário reabrir o dia desse recebimento.
+
+Somente **administrador ou secretaria** pode usar **Reabrir caixa**, com motivo obrigatório. A reabertura conserva o fechamento anterior. Faça a correção e uma nova conferência; o próximo fechamento recebe outro número de versão. Reabrir um dia antigo não reabre nem substitui o fechamento de outro dia.
+
+O **Histórico de fechamentos e reaberturas** preserva responsável, data e horário, valores esperados, valores conferidos, diferenças, justificativa e observações. Use **Ver e imprimir fechamento** para abrir o documento daquela versão e imprimir ou salvar como PDF; seus recebimentos e valores não são substituídos quando houver correção posterior. Os registros também estão disponíveis em **Auditoria → Fechamentos e reaberturas de caixa**, escolhendo o dia.
+
+**Imprimir conferência do dia** continua disponível para consulta, mas não fecha o caixa. O fechamento geral diário não representa caixas separados por funcionário ou conta, controle de sangrias/retiradas, nem registro de devolução física de dinheiro; esses movimentos exigem um módulo próprio.
+
 ## Portal da família e convocações
 
 Em **Jogos e convocações**, preencha partida, adversário, categoria, data, horário e local. Use **Orientações da convocação** para informar a apresentação, o uniforme e o que levar. O horário de apresentação não é calculado automaticamente; informe a orientação real da equipe.

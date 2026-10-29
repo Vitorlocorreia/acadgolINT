@@ -5,6 +5,7 @@ import {InvoiceProofsButton} from './invoice-proofs-button'
 import {AuditTab} from './audit-tab'
 import {ManualPaymentDialog} from './manual-payment-dialog'
 import {AdvancePaymentDialog} from './advance-payment-dialog'
+import {CashDayClosurePanel} from './cash-day-closure-panel'
 import {nextBillingMonth} from '@/lib/finance/billing-months'
 import {paymentPartsLabel} from '@/lib/finance/payment-parts'
 import { useState, useTransition } from 'react'
@@ -597,14 +598,14 @@ export function FinanceiroClient({
                 <span className="text-[var(--text-secondary)] text-xs font-bold ">Data do Fechamento:</span>
                 <input
                   type="date" aria-label="Data do fechamento"
-                  defaultValue={targetDate}
+                  key={targetDate} defaultValue={targetDate}
                   onChange={handleDateChange}
                   className="bg-transparent text-[var(--text-primary)] text-xs font-mono font-bold outline-none cursor-pointer"
                 />
               </div>
               {targetDate === todayStr && (
                 <span className="px-2 py-1 bg-emerald-100 text-[#a71327] text-xs font-bold tracking-normal rounded">
-                  Hoje (Em Aberto)
+                  Hoje
                 </span>
               )}
             </div>
@@ -614,17 +615,18 @@ export function FinanceiroClient({
               className="button px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold  tracking-normal flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
             >
               <Printer className="w-4 h-4 text-[var(--text-muted)]" />
-              Imprimir Espelho de Caixa
+              Imprimir conferência do dia
             </button>
           </div>
 
+          <CashDayClosurePanel key={targetDate} date={targetDate} today={todayStr}/>
           {/* Cards de Conferência da Gaveta & Métodos */}
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             {/* Dinheiro (Espécie na Gaveta) */}
             <div className="card-light p-4 space-y-1.5 border-emerald-300 bg-emerald-50/50">
               <div className="flex items-center justify-between text-emerald-800 font-bold tracking-normal text-xs">
                 <span className="flex items-center gap-1">
-                  <Banknote className="w-4 h-4 text-emerald-700" /> Dinheiro (Gaveta)
+                  <Banknote className="w-4 h-4 text-emerald-700" /> Dinheiro recebido
                 </span>
               </div>
               <div className="stat-number  text-emerald-900 tracking-tight leading-tight">
@@ -676,7 +678,7 @@ export function FinanceiroClient({
             <div className="card-light p-4 space-y-1.5 border-slate-900 bg-slate-900 text-white col-span-2 lg:col-span-1">
               <div className="flex items-center justify-between text-[var(--text-muted)] font-bold tracking-normal text-xs">
                 <span className="flex items-center gap-1">
-                  <Wallet className="w-4 h-4 text-white" /> Total do Caixa
+                  <Wallet className="w-4 h-4 text-white" /> Total recebido no dia
                 </span>
               </div>
               <div className="stat-number  text-white tracking-tight leading-tight">
